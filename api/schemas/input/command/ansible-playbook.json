@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "playbook": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "check": {
+      "type": "boolean"
+    },
+    "dependencies": {
+      "type": "object"
+    },
+    "diff": {
+      "type": "boolean"
+    },
+    "extra_vars": {
+      "type": "object"
+    },
+    "extra_vars_file": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "flush_cache": {
+      "type": "boolean"
+    },
+    "force_handlers": {
+      "type": "boolean"
+    },
+    "forks": {
+      "type": "integer",
+			"minimum": 1
+    },
+    "inventory": {
+      "type": "string"
+    },
+    "limit": {
+      "type": "string"
+    },
+    "list_hosts": {
+      "type": "boolean"
+    },
+    "list_tags": {
+      "type": "boolean"
+    },
+    "list_tasks": {
+      "type": "boolean"
+    },
+    "module_path": {
+      "type": "string"
+    },
+    "skip_tags": {
+      "type": "string"
+    },
+    "start_at_task": {
+      "type": "string"
+    },
+    "syntax_check": {
+      "type": "boolean"
+    },
+    "tags": {
+      "type": "string"
+    },
+    "vault_id": {
+      "type": "string"
+    },
+    "vault_password_file": {
+      "type": "string"
+    },
+    "verbose": {
+      "type": "string",
+			"enum": [
+				"v",
+				"vv",
+				"vvv",
+				"vvvv"
+			]
+    },
+    "version": {
+      "type": "boolean"
+    },
+    "scp_extra_args": {
+      "type": "string"
+    },
+    "sftp_extra_args": {
+      "type": "string"
+    },
+    "ssh_common_args": {
+      "type": "string"
+    },
+    "ssh_extra_args": {
+      "type": "string"
+    },
+    "timeout": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "user": {
+      "type": "string"
+    },
+    "become": {
+      "type": "boolean"
+    },
+    "become_method": {
+      "type": "string",
+      "enum": [
+        "ksu",
+        "pbrun",
+        "enable",
+        "sesu",
+        "pmrun",
+        "runas",
+        "sudo",
+        "su",
+        "doas",
+        "pfexec",
+        "machinectl",
+        "dzdo"
+      ]
+    },
+    "become_user": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "playbook",
+    "inventory"
+  ],
+  "additionalProperties": false
+}
+
