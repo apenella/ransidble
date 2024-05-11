@@ -1,11 +1,9 @@
 package repository
 
-import (
-	"context"
+// import (
+// 	"github.com/apenella/ransidble/internal/domain/core/entity"
+// )
 
-	model "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
-)
-
-type Runner interface {
-	Run(ctx context.Context, options *model.AnsiblePlaybookOptions) error
-}
+// type Executor interface {
+// 	Execute(task *entity.Task) error
+// }

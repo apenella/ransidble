@@ -7,13 +7,21 @@ import (
 const (
 	// DefaultHTTPListenAddress default HTTP listen address
 	DefaultHTTPListenAddress = ":8080"
+	// DefaultWorkerPoolSize default worker pool size
+	DefaultWorkerPoolSize = 1
 
 	// HTTPListenAddressKey key for HTTP listen address configuration
 	HTTPListenAddressKey = "http_listen_address"
+	// WorkerPoolSizeKey key for worker pool size configuration
+	WorkerPoolSizeKey = "worker_pool_size"
 )
 
+// Configuration represents the configuration
 type Configuration struct {
+	// HTTPListenAddress represents the HTTP listen address
 	HTTPListenAddress string `mapstructure:"http_listen_address"`
+	// WorkerPoolSize represents the worker pool size
+	WorkerPoolSize int `mapstructure:"worker_pool_size"`
 }
 
 func LoadConfig() (*Configuration, error) {
@@ -23,6 +31,7 @@ func LoadConfig() (*Configuration, error) {
 	v := viper.New()
 
 	v.SetDefault(HTTPListenAddressKey, DefaultHTTPListenAddress)
+	v.SetDefault(WorkerPoolSizeKey, DefaultWorkerPoolSize)
 
 	v.SetConfigName("ransidble") // Name of the config file (config.yaml, config.json, etc.)
 	v.AddConfigPath(".")         // Search the current directory for the config file
@@ -44,6 +53,7 @@ func LoadConfig() (*Configuration, error) {
 
 	// Initialize config variable
 	config.HTTPListenAddress = v.GetString("http_listen_address")
+	config.WorkerPoolSize = v.GetInt("worker_pool_size")
 
 	return &config, nil
 }

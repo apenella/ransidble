@@ -13,7 +13,7 @@ func NewAnsiblePlaybookRun() *AnsiblePlaybookRun {
 	return &AnsiblePlaybookRun{}
 }
 
-func (a *AnsiblePlaybookRun) Run(ctx context.Context, options *model.AnsiblePlaybookOptions) error {
+func (a *AnsiblePlaybookRun) Run(ctx context.Context, options *model.AnsiblePlaybookParameters) error {
 	fmt.Println("[NOT IMPLEMENTED] Running Ansible playbook")
 	return nil
 }

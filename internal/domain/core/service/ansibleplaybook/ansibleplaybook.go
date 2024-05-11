@@ -3,23 +3,32 @@ package ansibleplaybook
 import (
 	"context"
 
-	model "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
+	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
+	"github.com/google/uuid"
 )
 
+// AnsiblePlaybookService represents the service to run an Ansible playbook
 type AnsiblePlaybookService struct {
-	runner repository.Runner
+	executor repository.Executor
 }
 
-func NewAnsiblePlaybookService(runner repository.Runner) *AnsiblePlaybookService {
+// NewAnsiblePlaybookService creates a new AnsiblePlaybookService
+func NewAnsiblePlaybookService(executor repository.Executor) *AnsiblePlaybookService {
 	return &AnsiblePlaybookService{
-		runner: runner,
+		executor: executor,
 	}
 }
 
-func (a *AnsiblePlaybookService) Run(ctx context.Context, options *model.AnsiblePlaybookOptions) error {
+// GenerateID generates an ID
+func (a *AnsiblePlaybookService) GenerateID() string {
+	// Generate a UUID
+	id := uuid.New().String()
+	return id
+}
 
-	err := a.runner.Run(ctx, options)
+func (a *AnsiblePlaybookService) Run(ctx context.Context, task *entity.Task) error {
+	err := a.executor.Execute(task)
 	if err != nil {
 		return err
 	}

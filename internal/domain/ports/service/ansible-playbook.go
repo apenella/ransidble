@@ -3,9 +3,10 @@ package service
 import (
 	"context"
 
-	model "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
+	"github.com/apenella/ransidble/internal/domain/core/entity"
 )
 
 type AnsiblePlaybookServicer interface {
-	Run(ctx context.Context, options *model.AnsiblePlaybookOptions) error
+	GenerateID() string
+	Run(ctx context.Context, task *entity.Task) error
 }

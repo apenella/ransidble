@@ -1,6 +1,6 @@
 package ansibleplaybook
 
-type AnsiblePlaybookOptions struct {
+type AnsiblePlaybookParameters struct {
 
 	// Playbooks is the ansible's playbooks list to be executed
 	Playbook []string `json:"playbooks" validate:"required"`
