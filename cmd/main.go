@@ -16,8 +16,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("%+v\n", config)
-
 	err = cli.NewCommand(config).Execute()
 	if err != nil {
 		fmt.Println(err)

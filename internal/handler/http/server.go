@@ -3,67 +3,83 @@ package http
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
+	"sync"
 
+	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/labstack/echo/v4"
 )
 
+var (
+	// ErrServerStarting represents an error when starting the server
+	ErrServerStarting = fmt.Errorf("error starting server")
+
+	// ErrServerStopping represents an error when stopping the server
+	ErrServerStopping = fmt.Errorf("error stopping server")
+)
+
 type Server struct {
-	server *http.Server
+	logger   repository.Logger
+	once     sync.Once
+	server   *http.Server
+	stopCh   chan struct{}
+	stopOnce sync.Once
 }
 
-func NewServer(listenAddress string, handler *echo.Echo) *Server {
+func NewServer(listenAddress string, handler *echo.Echo, logger repository.Logger) *Server {
 	return &Server{
 		server: &http.Server{
 			Addr:    listenAddress,
 			Handler: handler,
 		},
+		stopCh: make(chan struct{}),
+		logger: logger,
 	}
 }
 
-func (s *Server) Start() error {
-	var err error
+func (s *Server) Start(ctx context.Context) (err error) {
 
-	log.Printf("Starting server on %s", s.server.Addr)
+	s.once.Do(func() {
 
-	// Wait for interrupt signal to gracefully shutdown the server
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		s.logger.Info(fmt.Sprintf("Starting server on %s", s.server.Addr))
 
-	errListenAndServe := make(chan error)
-
-	go func() {
-		errListenAndServe <- s.server.ListenAndServe()
-	}()
-
-	select {
-	case err = <-errListenAndServe:
-		if err != nil {
-			return fmt.Errorf("Error starting server. %w", err)
-		}
-	case <-quit:
-		log.Println("Shutting down server...")
-	}
-
-	err = s.server.Shutdown(context.Background())
-	if err != nil {
-		err = fmt.Errorf("Error shutting down server. %w", err)
-
-		errStop := s.Stop()
-		if errStop != nil {
-			err = fmt.Errorf("Error stopping server. %w. %w", errStop, err)
+		if ctx == nil {
+			ctx = context.Background()
 		}
 
-		return err
-	}
+		errListenAndServeCh := make(chan error)
+		go func() {
+			errListenAndServe := s.server.ListenAndServe()
+			if errListenAndServe != nil {
+				errListenAndServeCh <- errListenAndServe
+			}
+		}()
+
+		select {
+		case errListenAndServe := <-errListenAndServeCh:
+			if errListenAndServe != nil {
+				err = fmt.Errorf("%w: %s", ErrServerStarting, errListenAndServe)
+				s.Stop()
+			}
+		case <-s.stopCh:
+
+			errShutdown := s.server.Shutdown(ctx)
+			if errShutdown != nil {
+				err = fmt.Errorf("%w: %s", ErrServerStopping, errShutdown)
+			}
+
+			s.logger.Info("HTTP Server stopped")
+			return
+		}
+	})
 
 	return nil
 }
 
-func (s *Server) Stop() error {
-	return nil
+func (s *Server) Stop() {
+	s.logger.Info("Stopping HTTP server...")
+
+	s.stopOnce.Do(func() {
+		close(s.stopCh)
+	})
 }

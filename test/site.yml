@@ -1,0 +1,10 @@
+- hosts: all
+
+  tasks:
+    - name: wait for 5 seconds
+      pause:
+        seconds: 15
+
+    - name: ansibleplaybook-simple
+      debug:
+        msg: Your are running 'ansibleplaybook-simple' example

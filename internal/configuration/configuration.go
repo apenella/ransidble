@@ -9,11 +9,15 @@ const (
 	DefaultHTTPListenAddress = ":8080"
 	// DefaultWorkerPoolSize default worker pool size
 	DefaultWorkerPoolSize = 1
+	// DefaultLogLevel default log level
+	DefaultLogLevel = "info"
 
 	// HTTPListenAddressKey key for HTTP listen address configuration
 	HTTPListenAddressKey = "http_listen_address"
 	// WorkerPoolSizeKey key for worker pool size configuration
 	WorkerPoolSizeKey = "worker_pool_size"
+	// LogLevelKey key for log level configuration
+	LogLevelKey = "log_level"
 )
 
 // Configuration represents the configuration
@@ -22,6 +26,8 @@ type Configuration struct {
 	HTTPListenAddress string `mapstructure:"http_listen_address"`
 	// WorkerPoolSize represents the worker pool size
 	WorkerPoolSize int `mapstructure:"worker_pool_size"`
+	// LogLevel represents the log level
+	LogLevel string `mapstructure:"log_level"`
 }
 
 func LoadConfig() (*Configuration, error) {
@@ -32,6 +38,7 @@ func LoadConfig() (*Configuration, error) {
 
 	v.SetDefault(HTTPListenAddressKey, DefaultHTTPListenAddress)
 	v.SetDefault(WorkerPoolSizeKey, DefaultWorkerPoolSize)
+	v.SetDefault(LogLevelKey, DefaultLogLevel)
 
 	v.SetConfigName("ransidble") // Name of the config file (config.yaml, config.json, etc.)
 	v.AddConfigPath(".")         // Search the current directory for the config file
@@ -54,6 +61,7 @@ func LoadConfig() (*Configuration, error) {
 	// Initialize config variable
 	config.HTTPListenAddress = v.GetString("http_listen_address")
 	config.WorkerPoolSize = v.GetInt("worker_pool_size")
+	config.LogLevel = v.GetString("log_level")
 
 	return &config, nil
 }

@@ -1,4 +1,4 @@
-package ansibleplaybook
+package command
 
 import "testing"
 

@@ -1,9 +1,14 @@
 package persistence
 
-import "github.com/apenella/ransidble/internal/domain/core/entity"
+import (
+	"sync"
+
+	"github.com/apenella/ransidble/internal/domain/core/entity"
+)
 
 type MemoryPersistence struct {
 	store map[string]*entity.Task
+	mutex sync.Mutex
 }
 
 // NewMemoryRepository creates a new memory repository
@@ -20,6 +25,9 @@ func (m *MemoryPersistence) Find(id string) (*entity.Task, error) {
 		return nil, entity.ErrNotInitializedStorage
 	}
 
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	task, ok := m.store[id]
 	if !ok {
 		return nil, entity.ErrTaskNotFound
@@ -31,6 +39,10 @@ func (m *MemoryPersistence) Find(id string) (*entity.Task, error) {
 // FindAll returns all tasks
 func (m *MemoryPersistence) FindAll() ([]*entity.Task, error) {
 	tasks := []*entity.Task{}
+
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	for _, task := range m.store {
 		tasks = append(tasks, task)
 	}
@@ -50,7 +62,10 @@ func (m *MemoryPersistence) Remove(id string) error {
 		return entity.ErrTaskNotFound
 	}
 
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	delete(m.store, id)
+
 	return nil
 }
 
@@ -61,12 +76,16 @@ func (m *MemoryPersistence) SafeStore(id string, task *entity.Task) error {
 		return entity.ErrNotInitializedStorage
 	}
 
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
 	_, ok := m.store[id]
 	if ok {
 		return entity.ErrTaskAlreadyExists
 	}
 
 	m.store[id] = task
+
 	return nil
 }
 
@@ -77,7 +96,10 @@ func (m *MemoryPersistence) Store(id string, task *entity.Task) error {
 		return entity.ErrNotInitializedStorage
 	}
 
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	m.store[id] = task
+
 	return nil
 }
 
@@ -93,6 +115,9 @@ func (m *MemoryPersistence) Update(id string, task *entity.Task) error {
 		return entity.ErrTaskNotFound
 	}
 
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	m.store[id] = task
+
 	return nil
 }

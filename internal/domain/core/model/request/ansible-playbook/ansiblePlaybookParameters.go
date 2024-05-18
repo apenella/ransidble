@@ -1,21 +1,30 @@
 package ansibleplaybook
 
+import (
+	_ "embed"
+
+	"github.com/go-playground/validator/v10"
+)
+
 type AnsiblePlaybookParameters struct {
 
+	// Project is the project name
+	Project string `json:"project" validate:"required"`
+
 	// Playbooks is the ansible's playbooks list to be executed
-	Playbook []string `json:"playbooks" validate:"required"`
+	Playbooks []string `json:"playbooks" validate:"required"`
 
 	// // AskVaultPassword ask for vault password
 	// AskVaultPassword bool
 
 	// Check don't make any changes; instead, try to predict some of the changes that may occur
-	Check bool `json:"check,omitempty" validate:"bool"`
+	Check bool `json:"check,omitempty" validate:"boolean"`
 
 	// Diff when changing (small) files and templates, show the differences in those files; works great with --check
-	Diff bool `json:"diff,omitempty" validate:"bool"`
+	Diff bool `json:"diff,omitempty" validate:"boolean"`
 
 	// Dependencies is a list of role and collection dependencies
-	Dependencies interface{} `json:"dependencies,omitempty"`
+	Dependencies *AnsiblePlaybookDependencies `json:"dependencies,omitempty"`
 
 	// ExtraVars is a map of extra variables used on ansible-playbook execution
 	ExtraVars map[string]interface{} `json:"extra_vars,omitempty"`
@@ -24,13 +33,13 @@ type AnsiblePlaybookParameters struct {
 	ExtraVarsFile []string `json:"extra_vars_file,omitempty"`
 
 	// FlushCache is the flush cache flag for ansible-playbook
-	FlushCache bool `json:"flush_cache,omitempty" validate:"bool"`
+	FlushCache bool `json:"flush_cache,omitempty" validate:"boolean"`
 
 	// ForceHandlers run handlers even if a task fails
-	ForceHandlers bool `json:"force_handlers,omitempty" validate:"bool"`
+	ForceHandlers bool `json:"force_handlers,omitempty" validate:"boolean"`
 
 	// Forks specify number of parallel processes to use (default=50)
-	Forks string `json:"forks,omitempty" validate:"numeric"`
+	Forks int `json:"forks,omitempty" validate:"number"`
 
 	// Inventory specify inventory host path
 	Inventory string `json:"inventory,omitempty" validate:"required"`
@@ -39,16 +48,16 @@ type AnsiblePlaybookParameters struct {
 	Limit string `json:"limit,omitempty"`
 
 	// ListHosts outputs a list of matching hosts
-	ListHosts bool `json:"list_hosts,omitempty" validate:"bool"`
+	ListHosts bool `json:"list_hosts,omitempty" validate:"boolean"`
 
 	// ListTags is the list tags flag for ansible-playbook
-	ListTags bool `json:"list_tags,omitempty" validate:"bool"`
+	ListTags bool `json:"list_tags,omitempty" validate:"boolean"`
 
 	// ListTasks is the list tasks flag for ansible-playbook
-	ListTasks bool `json:"list_tasks,omitempty" validate:"bool"`
+	ListTasks bool `json:"list_tasks,omitempty" validate:"boolean"`
 
-	// ModulePath repend colon-separated path(s) to module library (default=~/.ansible/plugins/modules:/usr/share/ansible/plugins/modules)
-	ModulePath string `json:"module_path,omitempty"`
+	// // ModulePath repend colon-separated path(s) to module library (default=~/.ansible/plugins/modules:/usr/share/ansible/plugins/modules)
+	// ModulePath string `json:"module_path,omitempty"`
 
 	// SkipTags only run plays and tasks whose tags do not match these values
 	SkipTags string `json:"skip_tags,omitempty"`
@@ -60,7 +69,7 @@ type AnsiblePlaybookParameters struct {
 	// Step bool
 
 	// SyntaxCheck is the syntax check flag for ansible-playbook
-	SyntaxCheck bool `json:"syntax_check,omitempty" validate:"bool"`
+	SyntaxCheck bool `json:"syntax_check,omitempty" validate:"boolean"`
 
 	// Tags is the tags flag for ansible-playbook
 	Tags string `json:"tags,omitempty"`
@@ -87,15 +96,15 @@ type AnsiblePlaybookParameters struct {
 	// VerboseVVVV bool
 
 	// Version show program's version number, config file location, configured module search path, module location, executable location and exit
-	Version bool `json:"version,omitempty" validate:"bool"`
+	Version bool `json:"version,omitempty" validate:"boolean"`
 
 	// Parameters defined on `Connections Options` section within ansible-playbook's man page, and which defines how to connect to hosts.
 
 	// // AskPass defines whether user's password should be asked to connect to host
 	// AskPass bool
 
-	// // Connection is the type of connection used by ansible-playbook
-	// Connection string
+	// Connection is the type of connection used by ansible-playbook
+	Connection string `json:"connection,omitempty" validate:"alphanum"`
 
 	// // PrivateKey is the user's private key file used to connect to a host
 	// PrivateKey string
@@ -124,7 +133,7 @@ type AnsiblePlaybookParameters struct {
 	// AskBecomePass bool
 
 	// Become is ansble-playbook's become flag
-	Become bool `json:"become,omitempty" validate:"bool"`
+	Become bool `json:"become,omitempty" validate:"boolean"`
 
 	// BecomeMethod is ansble-playbook's become method. The accepted become methods are:
 	// 	- ksu        Kerberos substitute user
@@ -143,4 +152,171 @@ type AnsiblePlaybookParameters struct {
 
 	// BecomeUser is ansble-playbook's become user
 	BecomeUser string `json:"become_user,omitempty"`
+}
+
+type AnsiblePlaybookDependencies struct {
+	Roles       *AnsiblePlaybookRoleDependencies       `json:"roles,omitempty"`
+	Collections *AnsiblePlaybookCollectionDependencies `json:"collections,omitempty"`
+}
+
+type AnsiblePlaybookRoleDependencies struct {
+
+	// Roles is a list of roles to install
+	Roles []string `json:"roles,omitempty"`
+
+	// ApiKey represent the API key to use to authenticate against the galaxy server. Same as --token
+	ApiKey string `json:"api,omitempty"`
+
+	// // Force represents whether to force overwriting an existing role or role file.
+	// Force bool
+
+	// // ForceWithDeps represents whether to force overwriting an existing role, role file, or dependencies.
+	// ForceWithDeps bool
+
+	// // IgnoreCerts represent the flag to ignore SSL certificate validation errors
+	// IgnoreCerts bool
+
+	// IgnoreErrors represents whether to continue processing even if a role fails to install.
+	IgnoreErrors bool `json:"ignore_errors,omitempty" validate:"boolean"`
+
+	// // KeepSCMMeta represent the flag to use tar instead of the scm archive option when packaging the role.
+	// KeepSCMMeta bool
+
+	// NoDeps represents whether to install dependencies.
+	NoDeps bool `json:"no_deps,omitempty" validate:"boolean"`
+
+	// RoleFile represents the path to a file containing a list of roles to install.
+	RoleFile string `json:"role_file,omitempty"`
+
+	// // RolesPath represents the path where roles should be installed on the local filesystem.
+	// RolesPath string
+
+	// Server represent the flag to specify the galaxy server to use
+	Server string `json:"server,omitempty"`
+
+	// Timeout represent the time to wait for operations against the galaxy server, defaults to 60s
+	Timeout string `json:"timeout,omitempty" validate:"numeric"`
+
+	// Token represent the token to use to authenticate against the galaxy server. Same as --api-key
+	Token string `json:"token,omitempty"`
+
+	// Verbose verbose mode enabled
+	Verbose bool `json:"verbose,omitempty" validate:"boolean"`
+
+	// // Verbose verbose mode -v enabled
+	// VerboseV bool
+
+	// // Verbose verbose mode -vv enabled
+	// VerboseVV bool
+
+	// // Verbose verbose mode -vvv enabled
+	// VerboseVVV bool
+
+	// // Verbose verbose mode -vvvv enabled
+	// VerboseVVVV bool
+
+	// // Version show program's version number, config file location, configured module search path, module location, executable location and exit
+	// Version bool
+}
+
+type AnsiblePlaybookCollectionDependencies struct {
+
+	// Collections is a list of collections to install.
+	Collections []string `json:"collections,omitempty"`
+
+	// APIKey is the Ansible Galaxy API key.
+	APIKey string `json:"api,omitempty"`
+
+	// // ClearResponseCache clears the existing server response cache.
+	// ClearResponseCache bool
+
+	// // DisableGPGVerify disables GPG signature verification when installing collections from a Galaxy server.
+	// DisableGPGVerify bool
+
+	// ForceWithDeps forces overwriting an existing collection and its dependencies.
+	ForceWithDeps bool `json:"force_with_deps,omitempty" validate:"boolean"`
+
+	// // IgnoreSignatureStatusCode suppresses this argument. It may be specified multiple times.
+	// IgnoreSignatureStatusCode bool
+
+	// // IgnoreSignatureStatusCodes is a space separated list of status codes to ignore during signature verification.
+	// IgnoreSignatureStatusCodes string
+
+	// // Keyring is the keyring used during signature verification.
+	// Keyring string
+
+	// // NoCache does not use the server response cache.
+	// NoCache bool
+
+	// // Offline installs collection artifacts (tarballs) without contacting any distribution servers.
+	// Offline bool
+
+	// Pre includes pre-release versions. Semantic versioning pre-releases are ignored by default.
+	Pre bool `json:"pre,omitempty" validate:"boolean"`
+
+	// // RequiredValidSignatureCount is the number of signatures that must successfully verify the collection.
+	// RequiredValidSignatureCount int
+
+	// // Signature is an additional signature source to verify the authenticity of the MANIFEST.json.
+	// Signature string
+
+	// Timeout is the time to wait for operations against the galaxy server, defaults to 60s.
+	Timeout string `json:"timeout,omitempty" validate:"numeric"`
+
+	// Token is the Ansible Galaxy API key.
+	Token string `json:"token,omitempty"`
+
+	// // Upgrade upgrades installed collection artifacts. This will also update dependencies unless –no-deps is provided.
+	// Upgrade bool
+
+	// // IgnoreCerts ignores SSL certificate validation errors.
+	// IgnoreCerts bool
+
+	// // Force forces overwriting an existing role or collection.
+	// Force bool
+
+	// IgnoreErrors ignores errors during installation and continue with the next specified collection.
+	IgnoreErrors bool `json:"ignore_errors,omitempty" validate:"boolean"`
+
+	// // NoDeps doesn’t download collections listed as dependencies.
+	// NoDeps bool
+
+	// // CollectionsPath is the path to the directory containing your collections.
+	// CollectionsPath string
+
+	// RequirementsFile is a file containing a list of collections to be installed.
+	RequirementsFile string `json:"requirements_file,omitempty"`
+
+	// Server is the Galaxy API server URL.
+	Server string `json:"server,omitempty"`
+
+	// Verbose verbose mode enabled
+	Verbose bool `json:"verbose,omitempty" validate:"boolean"`
+
+	// // Version show program's version number, config file location, configured module search path, module location, executable location and exit
+	// Version bool
+}
+
+func (params *AnsiblePlaybookParameters) Validate() error {
+	validate := validator.New()
+	return validate.Struct(params)
+
+	// fmt.Println(ansiblePlaybookParametersSchema)
+	// fmt.Printf(">>> %s\n", string(ansiblePlaybookParametersSchema))
+
+	// schemaLoader := gojsonschema.NewBytesLoader(ansiblePlaybookParametersSchema)
+	// documentLoader := gojsonschema.NewGoLoader(params)
+
+	// result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	// if err != nil {
+	// 	return fmt.Errorf("%s: %s", ErrValidationJSONSchema, err)
+	// }
+
+	// fmt.Println(result)
+
+	// if !result.Valid() {
+	// 	return fmt.Errorf("%s: %s", ErrInvalidRequestPayload, result.Errors())
+	// }
+
+	return nil
 }
