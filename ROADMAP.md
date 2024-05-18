@@ -1,7 +1,6 @@
 # Ransidble Roadmap
 
-- Implement a dispatcher to run Ansible playbooks commands
-- Publish endpoints to achieve the status of the execution
+- Store the execution output and make it available to the user
 - Upload projects in multiple formats
   - tar.gz
   - oci image

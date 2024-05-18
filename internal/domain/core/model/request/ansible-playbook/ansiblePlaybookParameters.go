@@ -155,7 +155,9 @@ type AnsiblePlaybookParameters struct {
 }
 
 type AnsiblePlaybookDependencies struct {
-	Roles       *AnsiblePlaybookRoleDependencies       `json:"roles,omitempty"`
+	// Roles defines how to install roles dependencies
+	Roles *AnsiblePlaybookRoleDependencies `json:"roles,omitempty"`
+	// Collections defines how to install collections dependencies
 	Collections *AnsiblePlaybookCollectionDependencies `json:"collections,omitempty"`
 }
 
@@ -165,7 +167,7 @@ type AnsiblePlaybookRoleDependencies struct {
 	Roles []string `json:"roles,omitempty"`
 
 	// ApiKey represent the API key to use to authenticate against the galaxy server. Same as --token
-	ApiKey string `json:"api,omitempty"`
+	ApiKey string `json:"api_key,omitempty"`
 
 	// // Force represents whether to force overwriting an existing role or role file.
 	// Force bool
@@ -225,7 +227,7 @@ type AnsiblePlaybookCollectionDependencies struct {
 	Collections []string `json:"collections,omitempty"`
 
 	// APIKey is the Ansible Galaxy API key.
-	APIKey string `json:"api,omitempty"`
+	APIKey string `json:"api_key,omitempty"`
 
 	// // ClearResponseCache clears the existing server response cache.
 	// ClearResponseCache bool
