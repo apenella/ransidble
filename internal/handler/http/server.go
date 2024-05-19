@@ -57,6 +57,7 @@ func (s *Server) Start(ctx context.Context) (err error) {
 
 		select {
 		case errListenAndServe := <-errListenAndServeCh:
+
 			if errListenAndServe != nil {
 				err = fmt.Errorf("%w: %s", ErrServerStarting, errListenAndServe)
 				s.Stop()
@@ -73,7 +74,7 @@ func (s *Server) Start(ctx context.Context) (err error) {
 		}
 	})
 
-	return nil
+	return
 }
 
 func (s *Server) Stop() {

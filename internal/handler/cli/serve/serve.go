@@ -15,15 +15,19 @@ import (
 	taskHandler "github.com/apenella/ransidble/internal/handler/http/task"
 	"github.com/apenella/ransidble/internal/infrastructure/executor"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
+	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/local"
 	taskpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/task"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
 
 var (
 	// ErrStartDispatcher represents an error when starting the dispatcher
 	ErrStartDispatcher = fmt.Errorf("error starting dispatcher")
+	// ErrLoadProjects represents an error when loading projects
+	ErrLoadProjects = fmt.Errorf("error loading projects")
 )
 
 func NewCommand(config *configuration.Configuration) *cobra.Command {
@@ -36,8 +40,15 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			ctx := cmd.Context()
 			log := logger.NewLogger()
 
-			tasksStore := taskpersistence.NewMemoryPersistence()
-			dispatcher := executor.NewDispatcher(config.WorkerPoolSize, log)
+			projectsStore := localprojectpersistence.NewLocalProjectRepository(afero.NewOsFs(), config.Server.Project.LocalStoragePath, log)
+			errLoadProjects := projectsStore.LoadProjects()
+			if errLoadProjects != nil {
+				err = fmt.Errorf("%w: %s", ErrLoadProjects, errLoadProjects)
+				return
+			}
+
+			tasksStore := taskpersistence.NewMemoryTaskRepository()
+			dispatcher := executor.NewDispatcher(config.Server.WorkerPoolSize, log)
 			go func() {
 				errStartDispatcher := dispatcher.Start(ctx)
 				if errStartDispatcher != nil {
@@ -65,7 +76,7 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			signal.Notify(quitCh, syscall.SIGINT, syscall.SIGTERM)
 			errListenAndServeCh := make(chan error)
 
-			srv := server.NewServer(config.HTTPListenAddress, router, log)
+			srv := server.NewServer(config.Server.HTTPListenAddress, router, log)
 
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -92,7 +103,7 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 
 			wg.Wait()
 
-			return nil
+			return
 		},
 	}
 

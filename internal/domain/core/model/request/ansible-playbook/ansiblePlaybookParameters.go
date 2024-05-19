@@ -302,23 +302,4 @@ type AnsiblePlaybookCollectionDependencies struct {
 func (params *AnsiblePlaybookParameters) Validate() error {
 	validate := validator.New()
 	return validate.Struct(params)
-
-	// fmt.Println(ansiblePlaybookParametersSchema)
-	// fmt.Printf(">>> %s\n", string(ansiblePlaybookParametersSchema))
-
-	// schemaLoader := gojsonschema.NewBytesLoader(ansiblePlaybookParametersSchema)
-	// documentLoader := gojsonschema.NewGoLoader(params)
-
-	// result, err := gojsonschema.Validate(schemaLoader, documentLoader)
-	// if err != nil {
-	// 	return fmt.Errorf("%s: %s", ErrValidationJSONSchema, err)
-	// }
-
-	// fmt.Println(result)
-
-	// if !result.Valid() {
-	// 	return fmt.Errorf("%s: %s", ErrInvalidRequestPayload, result.Errors())
-	// }
-
-	return nil
 }

@@ -13,13 +13,16 @@ Ransidble is a utility that enables you to execute [Ansible](https://www.ansible
     - [Configuration](#configuration)
     - [Initiate the Ransidble server](#initiate-the-ransidble-server)
   - [User Reference](#user-reference)
-    - [Perform a request to execute an Ansible playbook](#perform-a-request-to-execute-an-ansible-playbook)
-    - [REST API Reference](#rest-api-reference)
-      - [Command](#command)
-        - [Execution Data Object](#execution-data-object)
-        - [Dependencies Object](#dependencies-object)
-          - [Roles Dependencies Object](#roles-dependencies-object)
-          - [Collections Dependencies Object](#collections-dependencies-object)
+    - [Perform a Aequest to Execute an Ansible playbook](#perform-a-aequest-to-execute-an-ansible-playbook)
+    - [Perform a Request Accepting Gzip Encoding](#perform-a-request-accepting-gzip-encoding)
+    - [Get the Status of an Execution](#get-the-status-of-an-execution)
+  - [REST API Reference](#rest-api-reference)
+    - [Command](#command)
+      - [Execution Data Object](#execution-data-object)
+      - [Dependencies Object](#dependencies-object)
+        - [Roles Dependencies Object](#roles-dependencies-object)
+        - [Collections Dependencies Object](#collections-dependencies-object)
+    - [Task](#task)
   - [Development Reference](#development-reference)
     - [Contributing](#contributing)
     - [Code of Conduct](#code-of-conduct)
@@ -84,7 +87,7 @@ PLAY RECAP *********************************************************************
 
 ## User Reference
 
-### Perform a request to execute an Ansible playbook
+### Perform a Aequest to Execute an Ansible playbook
 
 The following example demonstrates how to execute an Ansible playbook using the Ransidble server. Please refer to the [REST API Reference](#rest-api-reference) section for more information.
 
@@ -99,11 +102,40 @@ Content-Length: 46
 {"id":"2aff4156-00e7-413a-a54c-a372d009a3f3"}
 ```
 
-### REST API Reference
+### Perform a Request Accepting Gzip Encoding
 
-#### Command
+```bash
+❯ curl -H 'Accept-Encoding: gzip' --output /dev/stdout -s -XPOST 0.0.0.0:8080/command/ansible-playbook
+r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
+```
 
-##### Execution Data Object
+### Get the Status of an Execution
+
+```bash
+❯ curl -GET 0.0.0.0:8080/task/2aff4156-00e7-413a-a54c-a372d009a3f3 |jq
+{
+  "command": "ansible-playbook",
+  "completed_at": "",
+  "created_at": "2024-05-18T11:29:12+02:00",
+  "executed_at": "2024-05-18T11:29:12+02:00",
+  "id": "2aff4156-00e7-413a-a54c-a372d009a3f3",
+  "parameters": {
+    "project": "project",
+    "playbooks": [
+      "test/site.yml"
+    ],
+    "inventory": "127.0.0.1,",
+    "connection": "local"
+  },
+  "status": "RUNNING"
+}
+```
+
+## REST API Reference
+
+### Command
+
+#### Execution Data Object
 
 The JSON schema payload to execute an Ansible playbook command is defined [here](api/schemas/input/command/ansible-playbook-parameters.json). However, the following table provides a summary of the available attributes:
 
@@ -143,14 +175,14 @@ The JSON schema payload to execute an Ansible playbook command is defined [here]
 | become_method | string | Ansible-playbook's become method |
 | become_user | string | Ansible-playbook's become user |
 
-##### Dependencies Object
+#### Dependencies Object
 
 | JSON Attribute | Type | Description |
 |----------------|------|-------------|
 | roles | object | Defines how to install roles dependencies. The object is described in the section [Roles dependencies object](#roles-dependencies-object) |
 | collections | object | Defines how to install collections dependencies. The object is described in the section [Collections dependencies object](#collections-dependencies-object) |
 
-###### Roles Dependencies Object
+##### Roles Dependencies Object
 
 | JSON Attribute | Type | Description |
 |----------------|------|-------------|
@@ -164,7 +196,7 @@ The JSON schema payload to execute an Ansible playbook command is defined [here]
 | token | string | The token to use to authenticate against the galaxy server. Same as --api-key. |
 | verbose | bool | Verbose mode enabled. |
 
-###### Collections Dependencies Object
+##### Collections Dependencies Object
 
 | JSON Attribute | Type | Description |
 |----------------|------|-------------|
@@ -179,34 +211,7 @@ The JSON schema payload to execute an Ansible playbook command is defined [here]
 | server | string | The Galaxy API server URL. |
 | verbose | bool | Verbose mode enabled. |
 
-- Perform a request accepting gzip encoding to execute an Ansible playbook:
-
-```bash
-❯ curl -H 'Accept-Encoding: gzip' --output /dev/stdout -s -XPOST 0.0.0.0:8080/command/ansible-playbook
-r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
-```
-
-- Get the status of the execution:
-
-```bash
-❯ curl -GET 0.0.0.0:8080/task/2aff4156-00e7-413a-a54c-a372d009a3f3 |jq
-{
-  "command": "ansible-playbook",
-  "completed_at": "",
-  "created_at": "2024-05-18T11:29:12+02:00",
-  "executed_at": "2024-05-18T11:29:12+02:00",
-  "id": "2aff4156-00e7-413a-a54c-a372d009a3f3",
-  "parameters": {
-    "project": "project",
-    "playbooks": [
-      "test/site.yml"
-    ],
-    "inventory": "127.0.0.1,",
-    "connection": "local"
-  },
-  "status": "RUNNING"
-}
-```
+### Task
 
 ## Development Reference
 

@@ -6,20 +6,20 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 )
 
-type MemoryPersistence struct {
+type MemoryTaskRepository struct {
 	store map[string]*entity.Task
 	mutex sync.Mutex
 }
 
 // NewMemoryRepository creates a new memory repository
-func NewMemoryPersistence() *MemoryPersistence {
-	return &MemoryPersistence{
+func NewMemoryTaskRepository() *MemoryTaskRepository {
+	return &MemoryTaskRepository{
 		store: make(map[string]*entity.Task),
 	}
 }
 
 // Find returns a task by id
-func (m *MemoryPersistence) Find(id string) (*entity.Task, error) {
+func (m *MemoryTaskRepository) Find(id string) (*entity.Task, error) {
 
 	if m.store == nil || m == nil {
 		return nil, entity.ErrNotInitializedStorage
@@ -37,7 +37,7 @@ func (m *MemoryPersistence) Find(id string) (*entity.Task, error) {
 }
 
 // FindAll returns all tasks
-func (m *MemoryPersistence) FindAll() ([]*entity.Task, error) {
+func (m *MemoryTaskRepository) FindAll() ([]*entity.Task, error) {
 	tasks := []*entity.Task{}
 
 	m.mutex.Lock()
@@ -51,7 +51,7 @@ func (m *MemoryPersistence) FindAll() ([]*entity.Task, error) {
 }
 
 // Remove removes a task by id
-func (m *MemoryPersistence) Remove(id string) error {
+func (m *MemoryTaskRepository) Remove(id string) error {
 
 	if m.store == nil || m == nil {
 		return entity.ErrNotInitializedStorage
@@ -70,7 +70,7 @@ func (m *MemoryPersistence) Remove(id string) error {
 }
 
 // SafeStore stores a task and return an error if the task already exists
-func (m *MemoryPersistence) SafeStore(id string, task *entity.Task) error {
+func (m *MemoryTaskRepository) SafeStore(id string, task *entity.Task) error {
 
 	if m.store == nil || m == nil {
 		return entity.ErrNotInitializedStorage
@@ -90,7 +90,7 @@ func (m *MemoryPersistence) SafeStore(id string, task *entity.Task) error {
 }
 
 // Store stores a task
-func (m *MemoryPersistence) Store(id string, task *entity.Task) error {
+func (m *MemoryTaskRepository) Store(id string, task *entity.Task) error {
 
 	if m.store == nil || m == nil {
 		return entity.ErrNotInitializedStorage
@@ -104,7 +104,7 @@ func (m *MemoryPersistence) Store(id string, task *entity.Task) error {
 }
 
 // Update updates a task
-func (m *MemoryPersistence) Update(id string, task *entity.Task) error {
+func (m *MemoryTaskRepository) Update(id string, task *entity.Task) error {
 
 	if m.store == nil || m == nil {
 		return entity.ErrNotInitializedStorage

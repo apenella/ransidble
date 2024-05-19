@@ -7,28 +7,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewMemoryPersistence(t *testing.T) {
-	persistence := NewMemoryPersistence()
-	expected := &MemoryPersistence{
+func TestNewMemoryTaskRepository(t *testing.T) {
+	persistence := NewMemoryTaskRepository()
+	expected := &MemoryTaskRepository{
 		store: make(map[string]*entity.Task),
 	}
 
 	assert.Equal(t, persistence, expected)
 }
 
-// TestMemoryPersistence_Find tests the Find method
-func TestMemoryPersistence_Find(t *testing.T) {
+// TestMemoryTaskRepository_Find tests the Find method
+func TestMemoryTaskRepository_Find(t *testing.T) {
 	tests := []struct {
 		desc        string
 		id          string
-		persistence *MemoryPersistence
+		persistence *MemoryTaskRepository
 		expected    *entity.Task
 		err         error
 	}{
 		{
 			desc: "Testing find a task in memory persistence",
 			id:   "task1",
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
@@ -39,7 +39,7 @@ func TestMemoryPersistence_Find(t *testing.T) {
 		{
 			desc: "Testing finding a task error when store is not initialized",
 			id:   "task2",
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: nil,
 			},
 			expected: nil,
@@ -48,7 +48,7 @@ func TestMemoryPersistence_Find(t *testing.T) {
 		{
 			desc: "Testing finding a task error when task does not exist",
 			id:   "task3",
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
@@ -71,17 +71,17 @@ func TestMemoryPersistence_Find(t *testing.T) {
 	}
 }
 
-// TestMemoryPersistence_FindAll tests the FindAll method
-func TestMemoryPersistence_FindAll(t *testing.T) {
+// TestMemoryTaskRepository_FindAll tests the FindAll method
+func TestMemoryTaskRepository_FindAll(t *testing.T) {
 	tests := []struct {
 		desc        string
-		persistence *MemoryPersistence
+		persistence *MemoryTaskRepository
 		expected    []*entity.Task
 		err         error
 	}{
 		{
 			desc: "Testing find all tasks in memory persistence",
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 					"task2": {ID: "task2"},
@@ -92,7 +92,7 @@ func TestMemoryPersistence_FindAll(t *testing.T) {
 		},
 		{
 			desc: "Testing finding all tasks error when store is not initialized",
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: nil,
 			},
 			expected: []*entity.Task{},
@@ -113,24 +113,24 @@ func TestMemoryPersistence_FindAll(t *testing.T) {
 	}
 }
 
-// TestMemoryPersistence_Remove tests the Remove method
-func TestMemoryPersistence_Remove(t *testing.T) {
+// TestMemoryTaskRepository_Remove tests the Remove method
+func TestMemoryTaskRepository_Remove(t *testing.T) {
 	tests := []struct {
 		desc        string
 		id          string
-		persistence *MemoryPersistence
-		expected    *MemoryPersistence
+		persistence *MemoryTaskRepository
+		expected    *MemoryTaskRepository
 		err         error
 	}{
 		{
 			desc: "Testing remove a task in memory persistence",
 			id:   "task1",
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
 			},
-			expected: &MemoryPersistence{
+			expected: &MemoryTaskRepository{
 				store: make(map[string]*entity.Task),
 			},
 			err: nil,
@@ -138,21 +138,21 @@ func TestMemoryPersistence_Remove(t *testing.T) {
 		{
 			desc: "Testing removing a task error when store is not initialized",
 			id:   "task2",
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: nil,
 			},
-			expected: &MemoryPersistence{},
+			expected: &MemoryTaskRepository{},
 			err:      entity.ErrNotInitializedStorage,
 		},
 		{
 			desc: "Testing removing a task error when task does not exist",
 			id:   "task3",
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
 			},
-			expected: &MemoryPersistence{},
+			expected: &MemoryTaskRepository{},
 			err:      entity.ErrTaskNotFound,
 		},
 	}
@@ -170,24 +170,24 @@ func TestMemoryPersistence_Remove(t *testing.T) {
 	}
 }
 
-// TestMemoryPersistence_SafeStore tests the SafeStore method
-func TestMemoryPersistence_SafeStore(t *testing.T) {
+// TestMemoryTaskRepository_SafeStore tests the SafeStore method
+func TestMemoryTaskRepository_SafeStore(t *testing.T) {
 	tests := []struct {
 		desc        string
 		id          string
 		task        *entity.Task
-		persistence *MemoryPersistence
-		expected    *MemoryPersistence
+		persistence *MemoryTaskRepository
+		expected    *MemoryTaskRepository
 		err         error
 	}{
 		{
 			desc: "Testing safe store a task in memory persistence",
 			id:   "task1",
 			task: &entity.Task{ID: "task1"},
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{},
 			},
-			expected: &MemoryPersistence{
+			expected: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
@@ -198,22 +198,22 @@ func TestMemoryPersistence_SafeStore(t *testing.T) {
 			desc: "Testing safe store a task error when task already exists",
 			id:   "task1",
 			task: &entity.Task{ID: "task1"},
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
 			},
-			expected: &MemoryPersistence{},
+			expected: &MemoryTaskRepository{},
 			err:      entity.ErrTaskAlreadyExists,
 		},
 		{
 			desc: "Testing safe store a task error when store is not initialized",
 			id:   "task2",
 			task: &entity.Task{ID: "task2"},
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: nil,
 			},
-			expected: &MemoryPersistence{},
+			expected: &MemoryTaskRepository{},
 			err:      entity.ErrNotInitializedStorage,
 		},
 	}
@@ -231,24 +231,24 @@ func TestMemoryPersistence_SafeStore(t *testing.T) {
 	}
 }
 
-// TestMemoryPersistence_Store tests the Store method
-func TestMemoryPersistence_Store(t *testing.T) {
+// TestMemoryTaskRepository_Store tests the Store method
+func TestMemoryTaskRepository_Store(t *testing.T) {
 	tests := []struct {
 		desc        string
 		id          string
 		task        *entity.Task
-		persistence *MemoryPersistence
-		expected    *MemoryPersistence
+		persistence *MemoryTaskRepository
+		expected    *MemoryTaskRepository
 		err         error
 	}{
 		{
 			desc: "Testing store a task in memory persistence",
 			id:   "task1",
 			task: &entity.Task{ID: "task1"},
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{},
 			},
-			expected: &MemoryPersistence{
+			expected: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
@@ -259,12 +259,12 @@ func TestMemoryPersistence_Store(t *testing.T) {
 			desc: "Testing store a task overwriting a task in memory persistence",
 			id:   "task1",
 			task: &entity.Task{ID: "task1_new"},
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
 			},
-			expected: &MemoryPersistence{
+			expected: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1_new"},
 				},
@@ -275,10 +275,10 @@ func TestMemoryPersistence_Store(t *testing.T) {
 			desc: "Testing store a task error when store is not initialized",
 			id:   "task2",
 			task: &entity.Task{ID: "task2"},
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: nil,
 			},
-			expected: &MemoryPersistence{},
+			expected: &MemoryTaskRepository{},
 			err:      entity.ErrNotInitializedStorage,
 		},
 	}
@@ -296,26 +296,26 @@ func TestMemoryPersistence_Store(t *testing.T) {
 	}
 }
 
-// TestMemoryPersistence_Update tests the Update method
-func TestMemoryPersistence_Update(t *testing.T) {
+// TestMemoryTaskRepository_Update tests the Update method
+func TestMemoryTaskRepository_Update(t *testing.T) {
 	tests := []struct {
 		desc        string
 		id          string
 		task        *entity.Task
-		persistence *MemoryPersistence
-		expected    *MemoryPersistence
+		persistence *MemoryTaskRepository
+		expected    *MemoryTaskRepository
 		err         error
 	}{
 		{
 			desc: "Testing update a task in memory persistence",
 			id:   "task1",
 			task: &entity.Task{ID: "task1"},
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
 			},
-			expected: &MemoryPersistence{
+			expected: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
@@ -326,12 +326,12 @@ func TestMemoryPersistence_Update(t *testing.T) {
 			desc: "Testing update a task error when task does not exist",
 			id:   "task2",
 			task: &entity.Task{ID: "task2"},
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
 			},
-			expected: &MemoryPersistence{
+			expected: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
@@ -342,10 +342,10 @@ func TestMemoryPersistence_Update(t *testing.T) {
 			desc: "Testing update a task error when store is not initialized",
 			id:   "task3",
 			task: &entity.Task{ID: "task3"},
-			persistence: &MemoryPersistence{
+			persistence: &MemoryTaskRepository{
 				store: nil,
 			},
-			expected: &MemoryPersistence{},
+			expected: &MemoryTaskRepository{},
 			err:      entity.ErrNotInitializedStorage,
 		},
 	}

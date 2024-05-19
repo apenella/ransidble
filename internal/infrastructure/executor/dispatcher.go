@@ -65,7 +65,7 @@ func (d *Dispatcher) Start(ctx context.Context) (err error) {
 			worker := NewWorker(d.workerPool, d.logger)
 			d.workers = append(d.workers, worker)
 			workerStartErr := worker.Start(ctx)
-			if err != nil {
+			if workerStartErr != nil {
 				msg := fmt.Sprintf("%s: %v", ErrDispatcherStartingWorker, workerStartErr)
 				d.logger.Error(msg)
 				err = fmt.Errorf(msg)
@@ -97,7 +97,7 @@ func (d *Dispatcher) Start(ctx context.Context) (err error) {
 		}()
 	})
 
-	return nil
+	return
 }
 
 func (d *Dispatcher) Stop() {
