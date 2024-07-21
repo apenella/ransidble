@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"errors"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -28,23 +28,24 @@ var (
 	// Errors
 
 	// ErrTaskNotFound is returned when a task is not found
-	ErrTaskNotFound = errors.New("task not found")
+	ErrTaskNotFound = fmt.Errorf("task not found")
 	// ErrTaskAlreadyExists is returned when you try to store a task that already exists
-	ErrTaskAlreadyExists = errors.New("task already exists")
+	ErrTaskAlreadyExists = fmt.Errorf("task already exists")
 	// ErrNotInitializedStorage is returned when the storage is not initialized
-	ErrNotInitializedStorage = errors.New("storage not initialized")
+	ErrNotInitializedStorage = fmt.Errorf("storage not initialized")
 )
 
 // Task represents a task to be executed
 type Task struct {
-	Command      string      `json:"command"`
+	Command      string      `json:"command" validate:"required"`
 	CompletedAt  string      `json:"completed_at"`
 	CreatedAt    string      `json:"created_at"`
-	ExecutedAt   string      `json:"executed_at"`
-	ID           string      `json:"id"`
-	Parameters   interface{} `json:"parameters"`
-	Status       string      `json:"status"`
 	ErrorMessage string      `json:"error_message,omitempty"`
+	ExecutedAt   string      `json:"executed_at"`
+	ID           string      `json:"id" validate:"required"`
+	Parameters   interface{} `json:"parameters" validate:"required"`
+	Project      *Project    `json:"project"`
+	Status       string      `json:"status" validate:"required"`
 
 	statusMutex sync.Mutex
 }

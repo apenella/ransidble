@@ -8,11 +8,10 @@ import (
 	"syscall"
 
 	"github.com/apenella/ransidble/internal/configuration"
-	ansibleplaybookservice "github.com/apenella/ransidble/internal/domain/core/service/command"
 	taskService "github.com/apenella/ransidble/internal/domain/core/service/task"
 	server "github.com/apenella/ransidble/internal/handler/http"
-	ansibleplaybookhandler "github.com/apenella/ransidble/internal/handler/http/command/ansible-playbook"
 	taskHandler "github.com/apenella/ransidble/internal/handler/http/task"
+	"github.com/apenella/ransidble/internal/infrastructure/archive"
 	"github.com/apenella/ransidble/internal/infrastructure/executor"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/local"
@@ -39,16 +38,26 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 
 			ctx := cmd.Context()
 			log := logger.NewLogger()
+			filesystem := afero.NewOsFs()
 
-			projectsStore := localprojectpersistence.NewLocalProjectRepository(afero.NewOsFs(), config.Server.Project.LocalStoragePath, log)
-			errLoadProjects := projectsStore.LoadProjects()
+			workingDir, errCreateWorkingdir := afero.TempDir(filesystem, "", "ransidble")
+			if err != nil {
+				err = fmt.Errorf("%w: %s", archive.ErrCreatingWorkingDirFolder, errCreateWorkingdir)
+				return
+			}
+
+			projectsRepository := localprojectpersistence.NewLocalProjectRepository(filesystem, config.Server.Project.LocalStoragePath, log)
+			errLoadProjects := projectsRepository.LoadProjects()
 			if errLoadProjects != nil {
 				err = fmt.Errorf("%w: %s", ErrLoadProjects, errLoadProjects)
 				return
 			}
 
-			tasksStore := taskpersistence.NewMemoryTaskRepository()
-			dispatcher := executor.NewDispatcher(config.Server.WorkerPoolSize, log)
+			archiveFactory := archive.NewArchiveFactory()
+			archiveFactory.Register("local", archive.NewLocalStorageArchive(filesystem, log))
+
+			taskRepository := taskpersistence.NewMemoryTaskRepository()
+			dispatcher := executor.NewDispatcher(config.Server.WorkerPoolSize, filesystem, archiveFactory, workingDir, log)
 			go func() {
 				errStartDispatcher := dispatcher.Start(ctx)
 				if errStartDispatcher != nil {
@@ -63,11 +72,11 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 				Level: 5,
 			}))
 
-			ansiblePlaybookService := ansibleplaybookservice.NewAnsiblePlaybookService(dispatcher, tasksStore, log)
-			ansiblePlaybookHandler := ansibleplaybookhandler.NewAnsiblePlaybookHandler(ansiblePlaybookService, tasksStore, log)
-			router.POST("/command/ansible-playbook", ansiblePlaybookHandler.Handle)
+			createTaskAnsiblePlaybookService := taskService.NewCreateTaskAnsiblePlaybookService(dispatcher, taskRepository, projectsRepository, log)
+			createTaskAnsiblePlaybookHandler := taskHandler.NewCreateTaskAnsiblePlaybookHandler(createTaskAnsiblePlaybookService, log)
+			router.POST("/task/ansible-playbook/:project_id", createTaskAnsiblePlaybookHandler.Handle)
 
-			getTaskService := taskService.NewGetTaskService(tasksStore, log)
+			getTaskService := taskService.NewGetTaskService(taskRepository, log)
 			getTaskHandler := taskHandler.NewGetTaskHandler(getTaskService, log)
 			router.GET("/task/:id", getTaskHandler.Handle)
 

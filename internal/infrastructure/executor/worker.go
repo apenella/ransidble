@@ -3,17 +3,42 @@ package executor
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"sync"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	request "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
+	"github.com/apenella/ransidble/internal/infrastructure/archive"
 	executor "github.com/apenella/ransidble/internal/infrastructure/executor/ansible-playbook"
 	"github.com/google/uuid"
+	"github.com/spf13/afero"
+)
+
+const (
+	// WorkerTaskMessagePrefix represents the prefix message for worker errors
+	WorkerTaskMessagePrefix = "Worker %s: Task '%s'. %s"
+)
+
+var (
+	// ErrCreateWorkingDirFolder represents an error creating working directory folder
+	ErrCreateWorkingDirFolder = fmt.Errorf("error creating working directory folder")
+	// ErrProjectNotFound represents an error when the project is not found
+	ErrProjectNotFound = fmt.Errorf("project not found")
+	// ErrTaskInvalidParameters represents an error when the task has invalid parameters
+	ErrTaskInvalidParameters = fmt.Errorf("task has invalid parameters")
+	// ErrUnachiverNotFound represents an error when the unarchiver is not found
+	ErrUnachiverNotFound = fmt.Errorf("unarchiver not found")
+	// ErrRemovingWorkingDirFolder represents an error removing working directory folder
+	ErrRemovingWorkingDirFolder = fmt.Errorf("error removing working directory folder")
 )
 
 // Worker represents a worker to run tasks
 type Worker struct {
+	// archiver factory to get the archiver
+	archiverFactory *archive.ArchiveFactory
+	// fs is the filesystem
+	fs afero.Fs
 	// id is the id of the worker
 	id string
 	// logger is the logger of the worker
@@ -28,22 +53,40 @@ type Worker struct {
 	taskChan chan *entity.Task
 	// workerPool is the pool of workers to synchronize to the dispatcher
 	workerPool chan chan *entity.Task
+	// workingDir is the working directory
+	workingDir string
+}
+
+func genereteID() string {
+	return uuid.New().String()
 }
 
 // NewWorker creates a new worker
-func NewWorker(workerPool chan chan *entity.Task, logger repository.Logger) *Worker {
+func NewWorker(workerPool chan chan *entity.Task, fs afero.Fs, archiveFactory *archive.ArchiveFactory, workingDir string, logger repository.Logger) *Worker {
+
+	id := genereteID()
+	workingDir = filepath.Join(workingDir, id)
+
 	return &Worker{
-		// set random alphanumeric
-		id:         uuid.New().String(),
-		stopCh:     make(chan struct{}),
-		taskChan:   make(chan *entity.Task),
-		workerPool: workerPool,
-		logger:     logger,
+		archiverFactory: archiveFactory,
+		fs:              fs,
+		id:              id, // set random alphanumeric
+		logger:          logger,
+		stopCh:          make(chan struct{}),
+		taskChan:        make(chan *entity.Task),
+		workerPool:      workerPool,
+		workingDir:      workingDir,
 	}
 }
 
 // Start starts the worker
 func (w *Worker) Start(ctx context.Context) error {
+	var err error
+
+	err = w.fs.MkdirAll(w.workingDir, 0755)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrCreateWorkingDirFolder, err)
+	}
 
 	w.onceStart.Do(func() {
 		go func() {
@@ -61,29 +104,58 @@ func (w *Worker) Start(ctx context.Context) error {
 
 					switch t.Command {
 					case entity.ANSIBLE_PLAYBOOK:
-						w.logger.Debug(fmt.Sprintf("Worker %s: Running a playbook %s", w.id, t.ID))
+						w.logger.Debug(fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, "Running a playbook"))
 						_, ok = t.Parameters.(*request.AnsiblePlaybookParameters)
 						if !ok {
-							errorMsg := fmt.Sprintf("Worker %s: Task '%s' created with an invalid parameters", w.id, t.ID)
+							errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, ErrTaskInvalidParameters)
 							t.Failed(errorMsg)
 							w.logger.Error(errorMsg)
 							continue
 						}
-						t.Running()
 
+						if t.Project == nil {
+							errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, ErrProjectNotFound)
+							t.Failed(errorMsg)
+							w.logger.Error(errorMsg)
+							continue
+						}
+
+						archiver := w.archiverFactory.Get(t.Project.Type)
+						if archiver == nil {
+							errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, ErrUnachiverNotFound)
+							t.Failed(errorMsg)
+							w.logger.Error(errorMsg)
+							continue
+						}
+
+						projectTaskWorkingDir := filepath.Join(w.workingDir, t.Project.Name, t.ID)
+						err = archiver.Unarchive(t.Project, projectTaskWorkingDir)
+						if err != nil {
+							errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, fmt.Errorf("error unarchiving project: %w", err))
+							t.Failed(errorMsg)
+							w.logger.Error(errorMsg)
+							continue
+						}
+
+						t.Running()
 						ansibleplaybook := executor.NewAnsiblePlaybook()
-						errRunAnsiblePlaybook := ansibleplaybook.Run(ctx, t.Parameters.(*request.AnsiblePlaybookParameters))
+						errRunAnsiblePlaybook := ansibleplaybook.Run(ctx, projectTaskWorkingDir, t.Parameters.(*request.AnsiblePlaybookParameters))
 						if errRunAnsiblePlaybook != nil {
-							errorMsg := fmt.Sprintf("Worker %s: Task '%s' failed: %s", w.id, t.ID, errRunAnsiblePlaybook)
+							errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, errRunAnsiblePlaybook)
 							t.Failed(errorMsg)
 							w.logger.Error(errorMsg)
 						} else {
 							t.Success()
-							w.logger.Debug(fmt.Sprintf("Worker %s: Task '%s' successfully executed", w.id, t.ID))
+							w.logger.Debug(fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, "Playbook successfully executed"))
 						}
 
+						err := w.fs.RemoveAll(projectTaskWorkingDir)
+						if err != nil {
+							errorMsg := fmt.Sprintf("%s: %s", ErrRemovingWorkingDirFolder, err)
+							w.logger.Error(errorMsg)
+						}
 					default:
-						errorMsg := fmt.Sprintf("Worker %s: Task '%s' created with an unknown command", w.id, t.ID)
+						errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, "Task with an unknown command")
 						t.Failed(errorMsg)
 						w.logger.Error(errorMsg)
 					}
@@ -105,6 +177,13 @@ func (w *Worker) Stop() {
 	w.logger.Info(fmt.Sprintf("Stopping worker %s", w.id))
 
 	w.onceStop.Do(func() {
+
+		err := w.fs.RemoveAll(w.workingDir)
+		if err != nil {
+			errorMsg := fmt.Sprintf("%s: %s", ErrRemovingWorkingDirFolder, err)
+			w.logger.Error(errorMsg)
+		}
+
 		close(w.stopCh)
 	})
 }

@@ -1,4 +1,4 @@
-package ansibleplaybook
+package task
 
 import (
 	"fmt"
@@ -23,34 +23,43 @@ const (
 	ErrRunningAnsiblePlaybook = "error running ansible playbook"
 	// ErrInvalidTaskID represents an error when the task id is invalid
 	ErrInvalidTaskID = "invalid task id"
+	// ErrProjectIDNotProvided represents an error when the project id is not provided
+	ErrProjectIDNotProvided = "project id not provided"
 )
 
-type AnsiblePlaybookHandler struct {
-	service   service.AnsiblePlaybookServicer
-	taskStore repository.TaskStorer
-	logger    repository.Logger
+type CreateTaskAnsiblePlaybookHandler struct {
+	service service.AnsiblePlaybookServicer
+	logger  repository.Logger
 }
 
-func NewAnsiblePlaybookHandler(service service.AnsiblePlaybookServicer, taskStore repository.TaskStorer, logger repository.Logger) *AnsiblePlaybookHandler {
-	return &AnsiblePlaybookHandler{
-		logger:    logger,
-		service:   service,
-		taskStore: taskStore,
+func NewCreateTaskAnsiblePlaybookHandler(service service.AnsiblePlaybookServicer, logger repository.Logger) *CreateTaskAnsiblePlaybookHandler {
+	return &CreateTaskAnsiblePlaybookHandler{
+		logger:  logger,
+		service: service,
 	}
 }
 
-func (h *AnsiblePlaybookHandler) Handle(c echo.Context) error {
+func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 	var err error
 	var errorMsg string
-	var res *response.CommandResponse
+	var res *response.TaskResponse
 	var parameters request.AnsiblePlaybookParameters
 
 	ctx := c.Request().Context()
 
+	projectID := c.Param("project_id")
+	if projectID == "" {
+		res = &response.TaskResponse{
+			Error: ErrProjectIDNotProvided,
+		}
+		h.logger.Error(ErrProjectIDNotProvided)
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
 	err = c.Bind(&parameters)
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrBindingRequestPayload, err.Error())
-		res = &response.CommandResponse{
+		res = &response.TaskResponse{
 			Error: errorMsg,
 		}
 		h.logger.Error(errorMsg)
@@ -60,35 +69,36 @@ func (h *AnsiblePlaybookHandler) Handle(c echo.Context) error {
 	err = parameters.Validate()
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrInvalidRequestPayload, err.Error())
-		res = &response.CommandResponse{
+		res = &response.TaskResponse{
 			Error: errorMsg,
 		}
 		h.logger.Error(errorMsg)
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	id := h.service.GenerateID()
-	if id == "" {
-		res = &response.CommandResponse{
+	taskID := h.service.GenerateID()
+	if taskID == "" {
+		res = &response.TaskResponse{
 			Error: ErrInvalidTaskID,
 		}
 		h.logger.Error(ErrInvalidTaskID)
 		return c.JSON(http.StatusInternalServerError, res)
 	}
 
-	task := entity.NewTask(id, entity.ANSIBLE_PLAYBOOK, &parameters)
-	h.logger.Debug(fmt.Sprintf("running task %s\n", id), map[string]interface{}{"component": "handler", "task": task})
+	task := entity.NewTask(taskID, entity.ANSIBLE_PLAYBOOK, &parameters)
 
-	err = h.service.Run(ctx, task)
+	h.logger.Debug(fmt.Sprintf("Creating task %s to run an Ansible playook on project %s\n", taskID, projectID), map[string]interface{}{"component": "handler"})
+
+	err = h.service.Run(ctx, projectID, task)
 	if err != nil {
-		res = &response.CommandResponse{
+		res = &response.TaskResponse{
 			Error: fmt.Sprintf("%s: %s", ErrRunningAnsiblePlaybook, err.Error()),
 		}
 		return c.JSON(http.StatusServiceUnavailable, res)
 	}
 
-	res = &response.CommandResponse{
-		ID: id,
+	res = &response.TaskResponse{
+		ID: taskID,
 	}
 
 	return c.JSON(http.StatusAccepted, res)

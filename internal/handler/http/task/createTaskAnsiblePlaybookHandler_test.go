@@ -1,4 +1,4 @@
-package ansibleplaybook
+package task
 
 import "testing"
 

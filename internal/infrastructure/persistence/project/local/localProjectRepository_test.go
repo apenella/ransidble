@@ -15,7 +15,6 @@ func TestNewLocalProjectRepository(t *testing.T) {
 	expected := &LocalProjectRepository{
 		Path:     "/tmp",
 		Projects: make(map[string]*entity.Project),
-		Fs:       afero.NewMemMapFs(),
 		logger:   nil,
 	}
 

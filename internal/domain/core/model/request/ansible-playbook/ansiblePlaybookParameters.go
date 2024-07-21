@@ -8,9 +8,6 @@ import (
 
 type AnsiblePlaybookParameters struct {
 
-	// Project is the project name
-	Project string `json:"project" validate:"required"`
-
 	// Playbooks is the ansible's playbooks list to be executed
 	Playbooks []string `json:"playbooks" validate:"required"`
 
@@ -263,7 +260,7 @@ type AnsiblePlaybookCollectionDependencies struct {
 	// Signature string
 
 	// Timeout is the time to wait for operations against the galaxy server, defaults to 60s.
-	Timeout string `json:"timeout,omitempty" validate:"numeric"`
+	Timeout string `json:"timeout,omitempty"`
 
 	// Token is the Ansible Galaxy API key.
 	Token string `json:"token,omitempty"`

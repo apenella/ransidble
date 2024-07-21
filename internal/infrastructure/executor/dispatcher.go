@@ -7,6 +7,8 @@ import (
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
+	"github.com/apenella/ransidble/internal/infrastructure/archive"
+	"github.com/spf13/afero"
 )
 
 const (
@@ -21,6 +23,10 @@ var (
 
 // Dispatcher represents a dispatcher to run tasks
 type Dispatcher struct {
+	// archiver factory to get the archiver
+	archiverFactory *archive.ArchiveFactory
+	// fs is the filesystem
+	fs afero.Fs
 	// logger is the logger of the dispatcher
 	logger repository.Logger
 	// onceStart is the sync.Once to stop the dispatcher
@@ -35,10 +41,12 @@ type Dispatcher struct {
 	workerPool chan chan *entity.Task
 	// workers list of workers
 	workers []*Worker
+	// workingDir is the working directory
+	workingDir string
 }
 
 // NewDispatcher creates a new dispatcher
-func NewDispatcher(workers int, logger repository.Logger) *Dispatcher {
+func NewDispatcher(workers int, fs afero.Fs, archiveFactory *archive.ArchiveFactory, workingDir string, logger repository.Logger) *Dispatcher {
 
 	if workers == 0 {
 		workers = DefaultWorkerPoolSize
@@ -49,11 +57,14 @@ func NewDispatcher(workers int, logger repository.Logger) *Dispatcher {
 	// }
 
 	return &Dispatcher{
-		logger:     logger,
-		queue:      make(chan *entity.Task, workers),
-		stopCh:     make(chan struct{}),
-		workerPool: make(chan chan *entity.Task, workers),
-		workers:    make([]*Worker, 0, workers),
+		archiverFactory: archiveFactory,
+		fs:              fs,
+		logger:          logger,
+		queue:           make(chan *entity.Task, workers),
+		stopCh:          make(chan struct{}),
+		workerPool:      make(chan chan *entity.Task, workers),
+		workers:         make([]*Worker, 0, workers),
+		workingDir:      workingDir,
 	}
 }
 
@@ -62,7 +73,7 @@ func (d *Dispatcher) Start(ctx context.Context) (err error) {
 
 	d.onceStart.Do(func() {
 		for i := 0; i < cap(d.queue); i++ {
-			worker := NewWorker(d.workerPool, d.logger)
+			worker := NewWorker(d.workerPool, d.fs, d.archiverFactory, d.workingDir, d.logger)
 			d.workers = append(d.workers, worker)
 			workerStartErr := worker.Start(ctx)
 			if workerStartErr != nil {

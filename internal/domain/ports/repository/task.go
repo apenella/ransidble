@@ -9,8 +9,8 @@ type Executor interface {
 	Execute(task *entity.Task) error
 }
 
-// TaskStorer represents a repository to manage tasks
-type TaskStorer interface {
+// TaskRepository represents a repository to manage tasks
+type TaskRepository interface {
 	Find(id string) (*entity.Task, error)
 	FindAll() ([]*entity.Task, error)
 	Remove(id string) error

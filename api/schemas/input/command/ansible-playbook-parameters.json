@@ -2,9 +2,6 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "project": {
-      "type": "string"
-    },
     "playbooks": {
       "type": "array",
       "items": {
@@ -183,5 +180,5 @@
       "type": "string"
     }
   },
-  "required": ["project", "playbooks", "inventory"]
+  "required": ["playbooks", "inventory"]
 }

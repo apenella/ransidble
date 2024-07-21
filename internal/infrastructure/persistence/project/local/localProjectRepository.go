@@ -61,7 +61,6 @@ func (r *LocalProjectRepository) LoadProjects() error {
 
 			r.logger.Debug(fmt.Sprintf("Loading project %s from %s", project.Name(), projectPath))
 
-			fmt.Println(">>>>>", project.Name(), projectPath, projectEntity)
 			err = r.SafeStore(project.Name(), projectEntity)
 			if err != nil {
 				r.logger.Error(fmt.Sprintf("Error loading project %s: %s", project.Name(), err))

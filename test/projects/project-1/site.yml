@@ -1,9 +1,10 @@
 - hosts: all
+  gather_facts: no
 
   tasks:
     - name: wait for 5 seconds
       pause:
-        seconds: 15
+        seconds: 5
 
     - name: ansibleplaybook-simple
       debug:

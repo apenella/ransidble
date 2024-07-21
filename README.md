@@ -13,7 +13,7 @@ Ransidble is a utility that enables you to execute [Ansible](https://www.ansible
     - [Configuration](#configuration)
     - [Initiate the Ransidble server](#initiate-the-ransidble-server)
   - [User Reference](#user-reference)
-    - [Perform a Aequest to Execute an Ansible playbook](#perform-a-aequest-to-execute-an-ansible-playbook)
+    - [Perform a Request to Execute an Ansible playbook](#perform-a-request-to-execute-an-ansible-playbook)
     - [Perform a Request Accepting Gzip Encoding](#perform-a-request-accepting-gzip-encoding)
     - [Get the Status of an Execution](#get-the-status-of-an-execution)
   - [REST API Reference](#rest-api-reference)
@@ -44,37 +44,46 @@ The Ransidble server can be configured using environment variables. The followin
 
 | Environment Variable | Description | Default Value |
 |----------------------|-------------|---------------|
-| RANSIDBLE_WORKER_POOL_SIZE | The number of workers to execute the commands | 1 |
-| RANSIDBLE_HTTP_LISTEN_ADDRESS | The port where the server listens for incoming requests | :8080 |
-| RANSIDBLE_LOG_LEVEL | The log level for the server | info |
+| RANSIDBLE_SERVER_HTTP_LISTEN_ADDRESS | The port where the server listens for incoming requests | :8080 |
+| RANSIDBLE_SERVER_LOG_LEVEL | The log level for the server | info |
+| RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH | The path where the projects are stored | projects |
+| RANSIDBLE_SERVER_PROJECT_STORAGE_TYPE | The type of storage used to store the projects | local |
+| RANSIDBLE_SERVER_WORKER_POOL_SIZE | The number of workers to execute the commands | 1 |
 
 Ransidble can be also configured using a configuration file. In this case, the file must be named `ransidble.yaml` and placed in the same directory as the binary. Environment variables take precedence over the configuration file.
 The following is an example of a configuration file:
 
 ```yaml
-http_listen_address: ":8080"
-log_level: "info"
-worker_pool_size: 5
+server:
+  http_listen_address: ":8080"
+  log_level: info
+  worker_pool_size: 5
+  project:
+    local_storage_path: projects
+    storage_type: local
 ```
 
 ### Initiate the Ransidble server
 
 ```bash
-❯ RANSIDBLE_WORKER_POOL_SIZE=5 go run cmd/main.go serve
-{"data":null,"level":"info","msg":"Starting server on :8080","time":"2024-05-15T17:57:50+02:00"}
-{"data":null,"level":"info","msg":"Starting worker ecb8cc75-322d-49af-b7dd-391556ef2fb4","time":"2024-05-15T17:57:50+02:00"}
-{"data":null,"level":"info","msg":"Starting worker 5b41bc79-aefb-44f6-9980-52e11c27a5da","time":"2024-05-15T17:57:50+02:00"}
-{"data":null,"level":"info","msg":"Starting worker 66a3b4f7-b875-44eb-8f70-0bb79ca86a09","time":"2024-05-15T17:57:50+02:00"}
-{"data":null,"level":"info","msg":"Starting worker 23ee18fc-d70e-4039-85d6-30c7c81933b9","time":"2024-05-15T17:57:50+02:00"}
-{"data":null,"level":"info","msg":"Starting worker e53efbc4-8492-483a-97f2-0fff0556e358","time":"2024-05-15T17:57:50+02:00"}
-
-
-{"time":"2024-05-15T17:58:21.603022413+02:00","id":"","remote_ip":"127.0.0.1","host":"0.0.0.0:8080","method":"POST","uri":"/command/ansible-playbook","user_agent":"curl/7.81.0","status":202,"error":"","latency":277778,"latency_human":"277.778µs","bytes_in":82,"bytes_out":274}
-&{ [test/site.yml] false false <nil> map[] [] false false  127.0.0.1,  false false false    false    false false local     0  false  }
+RANSIDBLE_SERVER_LOG_LEVEL=info RANSIDBLE_SERVER_WORKER_POOL_SIZE=3 RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH=test/projects  go run cmd/main.go serve
+{"data":null,"level":"info","msg":"Starting server on :8080","time":"2024-07-21T20:01:04+02:00"}
+{"data":null,"level":"info","msg":"Starting worker 4838bac7-3efe-4a9d-837d-3e61924c5f35","time":"2024-07-21T20:01:04+02:00"}
+{"data":null,"level":"info","msg":"Starting worker 50498ab1-72b0-4b8f-a197-a83b527ec874","time":"2024-07-21T20:01:04+02:00"}
+{"data":null,"level":"info","msg":"Starting worker 7f05137a-7701-4e88-8aee-1b8fe65d2e80","time":"2024-07-21T20:01:04+02:00"}
+{"data":null,"level":"info","msg":"Executing task ecfc92dc-6323-40d6-9bf8-71c4d4d98640","time":"2024-07-21T20:01:19+02:00"}
+{"time":"2024-07-21T20:01:19.534469135+02:00","id":"","remote_ip":"127.0.0.1","host":"0.0.0.0:8080","method":"POST","uri":"/task/ansible-playbook/project-1","user_agent":"curl/7.81.0","status":202,"error":"","latency":518245,"latency_human":"518.245µs","bytes_in":77,"bytes_out":46}
+{"data":null,"level":"info","msg":"Setup project project-1 to /tmp/ransidble846872083/4838bac7-3efe-4a9d-837d-3e61924c5f35/project-1/ecfc92dc-6323-40d6-9bf8-71c4d4d98640","time":"2024-07-21T20:01:19+02:00"}
+[DEPRECATION WARNING]: ANSIBLE_COLLECTIONS_PATHS option, does not fit var
+naming standard, use the singular form ANSIBLE_COLLECTIONS_PATH instead. This
+feature will be removed from ansible-core in version 2.19. Deprecation warnings
+ can be disabled by setting deprecation_warnings=False in ansible.cfg.
 
 PLAY [all] *********************************************************************
 
-TASK [Gathering Facts] *********************************************************
+TASK [wait for 5 seconds] ******************************************************
+Pausing for 5 seconds
+(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)
 ok: [127.0.0.1]
 
 TASK [ansibleplaybook-simple] **************************************************
@@ -87,19 +96,19 @@ PLAY RECAP *********************************************************************
 
 ## User Reference
 
-### Perform a Aequest to Execute an Ansible playbook
+### Perform a Request to Execute an Ansible playbook
 
 The following example demonstrates how to execute an Ansible playbook using the Ransidble server. Please refer to the [REST API Reference](#rest-api-reference) section for more information.
 
 ```bash
-❯ curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/command/ansible-playbook -d '{"playbooks": ["test/site.yml"], "inventory": "127.0.0.1,", "connection": "local", "project": "project"}'
+curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/task/ansible-playbook/project-1 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}'
 HTTP/1.1 202 Accepted
 Content-Type: application/json
 Vary: Accept-Encoding
-Date: Sat, 18 May 2024 09:29:12 GMT
+Date: Sun, 21 Jul 2024 18:01:19 GMT
 Content-Length: 46
 
-{"id":"2aff4156-00e7-413a-a54c-a372d009a3f3"}
+{"id":"ecfc92dc-6323-40d6-9bf8-71c4d4d98640"}
 ```
 
 ### Perform a Request Accepting Gzip Encoding
@@ -112,22 +121,26 @@ r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
 ### Get the Status of an Execution
 
 ```bash
-❯ curl -GET 0.0.0.0:8080/task/2aff4156-00e7-413a-a54c-a372d009a3f3 |jq
+❯ curl -s -GET 0.0.0.0:8080/task/ecfc92dc-6323-40d6-9bf8-71c4d4d98640 | jq
 {
   "command": "ansible-playbook",
-  "completed_at": "",
-  "created_at": "2024-05-18T11:29:12+02:00",
-  "executed_at": "2024-05-18T11:29:12+02:00",
-  "id": "2aff4156-00e7-413a-a54c-a372d009a3f3",
+  "completed_at": "2024-07-21T20:01:25+02:00",
+  "created_at": "2024-07-21T20:01:19+02:00",
+  "executed_at": "2024-07-21T20:01:19+02:00",
+  "id": "ecfc92dc-6323-40d6-9bf8-71c4d4d98640",
   "parameters": {
-    "project": "project",
     "playbooks": [
-      "test/site.yml"
+      "site.yml"
     ],
     "inventory": "127.0.0.1,",
     "connection": "local"
   },
-  "status": "RUNNING"
+  "project": {
+    "name": "project-1",
+    "reference": "test/projects/project-1",
+    "type": "local"
+  },
+  "status": "SUCCESS"
 }
 ```
 
@@ -141,7 +154,6 @@ The JSON schema payload to execute an Ansible playbook command is defined [here]
 
 | JSON Attribute | Type | Description |
 |----------------|------|-------------|
-| project | string | The project name |
 | playbooks | []string | The ansible's playbooks list to be executed |
 | check | bool | Don't make any changes; instead, try to predict some of the changes that may occur |
 | diff | bool | When changing (small) files and templates, show the differences in those files; works great with --check |

@@ -31,10 +31,10 @@ func NewGetTaskHandler(s service.GetTaskServicer, logger repository.Logger) *Get
 
 func (h *GetTaskHandler) Handle(c echo.Context) error {
 
-	var res *response.CommandResponse
+	var res *response.TaskResponse
 
 	if h.service == nil {
-		res = &response.CommandResponse{
+		res = &response.TaskResponse{
 			Error: ErrGetTaskServiceNotInitialized,
 		}
 
@@ -44,7 +44,7 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 
 	id := c.Param("id")
 	if id == "" {
-		res = &response.CommandResponse{
+		res = &response.TaskResponse{
 			Error: ErrTaskIDNotProvided,
 		}
 		h.logger.Error(ErrTaskIDNotProvided)
@@ -54,7 +54,7 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 	h.logger.Debug(fmt.Sprintf("getting task %s\n", id), map[string]interface{}{"component": "handler"})
 	task, err := h.service.GetTask(id)
 	if err != nil {
-		res = &response.CommandResponse{
+		res = &response.TaskResponse{
 			Error: fmt.Sprintf("%s: %s", ErrGetTaskServiceNotInitialized, err.Error()),
 		}
 		h.logger.Error(fmt.Sprintf("%s: %s", ErrGetTaskServiceNotInitialized, err.Error()))

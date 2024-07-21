@@ -2,11 +2,20 @@ package ansibleplaybook
 
 import (
 	"context"
+	"path/filepath"
 	"strconv"
 
-	request "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
-
+	"github.com/apenella/go-ansible/v2/pkg/execute"
+	"github.com/apenella/go-ansible/v2/pkg/execute/configuration"
+	"github.com/apenella/go-ansible/v2/pkg/execute/workflow"
+	collection "github.com/apenella/go-ansible/v2/pkg/galaxy/collection/install"
 	"github.com/apenella/go-ansible/v2/pkg/playbook"
+	request "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
+)
+
+const (
+	// CollectionsPath represents the path where the collections are stored
+	CollectionsPath = ".collections"
 )
 
 type AnsiblePlaybook struct{}
@@ -15,7 +24,7 @@ func NewAnsiblePlaybook() *AnsiblePlaybook {
 	return &AnsiblePlaybook{}
 }
 
-func (a *AnsiblePlaybook) Run(ctx context.Context, parameters *request.AnsiblePlaybookParameters) error {
+func (a *AnsiblePlaybook) Run(ctx context.Context, workingDir string, parameters *request.AnsiblePlaybookParameters) error {
 
 	ansiblePlaybookOptions := &playbook.AnsiblePlaybookOptions{}
 
@@ -142,12 +151,79 @@ func (a *AnsiblePlaybook) Run(ctx context.Context, parameters *request.AnsiblePl
 		ansiblePlaybookOptions.BecomeUser = parameters.BecomeUser
 	}
 
-	// Handle dependencies
+	// TODO: Handle dependencies
 
-	err := playbook.NewAnsiblePlaybookExecute(parameters.Playbooks...).
-		WithPlaybookOptions(ansiblePlaybookOptions).
-		Execute(ctx)
+	workflowTasks := make([]execute.Executor, 0)
 
+	if parameters.Dependencies != nil {
+		if parameters.Dependencies.Collections != nil {
+			optionsFuncs := make([]collection.AnsibleGalaxyCollectionInstallOptionsFunc, 0)
+			options := &collection.AnsibleGalaxyCollectionInstallOptions{}
+
+			if len(parameters.Dependencies.Collections.Collections) > 0 {
+				optionsFuncs = append(optionsFuncs, collection.WithCollectionNames(parameters.Dependencies.Collections.Collections...))
+			}
+
+			if len(parameters.Dependencies.Collections.APIKey) > 0 {
+				options.APIKey = parameters.Dependencies.Collections.APIKey
+			}
+
+			options.ForceWithDeps = parameters.Dependencies.Collections.ForceWithDeps
+			options.Pre = parameters.Dependencies.Collections.Pre
+
+			if len(parameters.Dependencies.Collections.Timeout) > 0 {
+				options.Timeout = parameters.Dependencies.Collections.Timeout
+			}
+
+			if len(parameters.Dependencies.Collections.Token) > 0 {
+				options.Token = parameters.Dependencies.Collections.Token
+			}
+
+			options.IgnoreErrors = parameters.Dependencies.Collections.IgnoreErrors
+
+			if len(parameters.Dependencies.Collections.RequirementsFile) > 0 {
+				options.RequirementsFile = parameters.Dependencies.Collections.RequirementsFile
+			}
+
+			if len(parameters.Dependencies.Collections.Server) > 0 {
+				options.Server = parameters.Dependencies.Collections.Server
+			}
+
+			options.Verbose = parameters.Dependencies.Collections.Verbose
+
+			optionsFuncs = append(optionsFuncs, collection.WithGalaxyCollectionInstallOptions(options))
+			galaxyInstallCollectionCmd := collection.NewAnsibleGalaxyCollectionInstallCmd(optionsFuncs...)
+
+			galaxyInstallCollectionExecutor := configuration.NewAnsibleWithConfigurationSettingsExecute(
+				execute.NewDefaultExecute(
+					execute.WithCmd(galaxyInstallCollectionCmd),
+					execute.WithCmdRunDir(workingDir),
+				),
+				configuration.WithAnsibleCollectionsPaths(filepath.Join(workingDir, CollectionsPath)),
+			)
+
+			workflowTasks = append(workflowTasks, galaxyInstallCollectionExecutor)
+		}
+	}
+
+	playbookCmd := playbook.NewAnsiblePlaybookCmd(
+		playbook.WithPlaybooks(parameters.Playbooks...),
+		playbook.WithPlaybookOptions(ansiblePlaybookOptions),
+	)
+
+	playbookExecutor := configuration.NewAnsibleWithConfigurationSettingsExecute(
+		execute.NewDefaultExecute(
+			execute.WithCmd(playbookCmd),
+			execute.WithErrorEnrich(playbook.NewAnsiblePlaybookErrorEnrich()),
+			execute.WithCmdRunDir(workingDir),
+		),
+		configuration.WithAnsibleCollectionsPaths(filepath.Join(workingDir, CollectionsPath)),
+	)
+
+	workflowTasks = append(workflowTasks, playbookExecutor)
+
+	workflowExecutor := workflow.NewWorkflowExecute(workflowTasks...)
+	err := workflowExecutor.Execute(ctx)
 	if err != nil {
 		return err
 	}

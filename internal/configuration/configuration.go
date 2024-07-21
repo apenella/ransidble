@@ -92,14 +92,5 @@ func LoadConfig() (*Configuration, error) {
 		return nil, err
 	}
 
-	// fmt.Printf(">>> Configuration: %+v\n", config)
-
-	// // Initialize config variable
-	// config.Server = ServerConfiguration{
-	// 	HTTPListenAddress: v.GetString(strings.Join([]string{ServerKey, HTTPListenAddressKey}, ".")),
-	// 	WorkerPoolSize:    v.GetInt(strings.Join([]string{ServerKey, WorkerPoolSizeKey}, ".")),
-	// 	LogLevel:          v.GetString(strings.Join([]string{ServerKey, LogLevelKey}, ".")),
-	// }
-
 	return &config, nil
 }
