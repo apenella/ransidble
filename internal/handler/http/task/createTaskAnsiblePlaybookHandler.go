@@ -93,7 +93,7 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 
 	task := entity.NewTask(taskID, entity.ANSIBLE_PLAYBOOK, &parameters)
 
-	h.logger.Debug(fmt.Sprintf("Creating task %s to run an Ansible playbook on project %s\n", taskID, projectID), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "task_id": taskID, "project_id": projectID})
+	h.logger.Debug(fmt.Sprintf("creating task %s to run an Ansible playbook on project %s\n", taskID, projectID), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "task_id": taskID, "project_id": projectID})
 
 	err = h.service.Run(ctx, projectID, task)
 	if err != nil {

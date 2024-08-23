@@ -125,7 +125,7 @@ func (s *CreateTaskAnsiblePlaybookService) Run(ctx context.Context, projectID st
 	// 	return fmt.Errorf("%s: %w", ErrSettingUpProject, err)
 	// }
 
-	s.logger.Info(fmt.Sprintf("Executing task %s", task.ID))
+	s.logger.Info(fmt.Sprintf("executing task %s", task.ID))
 
 	err = s.executor.Execute(task)
 	if err != nil {

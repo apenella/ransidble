@@ -1,9 +1,11 @@
 package task
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
+	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
@@ -15,6 +17,8 @@ const (
 	ErrGetTaskServiceNotInitialized = "get task service not initialized"
 	// ErrTaskIDNotProvided represents an error when the task id is not provided
 	ErrTaskIDNotProvided = "task id not provided"
+	// ErrGettingTask represents an error executing the method getting task
+	ErrGettingTask = "error getting task"
 )
 
 type GetTaskHandler struct {
@@ -32,13 +36,17 @@ func NewGetTaskHandler(s service.GetTaskServicer, logger repository.Logger) *Get
 func (h *GetTaskHandler) Handle(c echo.Context) error {
 
 	var res *response.TaskResponse
+	var errorMsg string
+	var httpStatus int
+	var taskNotFoundErr *domainerror.TaskNotFoundError
+	var taskNotProvidedErr *domainerror.TaskNotProvidedError
 
 	if h.service == nil {
 		res = &response.TaskResponse{
 			Error: ErrGetTaskServiceNotInitialized,
 		}
 
-		h.logger.Error(ErrGetTaskServiceNotInitialized)
+		h.logger.Error(ErrGetTaskServiceNotInitialized, map[string]interface{}{"component": "GetTaskHandler.Handle"})
 		return c.JSON(http.StatusInternalServerError, res)
 	}
 
@@ -47,19 +55,33 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 		res = &response.TaskResponse{
 			Error: ErrTaskIDNotProvided,
 		}
-		h.logger.Error(ErrTaskIDNotProvided)
+		h.logger.Error(ErrTaskIDNotProvided, map[string]interface{}{"component": "GetTaskHandler.Handle"})
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	h.logger.Debug(fmt.Sprintf("getting task %s\n", id), map[string]interface{}{"component": "handler"})
+	h.logger.Debug(fmt.Sprintf("getting task %s\n", id), map[string]interface{}{"component": "GetTaskHandler.Handle", "task_id": id})
 	task, err := h.service.GetTask(id)
 	if err != nil {
-		res = &response.TaskResponse{
-			Error: fmt.Sprintf("%s: %s", ErrGetTaskServiceNotInitialized, err.Error()),
+
+		httpStatus = http.StatusInternalServerError
+
+		if errors.As(err, &taskNotFoundErr) {
+			httpStatus = http.StatusNotFound
 		}
-		h.logger.Error(fmt.Sprintf("%s: %s", ErrGetTaskServiceNotInitialized, err.Error()))
-		return c.JSON(http.StatusNotFound, res)
+
+		if errors.As(err, &taskNotProvidedErr) {
+			httpStatus = http.StatusBadRequest
+		}
+
+		errorMsg = fmt.Sprintf("%s: %s", ErrGettingTask, err.Error())
+
+		res = &response.TaskResponse{
+			Error: errorMsg,
+		}
+
+		h.logger.Error(errorMsg, map[string]interface{}{"component": "GetTaskHandler.Handle", "task_id": id})
+		return c.JSON(httpStatus, res)
 	}
 
-	return c.JSON(http.StatusNotImplemented, task)
+	return c.JSON(http.StatusOK, task)
 }
