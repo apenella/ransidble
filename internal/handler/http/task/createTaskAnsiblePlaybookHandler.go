@@ -1,10 +1,12 @@
 package task
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
+	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
 	request "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
@@ -42,8 +44,11 @@ func NewCreateTaskAnsiblePlaybookHandler(service service.AnsiblePlaybookServicer
 func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 	var err error
 	var errorMsg string
-	var res *response.TaskResponse
+	var httpStatus int
 	var parameters request.AnsiblePlaybookParameters
+	var projectNotFoundErr *domainerror.ProjectNotFoundError
+	var projectNotProvidedErr *domainerror.ProjectNotProvidedError
+	var res *response.TaskResponse
 
 	ctx := c.Request().Context()
 
@@ -52,7 +57,7 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		res = &response.TaskResponse{
 			Error: ErrProjectIDNotProvided,
 		}
-		h.logger.Error(ErrProjectIDNotProvided)
+		h.logger.Error(ErrProjectIDNotProvided, map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle"})
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
@@ -62,7 +67,7 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		res = &response.TaskResponse{
 			Error: errorMsg,
 		}
-		h.logger.Error(errorMsg)
+		h.logger.Error(errorMsg, map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "project_id": projectID})
 		return c.JSON(http.StatusInternalServerError, res)
 	}
 
@@ -72,7 +77,7 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		res = &response.TaskResponse{
 			Error: errorMsg,
 		}
-		h.logger.Error(errorMsg)
+		h.logger.Error(errorMsg, map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "project_id": projectID})
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
@@ -81,20 +86,36 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		res = &response.TaskResponse{
 			Error: ErrInvalidTaskID,
 		}
-		h.logger.Error(ErrInvalidTaskID)
+		h.logger.Error(ErrInvalidTaskID, map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "task_id": taskID})
+
 		return c.JSON(http.StatusInternalServerError, res)
 	}
 
 	task := entity.NewTask(taskID, entity.ANSIBLE_PLAYBOOK, &parameters)
 
-	h.logger.Debug(fmt.Sprintf("Creating task %s to run an Ansible playook on project %s\n", taskID, projectID), map[string]interface{}{"component": "handler"})
+	h.logger.Debug(fmt.Sprintf("Creating task %s to run an Ansible playbook on project %s\n", taskID, projectID), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "task_id": taskID, "project_id": projectID})
 
 	err = h.service.Run(ctx, projectID, task)
 	if err != nil {
-		res = &response.TaskResponse{
-			Error: fmt.Sprintf("%s: %s", ErrRunningAnsiblePlaybook, err.Error()),
+
+		httpStatus = http.StatusInternalServerError
+
+		if errors.As(err, &projectNotFoundErr) {
+			httpStatus = http.StatusNotFound
 		}
-		return c.JSON(http.StatusServiceUnavailable, res)
+
+		if errors.As(err, &projectNotProvidedErr) {
+			httpStatus = http.StatusBadRequest
+		}
+
+		errorMsg = fmt.Sprintf("%s: %s", ErrRunningAnsiblePlaybook, err.Error())
+		res = &response.TaskResponse{
+			Error: errorMsg,
+		}
+
+		h.logger.Error(errorMsg, map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "task_id": taskID, "project_id": projectID})
+
+		return c.JSON(httpStatus, res)
 	}
 
 	res = &response.TaskResponse{

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
+	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/google/uuid"
 )
@@ -24,8 +25,8 @@ var (
 	ErrProjectRepositoryNotInitialized = fmt.Errorf("project repository not initialized")
 	// ErrProjectNotProvided represents an error when the project is not provided
 	ErrProjectNotProvided = fmt.Errorf("project not provided")
-	// ErrProjectNotFound represents an error when the project is not found
-	ErrProjectNotFound = fmt.Errorf("project not found")
+	// ErrFindingProject represents an error when the project is not found
+	ErrFindingProject = fmt.Errorf("error finding project")
 	// ErrSettingUpProject represents an error when setting up a project
 	ErrSettingUpProject = fmt.Errorf("error setting up project")
 	// ErrGeneratingRandomString represents an error when generating a random string
@@ -63,40 +64,44 @@ func (s *CreateTaskAnsiblePlaybookService) Run(ctx context.Context, projectID st
 	// var workingDir string
 
 	if s.executor == nil {
-		s.logger.Error(ErrExecutorNotInitialized.Error())
+		s.logger.Error(ErrExecutorNotInitialized.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run"})
 		return ErrExecutorNotInitialized
 	}
 
 	if s.taskRepository == nil {
-		s.logger.Error(ErrTaskRepositoryNotInitialized.Error())
+		s.logger.Error(ErrTaskRepositoryNotInitialized.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run"})
 		return ErrTaskRepositoryNotInitialized
 	}
 
 	if s.projectRepository == nil {
-		s.logger.Error(ErrProjectRepositoryNotInitialized.Error())
+		s.logger.Error(ErrProjectRepositoryNotInitialized.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run"})
 		return ErrProjectRepositoryNotInitialized
 	}
 
 	if projectID == "" {
-		s.logger.Error(ErrProjectNotProvided.Error())
-		return ErrProjectNotProvided
+		s.logger.Error(ErrProjectNotProvided.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run"})
+
+		return domainerror.NewProjectNotProvidedError(ErrProjectNotProvided)
 	}
 
 	if task == nil {
-		s.logger.Error(ErrTaskNotProvided.Error())
+		s.logger.Error(ErrTaskNotProvided.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run"})
 		return ErrTaskNotProvided
 	}
 
 	err = s.taskRepository.SafeStore(task.ID, task)
 	if err != nil {
-		s.logger.Error("%s: %s", ErrorStoreTask, err.Error())
+		s.logger.Error("%s: %s", ErrorStoreTask, err.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run", "task_id": task.ID, "project_id": projectID})
 		return fmt.Errorf("%s: %w", ErrorStoreTask, err)
 	}
 
 	project, err = s.projectRepository.Find(projectID)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("%s: %s", ErrProjectNotFound, err.Error()), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run", "project_id": projectID, "task_id": task.ID})
-		return fmt.Errorf("%s: %w", ErrProjectNotFound, err)
+		s.logger.Error(fmt.Sprintf("%s: %s", ErrFindingProject, err.Error()), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run", "project_id": projectID, "task_id": task.ID})
+
+		return domainerror.NewProjectNotFoundError(
+			fmt.Errorf("%s %s: %w", ErrFindingProject, projectID, err),
+		)
 	}
 
 	task.Project = project
