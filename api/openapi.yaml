@@ -1,0 +1,216 @@
+---
+
+openapi: "3.0.0"
+info:
+  title: Ransidble API
+  version: 1.0.0
+  description: Ransidble is a utility that enables you to execute Ansible commands on remote hosts. It functions as a wrapper over Ansible, allowing users to launch playbooks, roles, and tasks remotely. This is achieved by exposing a REST API in front of Ansible, facilitating the execution of Ansible commands on remote hosts.
+paths:
+  /task/ansible-playbook/{project_id}:
+    post:
+      summary: Create a new Ansible playbook task
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Ansible playbook execution parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnsiblePlaybookParameters'
+      responses:
+        202:
+          description: Task accepted and is being processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        400:
+          description: Bad request, such as missing project ID or invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        404:
+          description: Bad request, project ID not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        405:
+          description: Method not allowed, such as using an unsupported HTTP method
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        500:
+          description: Internal server error, such as failing to bind request parameters, generate a task ID or failing to run the Ansible playbook
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /task/{id}:
+    get:
+      summary: Get a task by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Task retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+        404:
+          description: Task not found
+        500:
+          description: Internal server error
+
+components:
+  schemas:
+    AnsiblePlaybookParameters:
+      type: object
+      properties:
+        playbooks:
+          type: array
+          items:
+            type: string
+        check:
+          type: boolean
+        diff:
+          type: boolean
+        dependencies:
+          type: object
+          properties:
+            roles:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  items:
+                    type: string
+                api:
+                  type: string
+                ignore_errors:
+                  type: boolean
+                no_deps:
+                  type: boolean
+                role_file:
+                  type: string
+                server:
+                  type: string
+                timeout:
+                  type: string
+                token:
+                  type: string
+                verbose:
+                  type: boolean
+            collections:
+              type: object
+              properties:
+                collections:
+                  type: array
+                  items:
+                    type: string
+                api:
+                  type: string
+                force_with_deps:
+                  type: boolean
+                pre:
+                  type: boolean
+                timeout:
+                  type: string
+                token:
+                  type: string
+                ignore_errors:
+                  type: boolean
+                requirements_file:
+                  type: string
+                server:
+                  type: string
+                verbose:
+                  type: boolean
+        extra_vars:
+          type: object
+        extra_vars_file:
+          type: array
+          items:
+            type: string
+        flush_cache:
+          type: boolean
+        force_handlers:
+          type: boolean
+        forks:
+          type: integer
+        inventory:
+          type: string
+        limit:
+          type: string
+        list_hosts:
+          type: boolean
+        list_tags:
+          type: boolean
+        list_tasks:
+          type: boolean
+        skip_tags:
+          type: string
+        start_at_task:
+          type: string
+        syntax_check:
+          type: boolean
+        tags:
+          type: string
+        vault_id:
+          type: string
+        vault_password_file:
+          type: string
+        verbose:
+          type: boolean
+        version:
+          type: boolean
+        connection:
+          type: string
+        scp_extra_args:
+          type: string
+        sftp_extra_args:
+          type: string
+        ssh_common_args:
+          type: string
+        ssh_extra_args:
+          type: string
+        timeout:
+          type: integer
+        user:
+          type: string
+        become:
+          type: boolean
+        become_method:
+          type: string
+        become_user:
+          type: string
+      required:
+        - playbooks
+        - inventory
+    TaskResponse:
+      type: object
+      properties:
+        id:
+          description: Task ID
+          type: string
+        error:
+          description: Error message
+          type: string
