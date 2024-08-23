@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	// ErrTaskNotFound represents an error when a task is not found
-	ErrTaskNotFound = fmt.Errorf("task not found")
+	// ErrFindingTask represents an error when a task is not found
+	ErrFindingTask = fmt.Errorf("error finding task")
 	// ErrStoreNotInitialized represents an error when the store is not initialized
 	ErrStoreNotInitialized = fmt.Errorf("store not initialized")
 	// ErrTaskIDNotProvided represents an error when the task id is not provided
@@ -47,10 +47,10 @@ func (t *GetTaskService) GetTask(id string) (*entity.Task, error) {
 
 	task, err := t.repository.Find(id)
 	if err != nil {
-		t.logger.Error("%s: %s", ErrTaskNotFound.Error(), err.Error(), map[string]interface{}{"component": "GetTaskService.GetTask", "task_id": id})
+		t.logger.Error("%s: %s", ErrFindingTask.Error(), err.Error(), map[string]interface{}{"component": "GetTaskService.GetTask", "task_id": id})
 
 		return nil, domainerror.NewTaskNotFoundError(
-			fmt.Errorf("%s: %w", ErrTaskNotFound.Error(), err),
+			fmt.Errorf("%s %s: %w", ErrFindingTask.Error(), id, err),
 		)
 	}
 
