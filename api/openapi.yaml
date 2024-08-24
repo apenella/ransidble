@@ -1,6 +1,6 @@
 ---
 
-openapi: "3.1.0"
+openapi: "3.0.0"
 info:
   title: Ransidble API
   version: 1.0.0
@@ -50,7 +50,7 @@ paths:
                 properties:
                   message:
                     type: string
-                examples:
+                example:
                   message: Method not allowed
         500:
           description: Internal server error, such as failing to bind request parameters, generate a task ID or failing to run the Ansible playbook
