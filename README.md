@@ -1,6 +1,7 @@
 # Ransidble
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![swagger-editor](https://img.shields.io/badge/open--API-in--editor-brightgreen.svg?style=flat&label=open-api-v3)](https://editor.swagger.io/?url=https://raw.githubusercontent.com/apenella/ransidble/main/api/openapi.yaml)
 
 ![Ransidble-logo](docs/images/logo_ransidble.png "Ransidble logo")
 
@@ -12,12 +13,11 @@ Ransidble is a utility that enables you to execute [Ansible](https://www.ansible
   - [Server Usage Reference](#server-usage-reference)
     - [Configuration](#configuration)
     - [Initiate the Ransidble server](#initiate-the-ransidble-server)
+  - [REST API Reference](#rest-api-reference)
   - [User Reference](#user-reference)
     - [Perform a Request to Execute an Ansible playbook](#perform-a-request-to-execute-an-ansible-playbook)
     - [Perform a Request Accepting Gzip Encoding](#perform-a-request-accepting-gzip-encoding)
     - [Get the Status of an Execution](#get-the-status-of-an-execution)
-  - [REST API Reference](#rest-api-reference)
-    - [Task](#task)
   - [Development Reference](#development-reference)
     - [Contributing](#contributing)
     - [Code of Conduct](#code-of-conduct)
@@ -89,6 +89,10 @@ PLAY RECAP *********************************************************************
 127.0.0.1                  : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
 
+## REST API Reference
+
+The Ransidble provides you with a Open API specification that you can use to interact with the server. The Open API specification is available in the [api/openapi.yaml](api/openapi.yaml) file or through the [Swagger Editor](https://editor.swagger.io/?url=https://raw.githubusercontent.com/apenella/ransidble/main/api/openapi.yaml).
+
 ## User Reference
 
 ### Perform a Request to Execute an Ansible playbook
@@ -138,12 +142,6 @@ r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
   "status": "SUCCESS"
 }
 ```
-
-## REST API Reference
-
-### Task
-
-Refer to [Open API specification](api/openapi.yaml).
 
 ## Development Reference
 

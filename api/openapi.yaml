@@ -1,6 +1,6 @@
 ---
 
-openapi: "3.0.0"
+openapi: "3.1.0"
 info:
   title: Ransidble API
   version: 1.0.0
@@ -50,7 +50,7 @@ paths:
                 properties:
                   message:
                     type: string
-                example:
+                examples:
                   message: Method not allowed
         500:
           description: Internal server error, such as failing to bind request parameters, generate a task ID or failing to run the Ansible playbook
@@ -249,7 +249,7 @@ components:
           type: object
           description: The parameters for the task
         project:
-          $ref: '#/components/schemas/Project'
+          $ref: '#/components/schemas/ProjectResponse'
           description: The project associated with the task
         status:
           type: string
@@ -273,7 +273,7 @@ components:
           type: string
         Error:
           type: string
-    Project:
+    ProjectResponse:
       type: object
       properties:
         name:
