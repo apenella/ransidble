@@ -28,31 +28,36 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskResponse'
+                $ref: '#/components/schemas/TaskCreatedResponse'
         400:
           description: Bad request, such as missing project ID or invalid request payload
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskResponse'
+                $ref: '#/components/schemas/ErrorTaskResponse'
         404:
           description: Bad request, project ID not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskResponse'
+                $ref: '#/components/schemas/ErrorTaskResponse'
         405:
           description: Method not allowed, such as using an unsupported HTTP method
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskResponse'
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Method not allowed
         500:
           description: Internal server error, such as failing to bind request parameters, generate a task ID or failing to run the Ansible playbook
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskResponse'
+                $ref: '#/components/schemas/ErrorTaskResponse'
 
   /task/{id}:
     get:
@@ -69,16 +74,19 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  status:
-                    type: string
+                $ref: '#/components/schemas/TaskResponse'
         404:
           description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorTaskResponse'
         500:
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorTaskResponse'
 
 components:
   schemas:
@@ -205,12 +213,80 @@ components:
       required:
         - playbooks
         - inventory
-    TaskResponse:
+    TaskCreatedResponse:
       type: object
       properties:
         id:
           description: Task ID
           type: string
-        error:
-          description: Error message
+    TaskResponse:
+      type: object
+      properties:
+        command:
           type: string
+          description: Indicates the type of task
+          enum:
+            - ansible-playbook
+        completed_at:
+          type: string
+          format: date-time
+          description: The time when the task was completed
+        created_at:
+          type: string
+          format: date-time
+          description: The time when the task was created
+        error_message:
+          type: string
+          description: The error message if the task failed
+        executed_at:
+          type: string
+          format: date-time
+          description: The time when the task was executed
+        id:
+          type: string
+          description: The unique identifier of the task
+        parameters:
+          type: object
+          description: The parameters for the task
+        project:
+          $ref: '#/components/schemas/Project'
+          description: The project associated with the task
+        status:
+          type: string
+          description: The current status of the task
+          enum:
+            - ACCEPTED
+            - FAILED
+            - PENDING
+            - RUNNING
+            - SUCCESS
+      required:
+        - command
+        - id
+        - parameters
+        - status
+    ErrorTaskResponse:
+      type: object
+      properties:
+        id:
+          description: Task ID
+          type: string
+        Error:
+          type: string
+    Project:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The project name
+        reference:
+          type: string
+          description: The project source
+        type:
+          type: string
+          description: The project type
+      required:
+        - name
+        - reference
+        - type
+
