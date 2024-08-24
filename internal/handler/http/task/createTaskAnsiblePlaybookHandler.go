@@ -48,56 +48,75 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 	var parameters request.AnsiblePlaybookParameters
 	var projectNotFoundErr *domainerror.ProjectNotFoundError
 	var projectNotProvidedErr *domainerror.ProjectNotProvidedError
-	var res *response.TaskResponse
+	var errorResponse *response.TaskErrorResponse
 
 	ctx := c.Request().Context()
 
 	projectID := c.Param("project_id")
 	if projectID == "" {
-		res = &response.TaskResponse{
+		errorResponse = &response.TaskErrorResponse{
 			Error: ErrProjectIDNotProvided,
 		}
-		h.logger.Error(ErrProjectIDNotProvided, map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle"})
-		return c.JSON(http.StatusBadRequest, res)
+		h.logger.Error(
+			ErrProjectIDNotProvided,
+			map[string]interface{}{
+				"component": "CreateTaskAnsiblePlaybookHandler.Handle"})
+		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
 	err = c.Bind(&parameters)
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrBindingRequestPayload, err.Error())
-		res = &response.TaskResponse{
+		errorResponse = &response.TaskErrorResponse{
 			Error: errorMsg,
 		}
-		h.logger.Error(errorMsg, map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "project_id": projectID})
-		return c.JSON(http.StatusInternalServerError, res)
+		h.logger.Error(
+			errorMsg,
+			map[string]interface{}{
+				"component":  "CreateTaskAnsiblePlaybookHandler.Handle",
+				"project_id": projectID})
+		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
 	err = parameters.Validate()
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrInvalidRequestPayload, err.Error())
-		res = &response.TaskResponse{
+		errorResponse = &response.TaskErrorResponse{
 			Error: errorMsg,
 		}
-		h.logger.Error(errorMsg, map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "project_id": projectID})
-		return c.JSON(http.StatusBadRequest, res)
+		h.logger.Error(
+			errorMsg,
+			map[string]interface{}{
+				"component":  "CreateTaskAnsiblePlaybookHandler.Handle",
+				"project_id": projectID})
+		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
 	taskID := h.service.GenerateID()
 	if taskID == "" {
-		res = &response.TaskResponse{
+		errorResponse = &response.TaskErrorResponse{
 			Error: ErrInvalidTaskID,
 		}
-		h.logger.Error(ErrInvalidTaskID, map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "task_id": taskID})
+		h.logger.Error(
+			ErrInvalidTaskID,
+			map[string]interface{}{
+				"component": "CreateTaskAnsiblePlaybookHandler.Handle",
+				"task_id":   taskID})
 
-		return c.JSON(http.StatusInternalServerError, res)
+		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
 	task := entity.NewTask(taskID, entity.ANSIBLE_PLAYBOOK, &parameters)
 
-	h.logger.Debug(fmt.Sprintf("creating task %s to run an Ansible playbook on project %s\n", taskID, projectID), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "task_id": taskID, "project_id": projectID})
+	h.logger.Debug(
+		fmt.Sprintf("creating task %s to run an Ansible playbook on project %s\n", taskID, projectID),
+		map[string]interface{}{
+			"component":  "CreateTaskAnsiblePlaybookHandler.Handle",
+			"task_id":    taskID,
+			"project_id": projectID})
 
 	err = h.service.Run(ctx, projectID, task)
 	if err != nil {
-
 		httpStatus = http.StatusInternalServerError
 
 		if errors.As(err, &projectNotFoundErr) {
@@ -109,18 +128,23 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		}
 
 		errorMsg = fmt.Sprintf("%s: %s", ErrRunningAnsiblePlaybook, err.Error())
-		res = &response.TaskResponse{
+		errorResponse = &response.TaskErrorResponse{
 			Error: errorMsg,
 		}
 
-		h.logger.Error(errorMsg, map[string]interface{}{"component": "CreateTaskAnsiblePlaybookHandler.Handle", "task_id": taskID, "project_id": projectID})
+		h.logger.Error(
+			errorMsg,
+			map[string]interface{}{
+				"component":  "CreateTaskAnsiblePlaybookHandler.Handle",
+				"task_id":    taskID,
+				"project_id": projectID})
 
-		return c.JSON(httpStatus, res)
+		return c.JSON(httpStatus, errorResponse)
 	}
 
-	res = &response.TaskResponse{
+	taskCreated := &response.TaskCreatedResponse{
 		ID: taskID,
 	}
 
-	return c.JSON(http.StatusAccepted, res)
+	return c.JSON(http.StatusAccepted, taskCreated)
 }

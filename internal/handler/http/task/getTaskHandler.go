@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
+	"github.com/apenella/ransidble/internal/domain/core/mapper"
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
@@ -35,31 +36,41 @@ func NewGetTaskHandler(s service.GetTaskServicer, logger repository.Logger) *Get
 
 func (h *GetTaskHandler) Handle(c echo.Context) error {
 
-	var res *response.TaskResponse
+	var errorResponse *response.TaskErrorResponse
 	var errorMsg string
 	var httpStatus int
 	var taskNotFoundErr *domainerror.TaskNotFoundError
 	var taskNotProvidedErr *domainerror.TaskNotProvidedError
 
 	if h.service == nil {
-		res = &response.TaskResponse{
+		errorResponse = &response.TaskErrorResponse{
 			Error: ErrGetTaskServiceNotInitialized,
 		}
 
-		h.logger.Error(ErrGetTaskServiceNotInitialized, map[string]interface{}{"component": "GetTaskHandler.Handle"})
-		return c.JSON(http.StatusInternalServerError, res)
+		h.logger.Error(
+			ErrGetTaskServiceNotInitialized,
+			map[string]interface{}{
+				"component": "GetTaskHandler.Handle"})
+		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
 	id := c.Param("id")
 	if id == "" {
-		res = &response.TaskResponse{
+		errorResponse = &response.TaskErrorResponse{
 			Error: ErrTaskIDNotProvided,
 		}
-		h.logger.Error(ErrTaskIDNotProvided, map[string]interface{}{"component": "GetTaskHandler.Handle"})
-		return c.JSON(http.StatusBadRequest, res)
+		h.logger.Error(
+			ErrTaskIDNotProvided,
+			map[string]interface{}{
+				"component": "GetTaskHandler.Handle"})
+		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
-	h.logger.Debug(fmt.Sprintf("getting task %s\n", id), map[string]interface{}{"component": "GetTaskHandler.Handle", "task_id": id})
+	h.logger.Debug(
+		fmt.Sprintf("getting task %s\n", id),
+		map[string]interface{}{
+			"component": "GetTaskHandler.Handle",
+			"task_id":   id})
 	task, err := h.service.GetTask(id)
 	if err != nil {
 
@@ -75,13 +86,20 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 
 		errorMsg = fmt.Sprintf("%s: %s", ErrGettingTask, err.Error())
 
-		res = &response.TaskResponse{
+		errorResponse = &response.TaskErrorResponse{
 			Error: errorMsg,
 		}
 
-		h.logger.Error(errorMsg, map[string]interface{}{"component": "GetTaskHandler.Handle", "task_id": id})
-		return c.JSON(httpStatus, res)
+		h.logger.Error(
+			errorMsg,
+			map[string]interface{}{
+				"component": "GetTaskHandler.Handle",
+				"task_id":   id})
+		return c.JSON(httpStatus, errorResponse)
 	}
 
-	return c.JSON(http.StatusOK, task)
+	taskMapper := mapper.NewTaskMapper()
+	taskResponse := taskMapper.ToTaskResponse(task)
+
+	return c.JSON(http.StatusOK, taskResponse)
 }
