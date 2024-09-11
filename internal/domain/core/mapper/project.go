@@ -15,6 +15,11 @@ func NewProjectMapper() *ProjectMapper {
 
 // ToProjectResponse maps a project entity to a project response
 func (m *ProjectMapper) ToProjectResponse(project *entity.Project) *response.ProjectResponse {
+
+	if project == nil {
+		return &response.ProjectResponse{}
+	}
+
 	return &response.ProjectResponse{
 		Name:      project.Name,
 		Reference: project.Reference,
