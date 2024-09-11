@@ -10,7 +10,7 @@ import (
 	"github.com/apenella/go-ansible/v2/pkg/execute/workflow"
 	collection "github.com/apenella/go-ansible/v2/pkg/galaxy/collection/install"
 	"github.com/apenella/go-ansible/v2/pkg/playbook"
-	request "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
+	"github.com/apenella/ransidble/internal/domain/core/entity"
 )
 
 const (
@@ -24,7 +24,7 @@ func NewAnsiblePlaybook() *AnsiblePlaybook {
 	return &AnsiblePlaybook{}
 }
 
-func (a *AnsiblePlaybook) Run(ctx context.Context, workingDir string, parameters *request.AnsiblePlaybookParameters) error {
+func (a *AnsiblePlaybook) Run(ctx context.Context, workingDir string, parameters *entity.AnsiblePlaybookParameters) error {
 
 	ansiblePlaybookOptions := &playbook.AnsiblePlaybookOptions{}
 

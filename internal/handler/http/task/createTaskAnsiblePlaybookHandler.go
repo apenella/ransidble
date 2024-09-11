@@ -7,6 +7,7 @@ import (
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
+	"github.com/apenella/ransidble/internal/domain/core/mapper"
 	request "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
@@ -45,7 +46,7 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 	var err error
 	var errorMsg string
 	var httpStatus int
-	var parameters request.AnsiblePlaybookParameters
+	var requestParameters request.AnsiblePlaybookParameters
 	var projectNotFoundErr *domainerror.ProjectNotFoundError
 	var projectNotProvidedErr *domainerror.ProjectNotProvidedError
 	var errorResponse *response.TaskErrorResponse
@@ -64,7 +65,7 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
-	err = c.Bind(&parameters)
+	err = c.Bind(&requestParameters)
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrBindingRequestPayload, err.Error())
 		errorResponse = &response.TaskErrorResponse{
@@ -78,7 +79,7 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
-	err = parameters.Validate()
+	err = requestParameters.Validate()
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrInvalidRequestPayload, err.Error())
 		errorResponse = &response.TaskErrorResponse{
@@ -91,6 +92,9 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 				"project_id": projectID})
 		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
+
+	ansiblePlaybookParametersMapper := mapper.NewAnsiblePlaybookParametersMapper()
+	parameters := ansiblePlaybookParametersMapper.ToAnsiblePlaybookParametersEntity(&requestParameters)
 
 	taskID := h.service.GenerateID()
 	if taskID == "" {
@@ -106,7 +110,7 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
-	task := entity.NewTask(taskID, entity.ANSIBLE_PLAYBOOK, &parameters)
+	task := entity.NewTask(taskID, entity.ANSIBLE_PLAYBOOK, parameters)
 
 	h.logger.Debug(
 		fmt.Sprintf("creating task %s to run an Ansible playbook on project %s\n", taskID, projectID),

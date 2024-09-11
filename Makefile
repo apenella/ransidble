@@ -30,3 +30,9 @@ get-task: ## Get the task status
 	@echo " Getting the task status"
 	@echo
 	curl -XGET 0.0.0.0:8080/task/$(TASK_ID)
+
+validate-openapi: ## Check the openapi spec
+	@echo
+	@echo " Checking the openapi spec"
+	@echo
+	@docker run --rm -v "${PWD}/api/openapi.yaml":/openapi.yaml jeanberu/swagger-cli swagger-cli validate /openapi.yaml

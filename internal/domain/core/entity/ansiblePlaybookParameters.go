@@ -1,4 +1,4 @@
-package ansibleplaybook
+package entity
 
 import (
 	_ "embed"

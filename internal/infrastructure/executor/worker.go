@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
-	request "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/infrastructure/archive"
 	executor "github.com/apenella/ransidble/internal/infrastructure/executor/ansible-playbook"
@@ -105,7 +104,7 @@ func (w *Worker) Start(ctx context.Context) error {
 					switch t.Command {
 					case entity.ANSIBLE_PLAYBOOK:
 						w.logger.Debug(fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, "Running a playbook"))
-						_, ok = t.Parameters.(*request.AnsiblePlaybookParameters)
+						_, ok = t.Parameters.(*entity.AnsiblePlaybookParameters)
 						if !ok {
 							errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, ErrTaskInvalidParameters)
 							t.Failed(errorMsg)
@@ -139,7 +138,7 @@ func (w *Worker) Start(ctx context.Context) error {
 
 						t.Running()
 						ansibleplaybook := executor.NewAnsiblePlaybook()
-						errRunAnsiblePlaybook := ansibleplaybook.Run(ctx, projectTaskWorkingDir, t.Parameters.(*request.AnsiblePlaybookParameters))
+						errRunAnsiblePlaybook := ansibleplaybook.Run(ctx, projectTaskWorkingDir, t.Parameters.(*entity.AnsiblePlaybookParameters))
 						if errRunAnsiblePlaybook != nil {
 							errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, errRunAnsiblePlaybook)
 							t.Failed(errorMsg)
