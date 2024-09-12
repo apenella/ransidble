@@ -32,22 +32,42 @@ func NewGetTaskService(repository repository.TaskRepository, logger repository.L
 func (t *GetTaskService) GetTask(id string) (*entity.Task, error) {
 
 	if t.repository == nil {
-		t.logger.Error(ErrStoreNotInitialized.Error(), map[string]interface{}{"component": "GetTaskService.GetTask", "task_id": id})
+		t.logger.Error(ErrStoreNotInitialized.Error(), map[string]interface{}{
+			"component": "GetTaskService.GetTask",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+			"task_id":   id,
+		})
 		return nil, ErrStoreNotInitialized
 	}
 
 	if id == "" {
-		t.logger.Error(ErrTaskIDNotProvided.Error(), map[string]interface{}{"component": "GetTaskService.GetTask", "task_id": id})
+		t.logger.Error(ErrTaskIDNotProvided.Error(), map[string]interface{}{
+			"component": "GetTaskService.GetTask",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+			"task_id":   id,
+		})
 
 		return nil, domainerror.NewTaskNotProvidedError(ErrTaskIDNotProvided)
 	}
 
-	t.logger.Error(ErrTaskIDNotProvided.Error(), map[string]interface{}{"component": "GetTaskService.GetTask", "task_id": id})
-	t.logger.Debug(fmt.Sprintf("getting task %s\n", id), map[string]interface{}{"component": "GetTaskService.GetTask", "task_id": id})
+	t.logger.Error(ErrTaskIDNotProvided.Error(), map[string]interface{}{
+		"component": "GetTaskService.GetTask",
+		"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+		"task_id":   id,
+	})
+	t.logger.Debug(fmt.Sprintf("getting task %s\n", id), map[string]interface{}{
+		"component": "GetTaskService.GetTask",
+		"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+		"task_id":   id,
+	})
 
 	task, err := t.repository.Find(id)
 	if err != nil {
-		t.logger.Error("%s: %s", ErrFindingTask.Error(), err.Error(), map[string]interface{}{"component": "GetTaskService.GetTask", "task_id": id})
+		t.logger.Error("%s: %s", ErrFindingTask.Error(), err.Error(), map[string]interface{}{
+			"component": "GetTaskService.GetTask",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+			"task_id":   id,
+		})
 
 		return nil, domainerror.NewTaskNotFoundError(
 			fmt.Errorf("%s %s: %w", ErrFindingTask.Error(), id, err),

@@ -61,7 +61,9 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		h.logger.Error(
 			ErrProjectIDNotProvided,
 			map[string]interface{}{
-				"component": "CreateTaskAnsiblePlaybookHandler.Handle"})
+				"component": "CreateTaskAnsiblePlaybookHandler.Handle",
+				"package":   "github.com/apenella/ransidble/internal/handler/http/task",
+			})
 		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
@@ -75,7 +77,9 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 			errorMsg,
 			map[string]interface{}{
 				"component":  "CreateTaskAnsiblePlaybookHandler.Handle",
-				"project_id": projectID})
+				"package":    "github.com/apenella/ransidble/internal/handler/http/task",
+				"project_id": projectID,
+			})
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
@@ -89,7 +93,9 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 			errorMsg,
 			map[string]interface{}{
 				"component":  "CreateTaskAnsiblePlaybookHandler.Handle",
-				"project_id": projectID})
+				"package":    "github.com/apenella/ransidble/internal/handler/http/task",
+				"project_id": projectID,
+			})
 		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
@@ -105,7 +111,9 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 			ErrInvalidTaskID,
 			map[string]interface{}{
 				"component": "CreateTaskAnsiblePlaybookHandler.Handle",
-				"task_id":   taskID})
+				"package":   "github.com/apenella/ransidble/internal/handler/http/task",
+				"task_id":   taskID,
+			})
 
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
@@ -116,8 +124,10 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		fmt.Sprintf("creating task %s to run an Ansible playbook on project %s\n", taskID, projectID),
 		map[string]interface{}{
 			"component":  "CreateTaskAnsiblePlaybookHandler.Handle",
+			"package":    "github.com/apenella/ransidble/internal/handler/http/task",
+			"project_id": projectID,
 			"task_id":    taskID,
-			"project_id": projectID})
+		})
 
 	err = h.service.Run(ctx, projectID, task)
 	if err != nil {
@@ -140,8 +150,10 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 			errorMsg,
 			map[string]interface{}{
 				"component":  "CreateTaskAnsiblePlaybookHandler.Handle",
+				"package":    "github.com/apenella/ransidble/internal/handler/http/task",
+				"project_id": projectID,
 				"task_id":    taskID,
-				"project_id": projectID})
+			})
 
 		return c.JSON(httpStatus, errorResponse)
 	}

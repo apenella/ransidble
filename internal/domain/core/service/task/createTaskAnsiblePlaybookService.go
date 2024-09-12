@@ -64,40 +64,65 @@ func (s *CreateTaskAnsiblePlaybookService) Run(ctx context.Context, projectID st
 	// var workingDir string
 
 	if s.executor == nil {
-		s.logger.Error(ErrExecutorNotInitialized.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run"})
+		s.logger.Error(ErrExecutorNotInitialized.Error(), map[string]interface{}{
+			"component": "CreateTaskAnsiblePlaybookService.Run",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+		})
 		return ErrExecutorNotInitialized
 	}
 
 	if s.taskRepository == nil {
-		s.logger.Error(ErrTaskRepositoryNotInitialized.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run"})
+		s.logger.Error(ErrTaskRepositoryNotInitialized.Error(), map[string]interface{}{
+			"component": "CreateTaskAnsiblePlaybookService.Run",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+		})
 		return ErrTaskRepositoryNotInitialized
 	}
 
 	if s.projectRepository == nil {
-		s.logger.Error(ErrProjectRepositoryNotInitialized.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run"})
+		s.logger.Error(ErrProjectRepositoryNotInitialized.Error(), map[string]interface{}{
+			"component": "CreateTaskAnsiblePlaybookService.Run",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+		})
 		return ErrProjectRepositoryNotInitialized
 	}
 
 	if projectID == "" {
-		s.logger.Error(ErrProjectNotProvided.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run"})
+		s.logger.Error(ErrProjectNotProvided.Error(), map[string]interface{}{
+			"component": "CreateTaskAnsiblePlaybookService.Run",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+		})
 
 		return domainerror.NewProjectNotProvidedError(ErrProjectNotProvided)
 	}
 
 	if task == nil {
-		s.logger.Error(ErrTaskNotProvided.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run"})
+		s.logger.Error(ErrTaskNotProvided.Error(), map[string]interface{}{
+			"component": "CreateTaskAnsiblePlaybookService.Run",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+		})
 		return ErrTaskNotProvided
 	}
 
 	err = s.taskRepository.SafeStore(task.ID, task)
 	if err != nil {
-		s.logger.Error("%s: %s", ErrorStoreTask, err.Error(), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run", "task_id": task.ID, "project_id": projectID})
+		s.logger.Error("%s: %s", ErrorStoreTask, err.Error(), map[string]interface{}{
+			"component":  "CreateTaskAnsiblePlaybookService.Run",
+			"package":    "github.com/apenella/ransidble/internal/domain/core/service/task",
+			"project_id": projectID,
+			"task_id":    task.ID,
+		})
 		return fmt.Errorf("%s: %w", ErrorStoreTask, err)
 	}
 
 	project, err = s.projectRepository.Find(projectID)
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("%s: %s", ErrFindingProject, err.Error()), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run", "project_id": projectID, "task_id": task.ID})
+		s.logger.Error(fmt.Sprintf("%s: %s", ErrFindingProject, err.Error()), map[string]interface{}{
+			"component":  "CreateTaskAnsiblePlaybookService.Run",
+			"package":    "github.com/apenella/ransidble/internal/domain/core/service/task",
+			"project_id": projectID,
+			"task_id":    task.ID,
+		})
 
 		return domainerror.NewProjectNotFoundError(
 			fmt.Errorf("%s %s: %w", ErrFindingProject, projectID, err),
@@ -113,7 +138,7 @@ func (s *CreateTaskAnsiblePlaybookService) Run(ctx context.Context, projectID st
 	// if err != nil {
 	// 	errorMsg := fmt.Sprintf("%s: %s", ErrGeneratingRandomString, err.Error())
 	// 	s.logger.Error(errorMsg.Error())
-	// 	return fmt.Errorf(errorMsg)
+	// 	return fmt.Errorf("%s", errorMsg)
 	// }
 	// randStr := hex.EncodeToString(randBytes)
 
@@ -129,7 +154,13 @@ func (s *CreateTaskAnsiblePlaybookService) Run(ctx context.Context, projectID st
 
 	err = s.executor.Execute(task)
 	if err != nil {
-		s.logger.Error("%s: %s", ErrorExecuteTask, err.Error())
+		s.logger.Error("%s: %s", ErrorExecuteTask, err.Error(),
+			map[string]interface{}{
+				"component":  "CreateTaskAnsiblePlaybookService.Run",
+				"package":    "github.com/apenella/ransidble/internal/domain/core/service/task",
+				"project_id": projectID,
+				"task_id":    task.ID,
+			})
 		return fmt.Errorf("%s: %w", ErrorExecuteTask, err)
 	}
 

@@ -50,7 +50,9 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 		h.logger.Error(
 			ErrGetTaskServiceNotInitialized,
 			map[string]interface{}{
-				"component": "GetTaskHandler.Handle"})
+				"component": "GetTaskHandler.Handle",
+				"package":   "github.com/apenella/ransidble/internal/handler/http/task",
+			})
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
@@ -62,7 +64,9 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 		h.logger.Error(
 			ErrTaskIDNotProvided,
 			map[string]interface{}{
-				"component": "GetTaskHandler.Handle"})
+				"component": "GetTaskHandler.Handle",
+				"package":   "github.com/apenella/ransidble/internal/handler/http/task",
+			})
 		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
@@ -70,7 +74,9 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 		fmt.Sprintf("getting task %s\n", id),
 		map[string]interface{}{
 			"component": "GetTaskHandler.Handle",
-			"task_id":   id})
+			"package":   "github.com/apenella/ransidble/internal/handler/http/task",
+			"task_id":   id,
+		})
 	task, err := h.service.GetTask(id)
 	if err != nil {
 
@@ -94,7 +100,9 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 			errorMsg,
 			map[string]interface{}{
 				"component": "GetTaskHandler.Handle",
-				"task_id":   id})
+				"package":   "github.com/apenella/ransidble/internal/handler/http/task",
+				"task_id":   id,
+			})
 		return c.JSON(httpStatus, errorResponse)
 	}
 
