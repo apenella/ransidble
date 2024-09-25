@@ -1,0 +1,31 @@
+---
+
+services:
+
+  ransidble:
+    build:
+      context: .
+      dockerfile: build/Dockerfile
+      args:
+        - GOLANG_VERSION=${GOLANG_VERSION}
+    environment:
+      - RANSIDBLE_SERVER_WORKER_POOL_SIZE=2
+
+  ci:
+    build:
+      context: .
+      dockerfile: build/Dockerfile.ci
+      args:
+        - GOLANG_VERSION=${GOLANG_VERSION}
+        - GO_TOOL_ERRCHECK_VERSION=${GO_TOOL_ERRCHECK_VERSION}
+        - GO_TOOL_GOLANGCI_LINT_VERSION=${GO_TOOL_GOLANGCI_LINT_VERSION}
+        - GO_TOOL_GOLINT_VERSION=${GO_TOOL_GOLINT_VERSION}
+        - GO_TOOL_GOSEC_VERSION=${GO_TOOL_GOSEC_VERSION}
+        - GO_TOOL_STATICCHECK_VERSION=${GO_TOOL_STATICCHECK_VERSION}
+    privileged: true
+    volumes:
+      - .:/usr/src/app
+    command:
+      - tail
+      - -f
+      - /dev/null
