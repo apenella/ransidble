@@ -58,7 +58,6 @@ func (m *TaskMapper) TestToTaskResponse(t *testing.T) {
 
 			res := m.ToTaskResponse(test.task)
 			assert.Equal(t, test.expected, res)
-
 		})
 	}
 }
