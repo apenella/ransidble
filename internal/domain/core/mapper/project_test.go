@@ -18,11 +18,13 @@ func (m *ProjectMapper) TestToProjectResponse(t *testing.T) {
 		{
 			desc: "Testing project mapping",
 			project: &entity.Project{
+				Format:    "project-format",
 				Name:      "project-name",
 				Reference: "project-reference",
 				Type:      "project-type",
 			},
 			expected: &response.ProjectResponse{
+				Format:    "project-format",
 				Name:      "project-name",
 				Reference: "project-reference",
 				Type:      "project-type",

@@ -6,7 +6,53 @@ info:
   version: 1.0.0
   description: Ransidble is a utility that enables you to execute Ansible commands on remote hosts. It functions as a wrapper over Ansible, allowing users to launch playbooks, roles, and tasks remotely. This is achieved by exposing a REST API in front of Ansible, facilitating the execution of Ansible commands on remote hosts.
 paths:
-  /task/ansible-playbook/{project_id}:
+  /projects:
+    get:
+      summary: Get all projects
+      responses:
+        200:
+          description: Projects retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectResponse'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectErrorResponse'
+  /projects/{id}:
+    get:
+      summary: Get a project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Project retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        404:
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectErrorResponse'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectErrorResponse'
+  /tasks/ansible-playbook/{project_id}:
     post:
       summary: Create a new Ansible playbook task
       parameters:
@@ -34,13 +80,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorTaskResponse'
+                $ref: '#/components/schemas/TaskErrorResponse'
         404:
           description: Bad request, project ID not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorTaskResponse'
+                $ref: '#/components/schemas/TaskErrorResponse'
         405:
           description: Method not allowed, such as using an unsupported HTTP method
           content:
@@ -57,9 +103,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorTaskResponse'
+                $ref: '#/components/schemas/TaskErrorResponse'
 
-  /task/{id}:
+  /tasks/{id}:
     get:
       summary: Get a task by ID
       parameters:
@@ -80,13 +126,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorTaskResponse'
+                $ref: '#/components/schemas/TaskErrorResponse'
         500:
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorTaskResponse'
+                $ref: '#/components/schemas/TaskErrorResponse'
 
 components:
   schemas:
@@ -265,7 +311,7 @@ components:
         - id
         - parameters
         - status
-    ErrorTaskResponse:
+    TaskErrorResponse:
       type: object
       properties:
         id:
@@ -285,8 +331,21 @@ components:
         type:
           type: string
           description: The project type
+        format:
+          type: string
+          description: The project type
+          enum:
+            - plain
+            - targz
       required:
         - name
         - reference
         - type
-
+    ProjectErrorResponse:
+      type: object
+      properties:
+        id:
+          description: Task ID
+          type: string
+        Error:
+          type: string

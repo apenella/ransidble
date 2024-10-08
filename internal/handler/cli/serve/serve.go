@@ -8,8 +8,10 @@ import (
 	"syscall"
 
 	"github.com/apenella/ransidble/internal/configuration"
+	projectService "github.com/apenella/ransidble/internal/domain/core/service/project"
 	taskService "github.com/apenella/ransidble/internal/domain/core/service/task"
 	server "github.com/apenella/ransidble/internal/handler/http"
+	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
 	taskHandler "github.com/apenella/ransidble/internal/handler/http/task"
 	"github.com/apenella/ransidble/internal/infrastructure/archive"
 	"github.com/apenella/ransidble/internal/infrastructure/executor"
@@ -22,6 +24,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	createTaskAnsiblePlaybookPath = "/tasks/ansible-playbook/:project_id"
+	getHealthPath                 = "/health"
+	getProjectPath                = "/projects/:id"
+	getProjectsPath               = "/projects"
+	getTaskPath                   = "/tasks/:id"
+	getTasksPath                  = "/tasks"
+)
+
 var (
 	// ErrStartDispatcher represents an error when starting the dispatcher
 	ErrStartDispatcher = fmt.Errorf("error starting dispatcher")
@@ -29,6 +40,7 @@ var (
 	ErrLoadProjects = fmt.Errorf("error loading projects")
 )
 
+// NewCommand returns a new cobra.Command to serve a Ransidble server
 func NewCommand(config *configuration.Configuration) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "serve",
@@ -74,11 +86,17 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 
 			createTaskAnsiblePlaybookService := taskService.NewCreateTaskAnsiblePlaybookService(dispatcher, taskRepository, projectsRepository, log)
 			createTaskAnsiblePlaybookHandler := taskHandler.NewCreateTaskAnsiblePlaybookHandler(createTaskAnsiblePlaybookService, log)
-			router.POST("/task/ansible-playbook/:project_id", createTaskAnsiblePlaybookHandler.Handle)
+			router.POST(createTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
 
 			getTaskService := taskService.NewGetTaskService(taskRepository, log)
 			getTaskHandler := taskHandler.NewGetTaskHandler(getTaskService, log)
-			router.GET("/task/:id", getTaskHandler.Handle)
+			router.GET(getTaskPath, getTaskHandler.Handle)
+
+			getProjectService := projectService.NewGetProjectService(projectsRepository, log)
+			getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
+			router.GET(getProjectPath, getProjectHandler.Handle)
+			getProjecListtHandler := projectHandler.NewGetProjecListtHandler(getProjectService, log)
+			router.GET(getProjectsPath, getProjecListtHandler.Handle)
 
 			// Wait for interrupt signal to gracefully shutdown the server
 			quitCh := make(chan os.Signal, 1)
