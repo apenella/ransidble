@@ -51,20 +51,19 @@ run-task-1: ## Make a request to create an ansible-playbook task
 	@echo
 	@echo " Making a request to the server"
 	@echo
-	curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/task/ansible-playbook/project-1 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}'
+	curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/tasks/ansible-playbook/project-1 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}'
 
 run-task-2: ## Make a request to create an ansible-playbook task
 	@echo
 	@echo " Making a request to the server"
 	@echo
-	curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/task/ansible-playbook/project-2 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local", "dependencies": {"collections": {"requirements_file": "requirements.yml"}}}'
-
+	curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/tasks/ansible-playbook/project-2 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local", "dependencies": {"collections": {"requirements_file": "requirements.yml"}}}'
 
 get-task: ## Get the task status
 	@echo
 	@echo " Getting the task status"
 	@echo
-	curl -XGET 0.0.0.0:8080/task/$(TASK_ID)
+	curl -XGET 0.0.0.0:8080/tasks/$(TASK_ID)
 
 validate-openapi: ## Check the openapi spec
 	@echo

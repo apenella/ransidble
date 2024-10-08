@@ -18,6 +18,8 @@ Ransidble is a utility that enables you to execute [Ansible](https://www.ansible
     - [Perform a Request to Execute an Ansible playbook](#perform-a-request-to-execute-an-ansible-playbook)
     - [Perform a Request Accepting Gzip Encoding](#perform-a-request-accepting-gzip-encoding)
     - [Get the Status of an Execution](#get-the-status-of-an-execution)
+    - [Get the project details](#get-the-project-details)
+    - [Get the list of projects](#get-the-list-of-projects)
   - [Development Reference](#development-reference)
     - [Contributing](#contributing)
     - [Code of Conduct](#code-of-conduct)
@@ -141,6 +143,38 @@ r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
   },
   "status": "SUCCESS"
 }
+```
+
+### Get the project details
+
+```bash
+❯ curl -s 0.0.0.0:8080/projects/project-1 | jq
+{
+  "format": "plain",
+  "name": "project-1",
+  "reference": "test/projects/project-1",
+  "type": "local"
+}
+```
+
+### Get the list of projects
+
+```bash
+❯ curl -s 0.0.0.0:8080/projects | jq
+[
+  {
+    "format": "plain",
+    "name": "project-1",
+    "reference": "test/projects/project-1",
+    "type": "local"
+  },
+  {
+    "format": "plain",
+    "name": "project-2",
+    "reference": "test/projects/project-2",
+    "type": "local"
+  }
+]
 ```
 
 ## Development Reference
