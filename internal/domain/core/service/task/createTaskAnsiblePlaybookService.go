@@ -58,6 +58,7 @@ func (s *CreateTaskAnsiblePlaybookService) GenerateID() string {
 	return id
 }
 
+// Run runs a task
 func (s *CreateTaskAnsiblePlaybookService) Run(ctx context.Context, projectID string, task *entity.Task) error {
 	var err error
 	var project *entity.Project
@@ -150,7 +151,13 @@ func (s *CreateTaskAnsiblePlaybookService) Run(ctx context.Context, projectID st
 	// 	return fmt.Errorf("%s: %w", ErrSettingUpProject, err)
 	// }
 
-	s.logger.Info(fmt.Sprintf("executing task %s", task.ID))
+	s.logger.Info(fmt.Sprintf("executing task %s", task.ID),
+		map[string]interface{}{
+			"component":  "CreateTaskAnsiblePlaybookService.Run",
+			"package":    "github.com/apenella/ransidble/internal/domain/core/service/task",
+			"project_id": projectID,
+			"task_id":    task.ID,
+		})
 
 	err = s.executor.Execute(task)
 	if err != nil {

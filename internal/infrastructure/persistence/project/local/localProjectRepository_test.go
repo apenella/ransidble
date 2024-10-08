@@ -11,11 +11,13 @@ import (
 
 // TestNewLocalProjectRepository tests the NewLocalProjectRepository method
 func TestNewLocalProjectRepository(t *testing.T) {
-	persistence := NewLocalProjectRepository(afero.NewMemMapFs(), "/tmp", nil)
+	fs := afero.NewMemMapFs()
+	persistence := NewLocalProjectRepository(fs, "/tmp", nil)
 	expected := &LocalProjectRepository{
+		Fs:       fs,
+		logger:   nil,
 		Path:     "/tmp",
 		Projects: make(map[string]*entity.Project),
-		logger:   nil,
 	}
 
 	assert.Equal(t, persistence, expected)

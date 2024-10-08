@@ -3,6 +3,7 @@ package local
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
@@ -15,8 +16,11 @@ const (
 	ErrProjectNotFound = "project not found"
 	// ErrProjectAlreadyExists represents a project already exists error
 	ErrProjectAlreadyExists = "project already exists"
+	// ExtensionTarGz represents the tar.gz extension
+	ExtensionTarGz = ".tar.gz"
 )
 
+// LocalProjectRepository represents a repository on local storage
 type LocalProjectRepository struct {
 	// Filesystem path where projects are stored
 	Fs afero.Fs
@@ -43,6 +47,9 @@ func NewLocalProjectRepository(fs afero.Fs, path string, logger repository.Logge
 func (r *LocalProjectRepository) LoadProjects() error {
 
 	var err error
+	var projectEntity *entity.Project
+	var projectFormat string
+	var projectPath string
 
 	_, err = afero.IsDir(r.Fs, r.Path)
 	if err != nil {
@@ -55,19 +62,30 @@ func (r *LocalProjectRepository) LoadProjects() error {
 	}
 
 	for _, project := range projects {
-		if project.IsDir() {
-			projectPath := filepath.Join(r.Path, project.Name())
-			projectEntity := entity.NewProject(project.Name(), projectPath, entity.ProjectTypeLocal)
 
-			r.logger.Debug(fmt.Sprintf("Loading project %s from %s", project.Name(), projectPath))
-
-			err = r.SafeStore(project.Name(), projectEntity)
-			if err != nil {
-				r.logger.Error(fmt.Sprintf("Error loading project %s: %s", project.Name(), err))
+		if project.Mode().IsRegular() {
+			// When is found a regular file and project name ends with .tar.gz we consider it as a tar.gz file, otherwise we skip the file
+			if strings.HasSuffix(project.Name(), ExtensionTarGz) {
+				projectFormat = entity.ProjectFormatTarGz
+			} else {
+				continue
 			}
-		} else {
-			r.logger.Warn(fmt.Sprintf("Path %s is not a directory, ignoring", project.Name()))
 		}
+
+		if project.IsDir() {
+			projectFormat = entity.ProjectFormatPlain
+		}
+
+		projectPath = filepath.Join(r.Path, project.Name())
+		projectEntity = entity.NewProject(project.Name(), projectPath, projectFormat, entity.ProjectTypeLocal)
+
+		r.logger.Debug(fmt.Sprintf("Loading project %s from %s", project.Name(), projectPath))
+
+		err = r.SafeStore(project.Name(), projectEntity)
+		if err != nil {
+			r.logger.Error(fmt.Sprintf("Error loading project %s: %s", project.Name(), err))
+		}
+
 	}
 
 	return nil
