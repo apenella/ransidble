@@ -69,7 +69,7 @@ RANSIDBLE_SERVER_LOG_LEVEL=info RANSIDBLE_SERVER_WORKER_POOL_SIZE=3 RANSIDBLE_SE
 {"data":null,"level":"info","msg":"Starting worker 50498ab1-72b0-4b8f-a197-a83b527ec874","time":"2024-07-21T20:01:04+02:00"}
 {"data":null,"level":"info","msg":"Starting worker 7f05137a-7701-4e88-8aee-1b8fe65d2e80","time":"2024-07-21T20:01:04+02:00"}
 {"data":null,"level":"info","msg":"Executing task ecfc92dc-6323-40d6-9bf8-71c4d4d98640","time":"2024-07-21T20:01:19+02:00"}
-{"time":"2024-07-21T20:01:19.534469135+02:00","id":"","remote_ip":"127.0.0.1","host":"0.0.0.0:8080","method":"POST","uri":"/task/ansible-playbook/project-1","user_agent":"curl/7.81.0","status":202,"error":"","latency":518245,"latency_human":"518.245µs","bytes_in":77,"bytes_out":46}
+{"time":"2024-07-21T20:01:19.534469135+02:00","id":"","remote_ip":"127.0.0.1","host":"0.0.0.0:8080","method":"POST","uri":"/tasks/ansible-playbook/project-1","user_agent":"curl/7.81.0","status":202,"error":"","latency":518245,"latency_human":"518.245µs","bytes_in":77,"bytes_out":46}
 {"data":null,"level":"info","msg":"Setup project project-1 to /tmp/ransidble846872083/4838bac7-3efe-4a9d-837d-3e61924c5f35/project-1/ecfc92dc-6323-40d6-9bf8-71c4d4d98640","time":"2024-07-21T20:01:19+02:00"}
 [DEPRECATION WARNING]: ANSIBLE_COLLECTIONS_PATHS option, does not fit var
 naming standard, use the singular form ANSIBLE_COLLECTIONS_PATH instead. This
@@ -102,7 +102,7 @@ The Ransidble provides you with a Open API specification that you can use to int
 The following example demonstrates how to execute an Ansible playbook using the Ransidble server. Please refer to the [REST API Reference](#rest-api-reference) section for more information.
 
 ```bash
-curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/task/ansible-playbook/project-1 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}'
+curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/tasks/ansible-playbook/project-1 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}'
 HTTP/1.1 202 Accepted
 Content-Type: application/json
 Vary: Accept-Encoding
@@ -122,7 +122,7 @@ r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
 ### Get the Status of an Execution
 
 ```bash
-❯ curl -s -GET 0.0.0.0:8080/task/ecfc92dc-6323-40d6-9bf8-71c4d4d98640 | jq
+❯ curl -s -GET 0.0.0.0:8080/tasks/ecfc92dc-6323-40d6-9bf8-71c4d4d98640 | jq
 {
   "command": "ansible-playbook",
   "completed_at": "2024-07-21T20:01:25+02:00",

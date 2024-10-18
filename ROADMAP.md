@@ -5,5 +5,5 @@
 - Upload projects in multiple formats
   - tar.gz
   - oci image
-- Implement authentication
-- Implement authorization
+- Implement authentication: It would be delegated to an external service
+- Implement authorization: It would be delegated to an external service 
