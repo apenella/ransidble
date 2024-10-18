@@ -16,8 +16,6 @@ func NewTaskMapper() *TaskMapper {
 // ToTaskResponse maps a task entity to a task response
 func (m *TaskMapper) ToTaskResponse(task *entity.Task) *response.TaskResponse {
 
-	projectMapper := NewProjectMapper()
-
 	return &response.TaskResponse{
 		Command:      task.Command,
 		CompletedAt:  task.CompletedAt,
@@ -26,7 +24,7 @@ func (m *TaskMapper) ToTaskResponse(task *entity.Task) *response.TaskResponse {
 		ExecutedAt:   task.ExecutedAt,
 		ID:           task.ID,
 		Parameters:   task.Parameters,
-		Project:      projectMapper.ToProjectResponse(task.Project),
+		ProjectID:    task.ProjectID,
 		Status:       task.Status,
 	}
 }

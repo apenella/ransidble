@@ -294,8 +294,8 @@ components:
         parameters:
           type: object
           description: The parameters for the task
-        project:
-          $ref: '#/components/schemas/ProjectResponse'
+        project_id:
+          type: string
           description: The project associated with the task
         status:
           type: string

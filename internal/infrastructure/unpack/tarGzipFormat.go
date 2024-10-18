@@ -1,4 +1,4 @@
-package archive
+package unpack
 
 import (
 	"fmt"
@@ -8,27 +8,29 @@ import (
 	"github.com/spf13/afero"
 )
 
-type TarGzipArchive struct {
+// TarGzipFormat struct used to unpack tar.gz files
+type TarGzipFormat struct {
 	Fs     afero.Fs
 	logger repository.Logger
 }
 
-func NewTarGzipArchive(fs afero.Fs, logger repository.Logger) *TarGzipArchive {
-	return &TarGzipArchive{
+// NewTarGzipFormat method creates a new TarGzipFormat struct
+func NewTarGzipFormat(fs afero.Fs, logger repository.Logger) *TarGzipFormat {
+	return &TarGzipFormat{
 		Fs:     fs,
 		logger: logger,
 	}
 }
 
-// Unarchive method prepares the project into dest folder
-func (a *TarGzipArchive) Unarchive(project *entity.Project, workingDir string) error {
+// Unpack method prepares the project into dest folder
+func (a *TarGzipFormat) Unpack(project *entity.Project, workingDir string) error {
 	var err error
 
 	if project == nil {
 		a.logger.Error(ErrProjectNotProvided.Error(),
 			map[string]interface{}{
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/archive",
-				"component": "TarGzipArchive.Unarchive"})
+				"component": "TarGzipFormat.Unpack"})
 		return ErrProjectNotProvided
 	}
 
@@ -38,7 +40,7 @@ func (a *TarGzipArchive) Unarchive(project *entity.Project, workingDir string) e
 		a.logger.Error(errorMsg,
 			map[string]interface{}{
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/archive",
-				"component": "TarGzipArchive.Unarchive"})
+				"component": "TarGzipFormat.Unpack"})
 		return fmt.Errorf("%s", errorMsg)
 	}
 
@@ -50,7 +52,7 @@ func (a *TarGzipArchive) Unarchive(project *entity.Project, workingDir string) e
 			errorMsg,
 			map[string]interface{}{
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/archive",
-				"component": "TarGzipArchive.Unarchive"})
+				"component": "TarGzipFormat.Unpack"})
 		return fmt.Errorf("%s", errorMsg)
 	}
 

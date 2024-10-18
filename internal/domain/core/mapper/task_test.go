@@ -25,7 +25,7 @@ func (m *TaskMapper) TestToTaskResponse(t *testing.T) {
 				ExecutedAt:   "task-executed-at",
 				ID:           "task-id",
 				Parameters:   "task-parameters",
-				Project:      &entity.Project{},
+				ProjectID:    "task-project-id",
 				Status:       "task-status",
 			},
 			expected: &response.TaskResponse{
@@ -36,7 +36,7 @@ func (m *TaskMapper) TestToTaskResponse(t *testing.T) {
 				ExecutedAt:   "task-executed-at",
 				ID:           "task-id",
 				Parameters:   "task-parameters",
-				Project:      &response.ProjectResponse{},
+				ProjectID:    "task-project-id",
 				Status:       "task-status",
 			},
 		},

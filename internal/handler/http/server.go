@@ -18,6 +18,7 @@ var (
 	ErrServerStopping = fmt.Errorf("error stopping server")
 )
 
+// Server represents a HTTP server
 type Server struct {
 	logger   repository.Logger
 	once     sync.Once
@@ -26,6 +27,7 @@ type Server struct {
 	stopOnce sync.Once
 }
 
+// NewServer creates a new server
 func NewServer(listenAddress string, handler *echo.Echo, logger repository.Logger) *Server {
 	return &Server{
 		server: &http.Server{
@@ -37,11 +39,16 @@ func NewServer(listenAddress string, handler *echo.Echo, logger repository.Logge
 	}
 }
 
+// Start starts the server
 func (s *Server) Start(ctx context.Context) (err error) {
 
 	s.once.Do(func() {
 
-		s.logger.Info(fmt.Sprintf("Starting server on %s", s.server.Addr))
+		s.logger.Info(fmt.Sprintf("Starting server on %s", s.server.Addr), map[string]interface{}{
+			"component": "Server.Start",
+			"package":   "github.com/apenella/ransidble/internal/handler/http",
+			"address":   s.server.Addr,
+		})
 
 		if ctx == nil {
 			ctx = context.Background()
@@ -69,7 +76,10 @@ func (s *Server) Start(ctx context.Context) (err error) {
 				err = fmt.Errorf("%w: %s", ErrServerStopping, errShutdown)
 			}
 
-			s.logger.Info("HTTP Server stopped")
+			s.logger.Info("HTTP Server stopped", map[string]interface{}{
+				"component": "Server.Start",
+				"package":   "github.com/apenella/ransidble/internal/handler/http",
+			})
 			return
 		}
 	})
@@ -77,8 +87,12 @@ func (s *Server) Start(ctx context.Context) (err error) {
 	return
 }
 
+// Stop stops the server
 func (s *Server) Stop() {
-	s.logger.Info("Stopping HTTP server...")
+	s.logger.Info("Stopping HTTP server", map[string]interface{}{
+		"component": "Server.Stop",
+		"package":   "github.com/apenella/ransidble/internal/handler/http",
+	})
 
 	s.stopOnce.Do(func() {
 		close(s.stopCh)

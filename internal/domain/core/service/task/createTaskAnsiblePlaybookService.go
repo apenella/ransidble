@@ -39,10 +39,17 @@ type CreateTaskAnsiblePlaybookService struct {
 	logger            repository.Logger
 	projectRepository repository.ProjectRepository
 	taskRepository    repository.TaskRepository
+	// workspaceBuilder  service.WorkspaceBuilder
 }
 
 // NewCreateTaskAnsiblePlaybookService creates a new CreateTaskAnsiblePlaybookService
-func NewCreateTaskAnsiblePlaybookService(executor repository.Executor, taskRepo repository.TaskRepository, projectRepo repository.ProjectRepository, logger repository.Logger) *CreateTaskAnsiblePlaybookService {
+func NewCreateTaskAnsiblePlaybookService(
+	executor repository.Executor,
+	taskRepo repository.TaskRepository,
+	projectRepo repository.ProjectRepository,
+	logger repository.Logger,
+) *CreateTaskAnsiblePlaybookService {
+
 	return &CreateTaskAnsiblePlaybookService{
 		executor:          executor,
 		logger:            logger,
@@ -59,10 +66,12 @@ func (s *CreateTaskAnsiblePlaybookService) GenerateID() string {
 }
 
 // Run runs a task
-func (s *CreateTaskAnsiblePlaybookService) Run(ctx context.Context, projectID string, task *entity.Task) error {
+func (s *CreateTaskAnsiblePlaybookService) Run(
+	ctx context.Context,
+	task *entity.Task,
+) error {
 	var err error
-	var project *entity.Project
-	// var workingDir string
+	var projectID string
 
 	if s.executor == nil {
 		s.logger.Error(ErrExecutorNotInitialized.Error(), map[string]interface{}{
@@ -88,6 +97,15 @@ func (s *CreateTaskAnsiblePlaybookService) Run(ctx context.Context, projectID st
 		return ErrProjectRepositoryNotInitialized
 	}
 
+	if task == nil {
+		s.logger.Error(ErrTaskNotProvided.Error(), map[string]interface{}{
+			"component": "CreateTaskAnsiblePlaybookService.Run",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+		})
+		return ErrTaskNotProvided
+	}
+
+	projectID = task.ProjectID
 	if projectID == "" {
 		s.logger.Error(ErrProjectNotProvided.Error(), map[string]interface{}{
 			"component": "CreateTaskAnsiblePlaybookService.Run",
@@ -95,14 +113,6 @@ func (s *CreateTaskAnsiblePlaybookService) Run(ctx context.Context, projectID st
 		})
 
 		return domainerror.NewProjectNotProvidedError(ErrProjectNotProvided)
-	}
-
-	if task == nil {
-		s.logger.Error(ErrTaskNotProvided.Error(), map[string]interface{}{
-			"component": "CreateTaskAnsiblePlaybookService.Run",
-			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
-		})
-		return ErrTaskNotProvided
 	}
 
 	err = s.taskRepository.SafeStore(task.ID, task)
@@ -115,41 +125,6 @@ func (s *CreateTaskAnsiblePlaybookService) Run(ctx context.Context, projectID st
 		})
 		return fmt.Errorf("%s: %w", ErrorStoreTask, err)
 	}
-
-	project, err = s.projectRepository.Find(projectID)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("%s: %s", ErrFindingProject, err.Error()), map[string]interface{}{
-			"component":  "CreateTaskAnsiblePlaybookService.Run",
-			"package":    "github.com/apenella/ransidble/internal/domain/core/service/task",
-			"project_id": projectID,
-			"task_id":    task.ID,
-		})
-
-		return domainerror.NewProjectNotFoundError(
-			fmt.Errorf("%s %s: %w", ErrFindingProject, projectID, err),
-		)
-	}
-
-	task.Project = project
-
-	// // TODO inject random generator as a dependency
-	// // Generate 5 random bytes for a 10 characters length string. Each byte is 2 characters length
-	// randBytes := make([]byte, 5)
-	// _, err = rand.Read(randBytes)
-	// if err != nil {
-	// 	errorMsg := fmt.Sprintf("%s: %s", ErrGeneratingRandomString, err.Error())
-	// 	s.logger.Error(errorMsg.Error())
-	// 	return fmt.Errorf("%s", errorMsg)
-	// }
-	// randStr := hex.EncodeToString(randBytes)
-
-	// workingDir = fmt.Sprintf("ransidble-%s-%s", projectID, randStr)
-
-	// err = s.projectRepository.Setup(project, workingDir)
-	// if err != nil {
-	// 	s.logger.Error(fmt.Sprintf("%s: %s", ErrSettingUpProject, err.Error()), map[string]interface{}{"component": "CreateTaskAnsiblePlaybookService.Run", "project_id": projectID, "task_id": task.ID})
-	// 	return fmt.Errorf("%s: %w", ErrSettingUpProject, err)
-	// }
 
 	s.logger.Info(fmt.Sprintf("executing task %s", task.ID),
 		map[string]interface{}{

@@ -9,7 +9,7 @@ import (
 // AnsiblePlaybookServicer represents the service to run an Ansible playbook
 type AnsiblePlaybookServicer interface {
 	GenerateID() string
-	Run(ctx context.Context, project_id string, task *entity.Task) error
+	Run(ctx context.Context, task *entity.Task) error
 }
 
 // GetTaskServicer represents the service to get a task

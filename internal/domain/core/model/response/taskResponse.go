@@ -17,7 +17,7 @@ type TaskResponse struct {
 	// Parameters represents the parameters to be used
 	Parameters interface{} `json:"parameters" validate:"required"`
 	// Project represents the project
-	Project *ProjectResponse `json:"project"`
+	ProjectID string `json:"project_id"`
 	// Status represents the status of the task
 	Status string `json:"status" validate:"required"`
 }

@@ -118,7 +118,7 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
-	task := entity.NewTask(taskID, entity.ANSIBLE_PLAYBOOK, parameters)
+	task := entity.NewTask(taskID, projectID, entity.ANSIBLE_PLAYBOOK, parameters)
 
 	h.logger.Debug(
 		fmt.Sprintf("creating task %s to run an Ansible playbook on project %s\n", taskID, projectID),
@@ -129,7 +129,7 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 			"task_id":    taskID,
 		})
 
-	err = h.service.Run(ctx, projectID, task)
+	err = h.service.Run(ctx, task)
 	if err != nil {
 		httpStatus = http.StatusInternalServerError
 

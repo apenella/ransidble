@@ -8,16 +8,19 @@ import (
 	"syscall"
 
 	"github.com/apenella/ransidble/internal/configuration"
+	"github.com/apenella/ransidble/internal/domain/core/entity"
+	"github.com/apenella/ransidble/internal/domain/core/service/executor"
 	projectService "github.com/apenella/ransidble/internal/domain/core/service/project"
 	taskService "github.com/apenella/ransidble/internal/domain/core/service/task"
+	"github.com/apenella/ransidble/internal/domain/core/service/workspace"
 	server "github.com/apenella/ransidble/internal/handler/http"
 	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
 	taskHandler "github.com/apenella/ransidble/internal/handler/http/task"
-	"github.com/apenella/ransidble/internal/infrastructure/archive"
-	"github.com/apenella/ransidble/internal/infrastructure/executor"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
-	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/local"
+	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch"
+	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
 	taskpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/task"
+	"github.com/apenella/ransidble/internal/infrastructure/unpack"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/afero"
@@ -52,24 +55,45 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			log := logger.NewLogger()
 			filesystem := afero.NewOsFs()
 
-			workingDir, errCreateWorkingdir := afero.TempDir(filesystem, "", "ransidble")
-			if err != nil {
-				err = fmt.Errorf("%w: %s", archive.ErrCreatingWorkingDirFolder, errCreateWorkingdir)
-				return
-			}
-
-			projectsRepository := localprojectpersistence.NewLocalProjectRepository(filesystem, config.Server.Project.LocalStoragePath, log)
+			// At the moment, the project repository loads the projects from the local storage. In the future, the plan is to have a database where you need to create a project before running it.
+			projectsRepository := localprojectpersistence.NewLocalProjectRepository(
+				filesystem,
+				config.Server.Project.LocalStoragePath,
+				log,
+			)
 			errLoadProjects := projectsRepository.LoadProjects()
 			if errLoadProjects != nil {
 				err = fmt.Errorf("%w: %s", ErrLoadProjects, errLoadProjects)
 				return
 			}
 
-			archiveFactory := archive.NewArchiveFactory()
-			archiveFactory.Register("local", archive.NewLocalStorageArchive(filesystem, log))
+			fetchFactory := fetch.NewFactory()
+			fetchFactory.Register(entity.ProjectTypeLocal, fetch.NewLocalStorage(
+				filesystem,
+				log,
+			))
+
+			unpackFactory := unpack.NewFactory()
+			unpackFactory.Register(entity.ProjectFormatPlain, unpack.NewPlainFormat(
+				filesystem,
+				log,
+			))
+
+			workspaceBuilder := workspace.NewBuilder(
+				filesystem,
+				fetchFactory,
+				unpackFactory,
+				projectsRepository,
+				log,
+			)
 
 			taskRepository := taskpersistence.NewMemoryTaskRepository()
-			dispatcher := executor.NewDispatcher(config.Server.WorkerPoolSize, filesystem, archiveFactory, workingDir, log)
+			dispatcher := executor.NewDispatch(
+				config.Server.WorkerPoolSize,
+				workspaceBuilder,
+				log,
+			)
+
 			go func() {
 				errStartDispatcher := dispatcher.Start(ctx)
 				if errStartDispatcher != nil {
@@ -84,7 +108,12 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 				Level: 5,
 			}))
 
-			createTaskAnsiblePlaybookService := taskService.NewCreateTaskAnsiblePlaybookService(dispatcher, taskRepository, projectsRepository, log)
+			createTaskAnsiblePlaybookService := taskService.NewCreateTaskAnsiblePlaybookService(
+				dispatcher,
+				taskRepository,
+				projectsRepository,
+				log,
+			)
 			createTaskAnsiblePlaybookHandler := taskHandler.NewCreateTaskAnsiblePlaybookHandler(createTaskAnsiblePlaybookService, log)
 			router.POST(createTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
 

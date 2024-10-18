@@ -7,20 +7,18 @@ import (
 )
 
 const (
-	// Task statuses
-
-	// Task status when the task is accepted to be executed
+	// ACCEPTED status when the task is accepted to be executed
 	ACCEPTED = "ACCEPTED"
-	// Task status when the task is failed
+	// FAILED status when the task is failed
 	FAILED = "FAILED"
-	// Task status when the task is pending. This status is used when the task is not yet accepted to be executed
+	// PENDING status when the task is pending. This status is used when the task is not yet accepted to be executed
 	PENDING = "PENDING"
-	// Task status when the task starts running
+	// RUNNING status when the task starts running
 	RUNNING = "RUNNING"
-	// Task status when the task is successfully executed
+	// SUCCESS status when the task is successfully executed
 	SUCCESS = "SUCCESS"
 
-	// Kinds of tasks
+	// ANSIBLE_PLAYBOOK identifies the task as an Ansible playbook task
 	ANSIBLE_PLAYBOOK = "ansible-playbook"
 )
 
@@ -44,19 +42,20 @@ type Task struct {
 	ExecutedAt   string      `json:"executed_at"`
 	ID           string      `json:"id" validate:"required"`
 	Parameters   interface{} `json:"parameters" validate:"required"`
-	Project      *Project    `json:"project"`
+	ProjectID    string      `json:"project_id"`
 	Status       string      `json:"status" validate:"required"`
 
 	statusMutex sync.Mutex
 }
 
 // NewTask creates a new task
-func NewTask(id string, command string, parameters interface{}) *Task {
+func NewTask(id string, projectID string, command string, parameters interface{}) *Task {
 	return &Task{
+		Command:    command,
 		CreatedAt:  time.Now().Format(time.RFC3339),
 		ID:         id,
-		Command:    command,
 		Parameters: parameters,
+		ProjectID:  projectID,
 		Status:     PENDING,
 	}
 }
