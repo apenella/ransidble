@@ -1,4 +1,4 @@
-package ansibleplaybook
+package executor
 
 import (
 	"context"

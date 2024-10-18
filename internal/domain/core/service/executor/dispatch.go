@@ -7,8 +7,7 @@ import (
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
-	"github.com/apenella/ransidble/internal/infrastructure/archive"
-	"github.com/spf13/afero"
+	"github.com/apenella/ransidble/internal/domain/ports/service"
 )
 
 const (
@@ -21,12 +20,8 @@ var (
 	ErrDispatcherStartingWorker = "error starting worker"
 )
 
-// Dispatcher represents a dispatcher to run tasks
-type Dispatcher struct {
-	// archiver factory to get the archiver
-	archiverFactory *archive.ArchiveFactory
-	// fs is the filesystem
-	fs afero.Fs
+// Dispatch represents a dispatcher to run tasks
+type Dispatch struct {
 	// logger is the logger of the dispatcher
 	logger repository.Logger
 	// onceStart is the sync.Once to stop the dispatcher
@@ -41,44 +36,43 @@ type Dispatcher struct {
 	workerPool chan chan *entity.Task
 	// workers list of workers
 	workers []*Worker
-	// workingDir is the working directory
-	workingDir string
+	// workspaceBuilder is the workspace builder
+	workspaceBuilder service.WorkspaceBuilder
 }
 
-// NewDispatcher creates a new dispatcher
-func NewDispatcher(workers int, fs afero.Fs, archiveFactory *archive.ArchiveFactory, workingDir string, logger repository.Logger) *Dispatcher {
+// NewDispatch creates a new dispatcher to run tasks
+func NewDispatch(workers int, workspaceBuilder service.WorkspaceBuilder, logger repository.Logger) *Dispatch {
 
 	if workers == 0 {
 		workers = DefaultWorkerPoolSize
 	}
 
-	// if logger == nil {
-	// 	logger = zap.NewNop()
-	// }
-
-	return &Dispatcher{
-		archiverFactory: archiveFactory,
-		fs:              fs,
-		logger:          logger,
-		queue:           make(chan *entity.Task, workers),
-		stopCh:          make(chan struct{}),
-		workerPool:      make(chan chan *entity.Task, workers),
-		workers:         make([]*Worker, 0, workers),
-		workingDir:      workingDir,
+	return &Dispatch{
+		logger:           logger,
+		queue:            make(chan *entity.Task, workers),
+		stopCh:           make(chan struct{}),
+		workerPool:       make(chan chan *entity.Task, workers),
+		workers:          make([]*Worker, 0, workers),
+		workspaceBuilder: workspaceBuilder,
 	}
 }
 
 // Start starts the dispatcher
-func (d *Dispatcher) Start(ctx context.Context) (err error) {
+func (d *Dispatch) Start(ctx context.Context) (err error) {
 
 	d.onceStart.Do(func() {
+
 		for i := 0; i < cap(d.queue); i++ {
-			worker := NewWorker(d.workerPool, d.fs, d.archiverFactory, d.workingDir, d.logger)
+			worker := NewWorker(d.workerPool, d.workspaceBuilder, d.logger)
 			d.workers = append(d.workers, worker)
 			workerStartErr := worker.Start(ctx)
+
 			if workerStartErr != nil {
 				msg := fmt.Sprintf("%s: %v", ErrDispatcherStartingWorker, workerStartErr)
-				d.logger.Error(msg)
+				d.logger.Error(msg, map[string]interface{}{
+					"component": "Dispatch.Start",
+					"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+				})
 				err = fmt.Errorf(msg)
 				return
 			}
@@ -101,7 +95,10 @@ func (d *Dispatcher) Start(ctx context.Context) (err error) {
 						wg.Done()
 					}
 					wg.Wait()
-					d.logger.Info("Dispatcher stopped")
+					d.logger.Info("Dispatcher stopped", map[string]interface{}{
+						"component": "Dispatch.Start",
+						"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+					})
 					return
 				}
 			}
@@ -111,15 +108,20 @@ func (d *Dispatcher) Start(ctx context.Context) (err error) {
 	return
 }
 
-func (d *Dispatcher) Stop() {
-	d.logger.Info("Stopping dispatcher...")
+// Stop stops the dispatcher
+func (d *Dispatch) Stop() {
+	d.logger.Info("Stopping dispatcher", map[string]interface{}{
+		"component": "Dispatch.Stop",
+		"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+	})
 
 	d.onceStop.Do(func() {
 		close(d.stopCh)
 	})
 }
 
-func (d *Dispatcher) Execute(task *entity.Task) error {
+// Execute executes a task
+func (d *Dispatch) Execute(task *entity.Task) error {
 	d.queue <- task
 	return nil
 }
