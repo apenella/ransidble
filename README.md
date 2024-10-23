@@ -11,15 +11,22 @@ Ransidble is a utility that enables you to execute [Ansible](https://www.ansible
   - [Why Ransidble?](#why-ransidble)
   - [How about the name?](#how-about-the-name)
   - [Server Usage Reference](#server-usage-reference)
-    - [Configuration](#configuration)
-    - [Initiate the Ransidble server](#initiate-the-ransidble-server)
+    - [Configurating the Ransidble server](#configurating-the-ransidble-server)
+    - [Initiating the Ransidble server](#initiating-the-ransidble-server)
   - [REST API Reference](#rest-api-reference)
   - [User Reference](#user-reference)
-    - [Perform a Request to Execute an Ansible playbook](#perform-a-request-to-execute-an-ansible-playbook)
-    - [Perform a Request Accepting Gzip Encoding](#perform-a-request-accepting-gzip-encoding)
-    - [Get the Status of an Execution](#get-the-status-of-an-execution)
-    - [Get the project details](#get-the-project-details)
-    - [Get the list of projects](#get-the-list-of-projects)
+    - [Project Definition](#project-definition)
+      - [Project Storage Types](#project-storage-types)
+        - [Local Filesystem](#local-filesystem)
+      - [Project Format Types](#project-format-types)
+        - [Plain](#plain)
+        - [Tar Gz](#tar-gz)
+    - [Examples of Requests](#examples-of-requests)
+      - [Performing a Request to Execute an Ansible playbook](#performing-a-request-to-execute-an-ansible-playbook)
+      - [Perform a Request Accepting Gzip Encoding](#perform-a-request-accepting-gzip-encoding)
+      - [Getting the Status of an Execution](#getting-the-status-of-an-execution)
+      - [Getting the project details](#getting-the-project-details)
+      - [Getting the list of projects](#getting-the-list-of-projects)
   - [Development Reference](#development-reference)
     - [Contributing](#contributing)
     - [Code of Conduct](#code-of-conduct)
@@ -35,7 +42,7 @@ Ransidble is a blend of 'Remote' and 'Ansible,' with a nod to the punk rock band
 
 ## Server Usage Reference
 
-### Configuration
+### Configurating the Ransidble server
 
 The Ransidble server can be configured using environment variables. The following table lists the available environment variables:
 
@@ -44,7 +51,6 @@ The Ransidble server can be configured using environment variables. The followin
 | RANSIDBLE_SERVER_HTTP_LISTEN_ADDRESS | The port where the server listens for incoming requests | :8080 |
 | RANSIDBLE_SERVER_LOG_LEVEL | The log level for the server | info |
 | RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH | The path where the projects are stored | projects |
-| RANSIDBLE_SERVER_PROJECT_STORAGE_TYPE | The type of storage used to store the projects | local |
 | RANSIDBLE_SERVER_WORKER_POOL_SIZE | The number of workers to execute the commands | 1 |
 
 Ransidble can be also configured using a configuration file. In this case, the file must be named `ransidble.yaml` and placed in the same directory as the binary. Environment variables take precedence over the configuration file.
@@ -60,7 +66,7 @@ server:
     storage_type: local
 ```
 
-### Initiate the Ransidble server
+### Initiating the Ransidble server
 
 ```bash
 RANSIDBLE_SERVER_LOG_LEVEL=info RANSIDBLE_SERVER_WORKER_POOL_SIZE=3 RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH=test/projects  go run cmd/main.go serve
@@ -97,7 +103,44 @@ The Ransidble provides you with a Open API specification that you can use to int
 
 ## User Reference
 
-### Perform a Request to Execute an Ansible playbook
+### Project Definition
+
+To execute an Ansible playbook, you must first define a project. A project serves as the source code for the Ansible playbook.
+
+Each project has the following attributes:
+
+- **Name**: The name of the project. Which is the unique identifier for the project.
+- **Reference**: The reference where the project is located in the storage.
+- **Storage Type**: The type of storage used to store the project.
+- **Format**: The format of the project.
+
+#### Project Storage Types
+
+##### Local Filesystem
+
+The local storage type stores the project in the local filesystem. You can define the path where projects are stored by using the `RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH` environment variable.
+
+#### Project Format Types
+
+##### Plain
+
+The plain format is a directory containing the Ansible playbook files.
+You can use the `plain` format for a project stored in the local filesystem.
+
+##### Tar Gz
+
+The `targz` format is a tarball compressed with gzip that contains the Ansible playbook files. Ransidble identifies a `targz` project by its `.tar.gz` extension.
+You can use the `targz` format for a project stored in the local filesystem.
+
+To prepare a project in the `targz` format, create a tarball compressed with gzip that contains the Ansible playbook files. The following example demonstrates how to create such a tarball from the files stored in the `my-project` directory:
+
+```bash
+tar -czvf my-project.tar.gz -C my-project .
+```
+
+### Examples of Requests
+
+#### Performing a Request to Execute an Ansible playbook
 
 The following example demonstrates how to execute an Ansible playbook using the Ransidble server. Please refer to the [REST API Reference](#rest-api-reference) section for more information.
 
@@ -112,14 +155,14 @@ Content-Length: 46
 {"id":"ecfc92dc-6323-40d6-9bf8-71c4d4d98640"}
 ```
 
-### Perform a Request Accepting Gzip Encoding
+#### Perform a Request Accepting Gzip Encoding
 
 ```bash
 ❯ curl -H 'Accept-Encoding: gzip' --output /dev/stdout -s -XPOST 0.0.0.0:8080/command/ansible-playbook
 r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
 ```
 
-### Get the Status of an Execution
+#### Getting the Status of an Execution
 
 ```bash
 ❯ curl -s -GET 0.0.0.0:8080/tasks/ecfc92dc-6323-40d6-9bf8-71c4d4d98640 | jq
@@ -145,7 +188,7 @@ r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
 }
 ```
 
-### Get the project details
+#### Getting the project details
 
 ```bash
 ❯ curl -s 0.0.0.0:8080/projects/project-1 | jq
@@ -157,7 +200,7 @@ r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
 }
 ```
 
-### Get the list of projects
+#### Getting the list of projects
 
 ```bash
 ❯ curl -s 0.0.0.0:8080/projects | jq

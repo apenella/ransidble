@@ -152,8 +152,8 @@ func (w *Workspace) Prepare() error {
 
 		return fmt.Errorf("%s: %w", "error generating workspace path", err)
 	}
-	w.workingDir = workingDir
 
+	w.workingDir = workingDir
 	_, err = w.fs.Stat(workingDir)
 	if err == nil {
 		w.logger.Error(
@@ -222,6 +222,7 @@ func (w *Workspace) Prepare() error {
 		return ErrProjectUnpackerNotAvailable
 	}
 
+	// TODO: workingDir should be set to a directory when the project is a directory and a file otherwise
 	err = unpacker.Unpack(project, workingDir)
 	if err != nil {
 		w.logger.Error(fmt.Sprintf("%s: %s", ErrUnpackingProject.Error(), err.Error()), map[string]interface{}{

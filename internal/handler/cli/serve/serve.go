@@ -68,13 +68,20 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			}
 
 			fetchFactory := fetch.NewFactory()
-			fetchFactory.Register(entity.ProjectTypeLocal, fetch.NewLocalStorage(
-				filesystem,
-				log,
-			))
+			fetchFactory.Register(
+				entity.ProjectTypeLocal,
+				fetch.NewLocalStorage(
+					filesystem,
+					log,
+				),
+			)
 
 			unpackFactory := unpack.NewFactory()
 			unpackFactory.Register(entity.ProjectFormatPlain, unpack.NewPlainFormat(
+				filesystem,
+				log,
+			))
+			unpackFactory.Register(entity.ProjectFormatTarGz, unpack.NewTarGzipFormat(
 				filesystem,
 				log,
 			))
@@ -87,7 +94,6 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 				log,
 			)
 
-			taskRepository := taskpersistence.NewMemoryTaskRepository()
 			dispatcher := executor.NewDispatch(
 				config.Server.WorkerPoolSize,
 				workspaceBuilder,
@@ -108,6 +114,7 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 				Level: 5,
 			}))
 
+			taskRepository := taskpersistence.NewMemoryTaskRepository()
 			createTaskAnsiblePlaybookService := taskService.NewCreateTaskAnsiblePlaybookService(
 				dispatcher,
 				taskRepository,

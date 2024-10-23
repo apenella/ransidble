@@ -115,6 +115,16 @@ func (s *CreateTaskAnsiblePlaybookService) Run(
 		return domainerror.NewProjectNotProvidedError(ErrProjectNotProvided)
 	}
 
+	_, err = s.projectRepository.Find(projectID)
+	if err != nil {
+		s.logger.Error(ErrFindingProject.Error(), map[string]interface{}{
+			"component":  "CreateTaskAnsiblePlaybookService.Run",
+			"package":    "github.com/apenella/ransidble/internal/domain/core/service/task",
+			"project_id": projectID,
+		})
+		return domainerror.NewProjectNotFoundError(ErrFindingProject)
+	}
+
 	err = s.taskRepository.SafeStore(task.ID, task)
 	if err != nil {
 		s.logger.Error("%s: %s", ErrorStoreTask, err.Error(), map[string]interface{}{

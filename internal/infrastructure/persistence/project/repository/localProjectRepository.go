@@ -50,6 +50,7 @@ func (r *LocalProjectRepository) LoadProjects() error {
 	var projectEntity *entity.Project
 	var projectFormat string
 	var projectPath string
+	var projectName string
 
 	_, err = afero.IsDir(r.Fs, r.Path)
 	if err != nil {
@@ -63,10 +64,13 @@ func (r *LocalProjectRepository) LoadProjects() error {
 
 	for _, project := range projects {
 
+		projectName = project.Name()
+
 		if project.Mode().IsRegular() {
 			// When is found a regular file and project name ends with .tar.gz we consider it as a tar.gz file, otherwise we skip the file
 			if strings.HasSuffix(project.Name(), ExtensionTarGz) {
 				projectFormat = entity.ProjectFormatTarGz
+				projectName = strings.TrimSuffix(project.Name(), ExtensionTarGz)
 			} else {
 				continue
 			}
@@ -77,11 +81,11 @@ func (r *LocalProjectRepository) LoadProjects() error {
 		}
 
 		projectPath = filepath.Join(r.Path, project.Name())
-		projectEntity = entity.NewProject(project.Name(), projectPath, projectFormat, entity.ProjectTypeLocal)
+		projectEntity = entity.NewProject(projectName, projectPath, projectFormat, entity.ProjectTypeLocal)
 
 		r.logger.Debug(fmt.Sprintf("Loading project %s from %s", project.Name(), projectPath))
 
-		err = r.SafeStore(project.Name(), projectEntity)
+		err = r.SafeStore(projectName, projectEntity)
 		if err != nil {
 			r.logger.Error(fmt.Sprintf("Error loading project %s: %s", project.Name(), err))
 		}

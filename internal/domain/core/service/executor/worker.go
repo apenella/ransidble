@@ -103,23 +103,27 @@ func (w *Worker) Start(ctx context.Context) (err error) {
 
 					err = workspace.Prepare()
 					if err != nil {
-						w.logger.Error(fmt.Sprintf("%s: %s", ErrPreparingWorkspace, err.Error()), map[string]interface{}{
+						errMssg := fmt.Sprintf("%s: %s", ErrPreparingWorkspace, err.Error())
+						t.Failed(errMssg)
+						w.logger.Error(errMssg, map[string]interface{}{
 							"component": "Worker.Start",
 							"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
 							"task_id":   t.ID,
 						})
-						err = fmt.Errorf("%s: %w", ErrPreparingWorkspace, err)
+						err = fmt.Errorf("%s", errMssg)
 						continue
 					}
 
 					workingDir, err = workspace.GetWorkingDir()
 					if err != nil {
-						w.logger.Error(fmt.Sprintf("%s: %s", ErrGettingWorkingDir, err.Error()), map[string]interface{}{
+						errMsg := fmt.Sprintf("%s: %s", ErrGettingWorkingDir, err.Error())
+						t.Failed(errMsg)
+						w.logger.Error(errMsg, map[string]interface{}{
 							"component": "CreateTaskAnsiblePlaybookService.Run",
 							"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
 							"task_id":   t.ID,
 						})
-						err = fmt.Errorf("%s: %w", ErrGettingWorkingDir, err)
+						err = fmt.Errorf("%s", errMsg)
 						continue
 					}
 
