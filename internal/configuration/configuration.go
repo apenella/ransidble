@@ -3,7 +3,6 @@ package configuration
 import (
 	"strings"
 
-	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/spf13/viper"
 )
 
@@ -14,8 +13,6 @@ const (
 	DefaultWorkerPoolSize = 1
 	// DefaultLogLevel default log level
 	DefaultLogLevel = "info"
-	// DefaultStorageType default storage type
-	DefaultStorageType = entity.ProjectTypeLocal
 	// DefaultLocalStoragePath default local storage path
 	DefaultLocalStoragePath = "projects"
 
@@ -30,8 +27,6 @@ const (
 
 	// ProjectKey key for project configuration
 	ProjectKey = "project"
-	// StorageTypeKey key for storage type configuration
-	StorageTypeKey = "storage_type"
 	// LocalStoragePathKey key for local storage path configuration
 	LocalStoragePathKey = "local_storage_path"
 )
@@ -41,6 +36,7 @@ type Configuration struct {
 	Server ServerConfiguration `mapstructure:"server"`
 }
 
+// ServerConfiguration represents the server configuration
 type ServerConfiguration struct {
 	// HTTPListenAddress represents the HTTP listen address
 	HTTPListenAddress string `mapstructure:"http_listen_address"`
@@ -52,13 +48,13 @@ type ServerConfiguration struct {
 	Project ProjectConfiguration `mapstructure:"project"`
 }
 
+// ProjectConfiguration represents the project configuration
 type ProjectConfiguration struct {
-	// StorageType represents the storage type
-	StorageType string `mapstructure:"storage_type"`
 	// LocalStoragePath represents the local storage path
 	LocalStoragePath string `mapstructure:"local_storage_path"`
 }
 
+// LoadConfig loads the configuration
 func LoadConfig() (*Configuration, error) {
 	var config Configuration
 	var err error
@@ -68,8 +64,6 @@ func LoadConfig() (*Configuration, error) {
 	v.SetDefault(strings.Join([]string{ServerKey, HTTPListenAddressKey}, "."), DefaultHTTPListenAddress)
 	v.SetDefault(strings.Join([]string{ServerKey, WorkerPoolSizeKey}, "."), DefaultWorkerPoolSize)
 	v.SetDefault(strings.Join([]string{ServerKey, LogLevelKey}, "."), DefaultLogLevel)
-
-	v.SetDefault(strings.Join([]string{ServerKey, ProjectKey, StorageTypeKey}, "."), DefaultStorageType)
 	v.SetDefault(strings.Join([]string{ServerKey, ProjectKey, LocalStoragePathKey}, "."), DefaultLocalStoragePath)
 
 	replacer := strings.NewReplacer(".", "_")
