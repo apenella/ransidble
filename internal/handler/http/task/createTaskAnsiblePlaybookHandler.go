@@ -118,7 +118,7 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
-	task := entity.NewTask(taskID, projectID, entity.ANSIBLE_PLAYBOOK, parameters)
+	task := entity.NewTask(taskID, projectID, entity.AnsiblePlaybookCommand, parameters)
 
 	h.logger.Debug(
 		fmt.Sprintf("creating task %s to run an Ansible playbook on project %s\n", taskID, projectID),

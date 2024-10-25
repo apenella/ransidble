@@ -128,7 +128,7 @@ func (w *Worker) Start(ctx context.Context) (err error) {
 					}
 
 					switch t.Command {
-					case entity.ANSIBLE_PLAYBOOK:
+					case entity.AnsiblePlaybookCommand:
 						w.logger.Debug(fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, "Running a playbook"))
 						_, ok = t.Parameters.(*entity.AnsiblePlaybookParameters)
 						if !ok {
