@@ -17,7 +17,6 @@ Ransidble is a utility that enables you to execute [Ansible](https://www.ansible
   - [User Reference](#user-reference)
     - [Project Definition](#project-definition)
       - [Project Storage Types](#project-storage-types)
-        - [Local Filesystem](#local-filesystem)
       - [Project Format Types](#project-format-types)
         - [Plain](#plain)
         - [Tar Gz](#tar-gz)
@@ -111,16 +110,18 @@ Each project has the following attributes:
 
 - **Name**: The name of the project. Which is the unique identifier for the project.
 - **Reference**: The reference where the project is located in the storage.
-- **Storage Type**: The type of storage used to store the project.
-- **Format**: The format of the project.
+- **Storage Type**: The type of storage used to store the project. [This](#project-storage-types) section describes the supported storage types.
+- **Format**: The format of the project. [This](#project-format-types) section describes the supported format types.
 
 #### Project Storage Types
 
-##### Local Filesystem
+The storage type defines where the project is stored. The supported storage types are:
 
-The local storage type stores the project in the local filesystem. You can define the path where projects are stored by using the `RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH` environment variable.
+- **local**: The project is stored in the local filesystem. The local storage type stores the project in the local filesystem. You can define the path where projects are stored by using the `RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH` environment variable.
 
 #### Project Format Types
+
+The format type defines the structure of the project. The following sections describe the supported format types.
 
 ##### Plain
 
