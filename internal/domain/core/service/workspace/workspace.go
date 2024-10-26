@@ -184,14 +184,14 @@ func (w *Workspace) Prepare() error {
 		return fmt.Errorf("%s", errorMsg)
 	}
 
-	fetcher := w.fetchFactory.Get(project.Type)
+	fetcher := w.fetchFactory.Get(project.Storage)
 	if fetcher == nil {
 		w.logger.Error(ErrProjectFetcherNotAvailable.Error(), map[string]interface{}{
-			"component":    "Workspace.Prepare",
-			"package":      "github.com/apenella/ransidble/internal/domain/core/service/workspace",
-			"project_id":   projectID,
-			"task_id":      w.task.ID,
-			"storage_type": project.Type,
+			"component":  "Workspace.Prepare",
+			"package":    "github.com/apenella/ransidble/internal/domain/core/service/workspace",
+			"project_id": projectID,
+			"task_id":    w.task.ID,
+			"storage":    project.Storage,
 		})
 
 		return ErrProjectFetcherNotAvailable
