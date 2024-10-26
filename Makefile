@@ -9,10 +9,15 @@ COLOR_END=\033[0m
 
 .DEFAULT_GOAL := help
 
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
+
 help: ## Lists available targets
 	@echo
 	@echo "Makefile usage:"
-	@grep -E '^[a-zA-Z1-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[1;32m%-20s\033[0m %s\n", $$1, $$2}' | sort
+	@grep -E '^[a-zA-Z1-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[1;32m%-25s\033[0m %s\n", $$1, $$2}' | sort
 	@echo
 
 #
@@ -38,6 +43,13 @@ golint: ci-go-tools-docker-image ## Executes Go linter (golint)
 	@echo
 	@docker run --rm -v "${PWD}":/app -w /app ci-go-tools-docker-image golint ./internal/... && echo "$(COLOR_GREEN) golint: all files linted$(COLOR_END)" || echo "$(COLOR_RED)golint: some files not linted$(COLOR_END)"
 
+tests: test-unit ## Executes tests
+
+tests-unit: ## Executes unit test
+	@echo
+	@echo "$(COLOR_BLUE) Executing unit test$(COLOR_END)"
+	@echo
+	@docker run --rm -v "${PWD}":/app -w /app golang:${GOLANG_VERSION}-alpine go test -count=1 -cover ./internal/... && echo "$(COLOR_GREEN) Unit test: OK$(COLOR_END)" || echo "$(COLOR_RED)Unit test: some test failed$(COLOR_END)"
 #
 # Environment targets
 
