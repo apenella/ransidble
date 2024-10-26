@@ -69,7 +69,7 @@ type AnsiblePlaybookParameters struct {
 	VaultPasswordFile string `json:"vault_password_file,omitempty"`
 
 	// Verbose verbose mode enabled
-	Verbose bool `json:"verbose,omitempty"`
+	Verbose bool `json:"verbose,omitempty" validate:"boolean"`
 
 	// // Verbose verbose mode -v enabled
 	// VerboseV bool
@@ -88,8 +88,8 @@ type AnsiblePlaybookParameters struct {
 
 	// Parameters defined on `Connections Options` section within ansible-playbook's man page, and which defines how to connect to hosts.
 
-	// Connection is the type of connection used by ansible-playbook
-	Connection string `json:"connection,omitempty" validate:"alphanum"`
+	// Connection is the type of connection used by ansible-playbook. It must not accept local connection
+	Connection string `json:"connection,omitempty"`
 
 	// // PrivateKey is the user's private key file used to connect to a host
 	// PrivateKey string

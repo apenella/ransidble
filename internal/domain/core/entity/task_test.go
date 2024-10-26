@@ -6,6 +6,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestNewTask(t *testing.T) {
+	task := NewTask("id", "project-id", "command", map[string]interface{}{})
+
+	assert.Equal(t, "id", task.ID)
+	assert.Equal(t, "project-id", task.ProjectID)
+	assert.Equal(t, "command", task.Command)
+	assert.Equal(t, map[string]interface{}{}, task.Parameters)
+	assert.Equal(t, PENDING, task.Status)
+}
+
 func TestTaskValidate(t *testing.T) {
 	type fields struct {
 		Command    string
@@ -131,4 +141,33 @@ func TestTaskValidate(t *testing.T) {
 
 		})
 	}
+}
+
+func TestAccepted(t *testing.T) {
+	task := NewTask("id", "project-id", "command", map[string]interface{}{})
+	task.Accepted()
+
+	assert.Equal(t, ACCEPTED, task.Status)
+}
+
+func TestRunning(t *testing.T) {
+	task := NewTask("id", "project-id", "command", map[string]interface{}{})
+	task.Running()
+
+	assert.Equal(t, RUNNING, task.Status)
+}
+
+func TestFailed(t *testing.T) {
+	task := NewTask("id", "project-id", "command", map[string]interface{}{})
+	task.Failed("error message")
+
+	assert.Equal(t, FAILED, task.Status)
+	assert.Equal(t, "error message", task.ErrorMessage)
+}
+
+func TestSuccess(t *testing.T) {
+	task := NewTask("id", "project-id", "command", map[string]interface{}{})
+	task.Success()
+
+	assert.Equal(t, SUCCESS, task.Status)
 }
