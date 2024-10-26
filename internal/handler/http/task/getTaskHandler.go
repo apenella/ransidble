@@ -22,11 +22,13 @@ const (
 	ErrGettingTask = "error getting task"
 )
 
+// GetTaskHandler is a handler for getting a task
 type GetTaskHandler struct {
 	service service.GetTaskServicer
 	logger  repository.Logger
 }
 
+// NewGetTaskHandler creates a new GetTaskHandler
 func NewGetTaskHandler(s service.GetTaskServicer, logger repository.Logger) *GetTaskHandler {
 	return &GetTaskHandler{
 		service: s,
@@ -34,6 +36,7 @@ func NewGetTaskHandler(s service.GetTaskServicer, logger repository.Logger) *Get
 	}
 }
 
+// Handle handles the request to get a task
 func (h *GetTaskHandler) Handle(c echo.Context) error {
 
 	var errorResponse *response.TaskErrorResponse
