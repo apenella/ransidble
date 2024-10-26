@@ -1,8 +1,6 @@
 package mapper
 
 import (
-	"fmt"
-
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/core/model/request"
 )
@@ -140,9 +138,6 @@ func (m *AnsiblePlaybookParametersMapper) copyMap(original map[string]interface{
 		case []interface{}:
 			copy[key] = m.copySlice(v)
 		default:
-
-			fmt.Println(">>>> value type is: ", v, key)
-
 			copy[key] = value
 		}
 	}
