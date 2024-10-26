@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
-	request "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
+	"github.com/apenella/ransidble/internal/domain/core/model/request"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -8,7 +8,7 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
 	"github.com/apenella/ransidble/internal/domain/core/mapper"
-	request "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
+	"github.com/apenella/ransidble/internal/domain/core/model/request"
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
@@ -30,11 +30,13 @@ const (
 	ErrProjectIDNotProvided = "project id not provided"
 )
 
+// CreateTaskAnsiblePlaybookHandler is a handler for creating a task to run an Ansible playbook
 type CreateTaskAnsiblePlaybookHandler struct {
 	service service.AnsiblePlaybookServicer
 	logger  repository.Logger
 }
 
+// NewCreateTaskAnsiblePlaybookHandler creates a new CreateTaskAnsiblePlaybookHandler
 func NewCreateTaskAnsiblePlaybookHandler(service service.AnsiblePlaybookServicer, logger repository.Logger) *CreateTaskAnsiblePlaybookHandler {
 	return &CreateTaskAnsiblePlaybookHandler{
 		logger:  logger,
@@ -42,6 +44,7 @@ func NewCreateTaskAnsiblePlaybookHandler(service service.AnsiblePlaybookServicer
 	}
 }
 
+// Handle handles the request to create a task to run an Ansible playbook
 func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 	var err error
 	var errorMsg string

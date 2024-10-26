@@ -1,4 +1,4 @@
-package ansibleplaybook
+package request
 
 import (
 	_ "embed"
@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// AnsiblePlaybookParameters represents the parameters to be used on ansible-playbook execution
 type AnsiblePlaybookParameters struct {
 
 	// Playbooks is the ansible's playbooks list to be executed

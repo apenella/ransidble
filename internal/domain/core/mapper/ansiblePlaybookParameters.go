@@ -1,8 +1,10 @@
 package mapper
 
 import (
+	"fmt"
+
 	"github.com/apenella/ransidble/internal/domain/core/entity"
-	request "github.com/apenella/ransidble/internal/domain/core/model/request/ansible-playbook"
+	"github.com/apenella/ransidble/internal/domain/core/model/request"
 )
 
 // AnsiblePlaybookParametersMapper is responsible for mapping ansible playbook parameters
@@ -13,6 +15,7 @@ func NewAnsiblePlaybookParametersMapper() *AnsiblePlaybookParametersMapper {
 	return &AnsiblePlaybookParametersMapper{}
 }
 
+// ToAnsiblePlaybookParametersEntity maps a request.AnsiblePlaybookParameters to a entity.AnsiblePlaybookParameters
 func (m *AnsiblePlaybookParametersMapper) ToAnsiblePlaybookParametersEntity(parameters *request.AnsiblePlaybookParameters) *entity.AnsiblePlaybookParameters {
 
 	if parameters == nil {
@@ -126,21 +129,27 @@ func (m *AnsiblePlaybookParametersMapper) toAnsiblePlaybookParametersExtraVarsEn
 	return copy
 }
 
+// copyMap copies the content of a map[string]interface{} to a new map[string]interface{}
 func (m *AnsiblePlaybookParametersMapper) copyMap(original map[string]interface{}) map[string]interface{} {
 	copy := make(map[string]interface{})
 	for key, value := range original {
+
 		switch v := value.(type) {
 		case map[string]interface{}:
 			copy[key] = m.copyMap(v)
 		case []interface{}:
 			copy[key] = m.copySlice(v)
 		default:
+
+			fmt.Println(">>>> value type is: ", v, key)
+
 			copy[key] = value
 		}
 	}
 	return copy
 }
 
+// copySlice copies the content of a []interface{} to a new []interface{}
 func (m *AnsiblePlaybookParametersMapper) copySlice(original []interface{}) []interface{} {
 	copy := make([]interface{}, len(original))
 	for i, value := range original {
