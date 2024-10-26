@@ -24,6 +24,6 @@ func (m *ProjectMapper) ToProjectResponse(project *entity.Project) *response.Pro
 		Format:    project.Format,
 		Name:      project.Name,
 		Reference: project.Reference,
-		Type:      project.Type,
+		Storage:   project.Storage,
 	}
 }

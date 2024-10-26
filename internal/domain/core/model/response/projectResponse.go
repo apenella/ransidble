@@ -8,6 +8,6 @@ type ProjectResponse struct {
 	Name string `json:"name" validate:"required"`
 	// Source represents the project source
 	Reference string `json:"reference" validate:"required"`
-	// Type represents the project type
-	Type string `json:"type" validate:"required"`
+	// Storage represents the project type
+	Storage string `json:"storage" validate:"required"`
 }

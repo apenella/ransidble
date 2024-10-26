@@ -19,17 +19,17 @@ type Project struct {
 	Name string `json:"name" validate:"required"`
 	// Source represents the project source. This field is required
 	Reference string `json:"reference" validate:"required"`
-	// Type represents the project type. This field is required and must be one of the following values: local
-	Type string `json:"type" validate:"required,oneof=local"`
+	// Storage represents the project type. This field is required and must be one of the following values: local
+	Storage string `json:"storage" validate:"required,oneof=local"`
 }
 
 // NewProject creates a new project instance
-func NewProject(name, referene, format, projectType string) *Project {
+func NewProject(name, referene, format, storage string) *Project {
 	return &Project{
 		Format:    format,
 		Name:      name,
 		Reference: referene,
-		Type:      projectType,
+		Storage:   storage,
 	}
 }
 

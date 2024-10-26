@@ -21,13 +21,13 @@ func (m *ProjectMapper) TestToProjectResponse(t *testing.T) {
 				Format:    "project-format",
 				Name:      "project-name",
 				Reference: "project-reference",
-				Type:      "project-type",
+				Storage:   "project-storage",
 			},
 			expected: &response.ProjectResponse{
 				Format:    "project-format",
 				Name:      "project-name",
 				Reference: "project-reference",
-				Type:      "project-type",
+				Storage:   "project-storage",
 			},
 		},
 		{

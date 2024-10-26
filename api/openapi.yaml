@@ -328,12 +328,14 @@ components:
         reference:
           type: string
           description: The project source
-        type:
+        storage:
           type: string
-          description: The project type
+          description: The project storage type
+          enum:
+            - local
         format:
           type: string
-          description: The project type
+          description: The project format
           enum:
             - plain
             - targz

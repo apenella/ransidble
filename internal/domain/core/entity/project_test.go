@@ -6,12 +6,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestNewProject(t *testing.T) {
+	project := NewProject("project", "reference", "plain", "local")
+
+	assert.Equal(t, "plain", project.Format)
+	assert.Equal(t, "project", project.Name)
+	assert.Equal(t, "reference", project.Reference)
+	assert.Equal(t, "local", project.Storage)
+}
+
 func TestProjectValidate(t *testing.T) {
 	type fields struct {
 		Format    string
 		Name      string
 		Reference string
-		Type      string
+		Storage   string
 	}
 	tests := []struct {
 		desc    string
@@ -24,7 +33,7 @@ func TestProjectValidate(t *testing.T) {
 				Format:    "plain",
 				Name:      "project",
 				Reference: "reference",
-				Type:      "local",
+				Storage:   "local",
 			},
 			wantErr: false,
 		},
@@ -34,7 +43,7 @@ func TestProjectValidate(t *testing.T) {
 				Format:    "",
 				Name:      "project",
 				Reference: "reference",
-				Type:      "local",
+				Storage:   "local",
 			},
 			wantErr: true,
 		},
@@ -44,7 +53,7 @@ func TestProjectValidate(t *testing.T) {
 				Format:    "plain",
 				Name:      "",
 				Reference: "reference",
-				Type:      "local",
+				Storage:   "local",
 			},
 			wantErr: true,
 		},
@@ -54,7 +63,7 @@ func TestProjectValidate(t *testing.T) {
 				Format:    "plain",
 				Name:      "project",
 				Reference: "",
-				Type:      "local",
+				Storage:   "local",
 			},
 			wantErr: true,
 		},
@@ -64,7 +73,7 @@ func TestProjectValidate(t *testing.T) {
 				Format:    "plain",
 				Name:      "project",
 				Reference: "reference",
-				Type:      "",
+				Storage:   "",
 			},
 			wantErr: true,
 		},
@@ -74,7 +83,7 @@ func TestProjectValidate(t *testing.T) {
 				Format:    "plain",
 				Name:      "project",
 				Reference: "reference",
-				Type:      "invalid-type",
+				Storage:   "invalid-type",
 			},
 			wantErr: true,
 		},
@@ -84,7 +93,7 @@ func TestProjectValidate(t *testing.T) {
 				Format:    "invalid-format",
 				Name:      "project",
 				Reference: "reference",
-				Type:      "local",
+				Storage:   "local",
 			},
 			wantErr: true,
 		},
@@ -96,7 +105,7 @@ func TestProjectValidate(t *testing.T) {
 				Format:    test.fields.Format,
 				Name:      test.fields.Name,
 				Reference: test.fields.Reference,
-				Type:      test.fields.Type,
+				Storage:   test.fields.Storage,
 			}
 			err := p.Validate()
 
