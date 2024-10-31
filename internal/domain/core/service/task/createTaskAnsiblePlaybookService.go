@@ -136,7 +136,7 @@ func (s *CreateTaskAnsiblePlaybookService) Run(
 		return fmt.Errorf("%s: %w", ErrorStoreTask, err)
 	}
 
-	s.logger.Info(fmt.Sprintf("executing task %s", task.ID),
+	s.logger.Debug(fmt.Sprintf("executing task %s", task.ID),
 		map[string]interface{}{
 			"component":  "CreateTaskAnsiblePlaybookService.Run",
 			"package":    "github.com/apenella/ransidble/internal/domain/core/service/task",

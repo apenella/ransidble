@@ -66,7 +66,7 @@ func (s *LocalStorage) Fetch(project *entity.Project, workingDir string) (err er
 		}
 	}
 
-	s.logger.Info("fetching project", map[string]interface{}{
+	s.logger.Debug("fetching project", map[string]interface{}{
 		"component":   "LocalStorage.Fetch",
 		"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
 		"project_id":  project.Name,
