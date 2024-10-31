@@ -3,6 +3,7 @@ package workspace
 import (
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
+	"github.com/apenella/ransidble/internal/domain/ports/service"
 	"github.com/spf13/afero"
 )
 
@@ -36,7 +37,7 @@ func NewBuilder(fs afero.Fs, fetchFactory repository.SourceCodeFetchFactory, unp
 }
 
 // WithTask sets the project
-func (w *Builder) WithTask(task *entity.Task) *Builder {
+func (w *Builder) WithTask(task *entity.Task) service.WorkspaceBuilder {
 	w.options = append(w.options, func(w *Workspace) {
 		w.task = task
 	})
@@ -44,7 +45,7 @@ func (w *Builder) WithTask(task *entity.Task) *Builder {
 }
 
 // Build creates a new workspace
-func (w *Builder) Build() *Workspace {
+func (w *Builder) Build() service.Workspacer {
 	workspace := &Workspace{}
 	for _, option := range w.options {
 		option(workspace)

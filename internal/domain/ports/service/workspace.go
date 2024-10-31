@@ -2,11 +2,17 @@ package service
 
 import (
 	"github.com/apenella/ransidble/internal/domain/core/entity"
-	"github.com/apenella/ransidble/internal/domain/core/service/workspace"
 )
+
+// Workspacer interface to manage a workspace
+type Workspacer interface {
+	Prepare() error
+	Cleanup() error
+	GetWorkingDir() (string, error)
+}
 
 // WorkspaceBuilder interface to build a workspace
 type WorkspaceBuilder interface {
-	WithTask(task *entity.Task) *workspace.Builder
-	Build() *workspace.Workspace
+	WithTask(task *entity.Task) WorkspaceBuilder
+	Build() Workspacer
 }
