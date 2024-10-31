@@ -184,6 +184,14 @@ func (w *Workspace) Prepare() error {
 		return fmt.Errorf("%s", errorMsg)
 	}
 
+	w.logger.Debug("Workspace created", map[string]interface{}{
+		"component":   "Workspace.Prepare",
+		"package":     "github.com/apenella/ransidble/internal/domain/core/service/workspace",
+		"project_id":  projectID,
+		"task_id":     w.task.ID,
+		"working_dir": workingDir,
+	})
+
 	fetcher := w.fetchFactory.Get(project.Storage)
 	if fetcher == nil {
 		w.logger.Error(ErrProjectFetcherNotAvailable.Error(), map[string]interface{}{
@@ -283,6 +291,13 @@ func (w *Workspace) Cleanup() error {
 		})
 		return ErrWorkingDirNotDefined
 	}
+
+	w.logger.Debug("Cleaning workspace", map[string]interface{}{
+		"component":   "Workspace.Cleanup",
+		"package":     "github.com/apenella/ransidble/internal/domain/core/service/workspace",
+		"task_id":     w.task.ID,
+		"working_dir": w.workingDir,
+	})
 
 	err := w.fs.RemoveAll(w.workingDir)
 	if err != nil {
