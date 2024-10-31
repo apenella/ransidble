@@ -1,8 +1,6 @@
 package request
 
 import (
-	_ "embed"
-
 	"github.com/go-playground/validator/v10"
 )
 
@@ -11,9 +9,6 @@ type AnsiblePlaybookParameters struct {
 
 	// Playbooks is the ansible's playbooks list to be executed
 	Playbooks []string `json:"playbooks" validate:"required"`
-
-	// // AskVaultPassword ask for vault password
-	// AskVaultPassword bool
 
 	// Check don't make any changes; instead, try to predict some of the changes that may occur
 	Check bool `json:"check,omitempty" validate:"boolean"`
@@ -54,17 +49,11 @@ type AnsiblePlaybookParameters struct {
 	// ListTasks is the list tasks flag for ansible-playbook
 	ListTasks bool `json:"list_tasks,omitempty" validate:"boolean"`
 
-	// // ModulePath repend colon-separated path(s) to module library (default=~/.ansible/plugins/modules:/usr/share/ansible/plugins/modules)
-	// ModulePath string `json:"module_path,omitempty"`
-
 	// SkipTags only run plays and tasks whose tags do not match these values
 	SkipTags string `json:"skip_tags,omitempty"`
 
 	// StartAtTask start the playbook at the task matching this name
 	StartAtTask string `json:"start_at_task,omitempty"`
-
-	// // Step one-step-at-a-time: confirm each task before running
-	// Step bool
 
 	// SyntaxCheck is the syntax check flag for ansible-playbook
 	SyntaxCheck bool `json:"syntax_check,omitempty" validate:"boolean"`
@@ -98,11 +87,8 @@ type AnsiblePlaybookParameters struct {
 
 	// Parameters defined on `Connections Options` section within ansible-playbook's man page, and which defines how to connect to hosts.
 
-	// // AskPass defines whether user's password should be asked to connect to host
-	// AskPass bool
-
 	// Connection is the type of connection used by ansible-playbook
-	Connection string `json:"connection,omitempty" validate:"alphanum"`
+	Connection string `json:"connection,omitempty"`
 
 	// // PrivateKey is the user's private key file used to connect to a host
 	// PrivateKey string
