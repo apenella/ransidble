@@ -28,7 +28,7 @@ func TestProjectValidate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			desc: "Validating a project",
+			desc: "Validating a project entity",
 			fields: fields{
 				Format:    "plain",
 				Name:      "project",
@@ -38,7 +38,7 @@ func TestProjectValidate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			desc: "Validating a project with empty format",
+			desc: "Validating a project entity with empty format",
 			fields: fields{
 				Format:    "",
 				Name:      "project",
@@ -48,7 +48,7 @@ func TestProjectValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a project with empty name",
+			desc: "Validating a project entity with empty name",
 			fields: fields{
 				Format:    "plain",
 				Name:      "",
@@ -58,7 +58,7 @@ func TestProjectValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a project with empty reference",
+			desc: "Validating a project entity with empty reference",
 			fields: fields{
 				Format:    "plain",
 				Name:      "project",
@@ -68,7 +68,7 @@ func TestProjectValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a project with empty type",
+			desc: "Validating a project entity with empty type",
 			fields: fields{
 				Format:    "plain",
 				Name:      "project",
@@ -78,7 +78,7 @@ func TestProjectValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a project with invalid type",
+			desc: "Validating a project entity with invalid type",
 			fields: fields{
 				Format:    "plain",
 				Name:      "project",
@@ -88,7 +88,7 @@ func TestProjectValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a project with invalid format",
+			desc: "Validating a project entity with invalid format",
 			fields: fields{
 				Format:    "invalid-format",
 				Name:      "project",

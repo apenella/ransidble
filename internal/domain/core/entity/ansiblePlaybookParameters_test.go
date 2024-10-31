@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewAnsiblePlaybookParametersValidate(t *testing.T) {
+func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 	type fields struct {
 		Playbooks     []string
 		Check         bool
@@ -30,7 +30,7 @@ func TestNewAnsiblePlaybookParametersValidate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			desc: "Validating a AnsiblePlaybookParameters",
+			desc: "Validating a AnsiblePlaybookParameters entity",
 			fields: fields{
 				Playbooks:     []string{"playbook.yml"},
 				Check:         false,
@@ -51,7 +51,7 @@ func TestNewAnsiblePlaybookParametersValidate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			desc: "Validating a AnsiblePlaybookParameters with empty playbooks",
+			desc: "Validating a AnsiblePlaybookParameters entity with empty playbooks",
 			fields: fields{
 				Check:         false,
 				Diff:          false,
@@ -71,7 +71,7 @@ func TestNewAnsiblePlaybookParametersValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a AnsiblePlaybookParameters with empty inventory",
+			desc: "Validating a AnsiblePlaybookParameters entity with empty inventory",
 			fields: fields{
 				Playbooks:     []string{"playbook.yml"},
 				Check:         false,

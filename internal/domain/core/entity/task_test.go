@@ -30,7 +30,7 @@ func TestTaskValidate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			desc: "Validating a task",
+			desc: "Validating a task entity ",
 			fields: fields{
 				Command:    "ansible-playbook",
 				ID:         "task-id",
@@ -41,7 +41,7 @@ func TestTaskValidate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			desc: "Validating a task with empty id",
+			desc: "Validating a task entity with empty id",
 			fields: fields{
 				ID:         "",
 				Status:     "ACCEPTED",
@@ -52,7 +52,7 @@ func TestTaskValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a task with empty status",
+			desc: "Validating a task entity with empty status",
 			fields: fields{
 				ID:         "task-id",
 				Status:     "",
@@ -63,7 +63,7 @@ func TestTaskValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a task with empty command",
+			desc: "Validating a task entity with empty command",
 			fields: fields{
 				ID:         "task-id",
 				Status:     "ACCEPTED",
@@ -74,7 +74,7 @@ func TestTaskValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a task with empty parameters",
+			desc: "Validating a task entity with empty parameters",
 			fields: fields{
 				ID:         "task-id",
 				Status:     "ACCEPTED",
@@ -85,7 +85,7 @@ func TestTaskValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a task with empty project id",
+			desc: "Validating a task entity with empty project id",
 			fields: fields{
 				ID:         "task-id",
 				Status:     "ACCEPTED",
@@ -96,7 +96,7 @@ func TestTaskValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a task with invalid status",
+			desc: "Validating a task entity with invalid status",
 			fields: fields{
 				ID:         "task-id",
 				Status:     "invalid-status",
@@ -107,7 +107,7 @@ func TestTaskValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a task with invalid command",
+			desc: "Validating a task entity with invalid command",
 			fields: fields{
 				ID:         "task-id",
 				Status:     "ACCEPTED",
@@ -144,6 +144,8 @@ func TestTaskValidate(t *testing.T) {
 }
 
 func TestAccepted(t *testing.T) {
+	t.Log("Testing task entity accepted method")
+
 	task := NewTask("id", "project-id", "command", map[string]interface{}{})
 	task.Accepted()
 
@@ -151,6 +153,8 @@ func TestAccepted(t *testing.T) {
 }
 
 func TestRunning(t *testing.T) {
+	t.Log("Testing task entity running method")
+
 	task := NewTask("id", "project-id", "command", map[string]interface{}{})
 	task.Running()
 
@@ -158,6 +162,8 @@ func TestRunning(t *testing.T) {
 }
 
 func TestFailed(t *testing.T) {
+	t.Log("Testing task entity failed method")
+
 	task := NewTask("id", "project-id", "command", map[string]interface{}{})
 	task.Failed("error message")
 
@@ -166,6 +172,8 @@ func TestFailed(t *testing.T) {
 }
 
 func TestSuccess(t *testing.T) {
+	t.Log("Testing task entity success method")
+
 	task := NewTask("id", "project-id", "command", map[string]interface{}{})
 	task.Success()
 
