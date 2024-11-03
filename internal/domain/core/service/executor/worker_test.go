@@ -7,6 +7,7 @@ import (
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/core/service/workspace"
+	"github.com/apenella/ransidble/internal/infrastructure/executor"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/stretchr/testify/assert"
 )
@@ -53,6 +54,7 @@ func TestCreateWorkspace(t *testing.T) {
 				&workspace.MockBuilder{
 					Workspace: &workspace.MockWorkspace{},
 				},
+				executor.NewAnsiblePlaybook(),
 				nil,
 			),
 			task: &entity.Task{
@@ -85,6 +87,7 @@ func TestCreateWorkspace(t *testing.T) {
 				&workspace.MockBuilder{
 					Workspace: &workspace.MockWorkspace{},
 				},
+				executor.NewAnsiblePlaybook(),
 				logger.NewFakeLogger(),
 			),
 			task: &entity.Task{
