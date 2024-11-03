@@ -8,7 +8,6 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
-	"github.com/apenella/ransidble/internal/infrastructure/executor"
 	"github.com/google/uuid"
 )
 
@@ -30,6 +29,8 @@ var (
 	ErrPreparingWorkspace = fmt.Errorf("error preparing workspace")
 	// ErrGettingWorkingDir represents an error when getting the working directory
 	ErrGettingWorkingDir = fmt.Errorf("error getting working directory")
+	// ErrAnsiblePlaybookExecutorDefined represents an error when the ansible playbook executor is not found
+	ErrAnsiblePlaybookExecutorDefined = fmt.Errorf("ansible playbook executor not defined")
 )
 
 // Worker represents a worker to run tasks
@@ -50,6 +51,9 @@ type Worker struct {
 	workerPool chan chan *entity.Task
 	// workspaceBuilder is the workspace builder
 	workspaceBuilder service.WorkspaceBuilder
+
+	// ansiblePlaybookExecutor is the ansible playbook executor
+	ansiblePlaybookExecutor AnsiblePlaybookExecutor
 }
 
 func genereteID() string {
@@ -57,17 +61,23 @@ func genereteID() string {
 }
 
 // NewWorker creates a new worker
-func NewWorker(workerPool chan chan *entity.Task, workspaceBuilder service.WorkspaceBuilder, logger repository.Logger) *Worker {
+func NewWorker(
+	workerPool chan chan *entity.Task,
+	workspaceBuilder service.WorkspaceBuilder,
+	ansiblePlaybookExecutor AnsiblePlaybookExecutor,
+	logger repository.Logger,
+) *Worker {
 
 	id := genereteID()
 
 	return &Worker{
-		id:               id, // set random alphanumeric
-		logger:           logger,
-		stopCh:           make(chan struct{}),
-		taskChan:         make(chan *entity.Task),
-		workerPool:       workerPool,
-		workspaceBuilder: workspaceBuilder,
+		ansiblePlaybookExecutor: ansiblePlaybookExecutor,
+		id:                      id, // set random alphanumeric
+		logger:                  logger,
+		stopCh:                  make(chan struct{}),
+		taskChan:                make(chan *entity.Task),
+		workerPool:              workerPool,
+		workspaceBuilder:        workspaceBuilder,
 	}
 }
 
@@ -123,15 +133,22 @@ func (w *Worker) Stop() {
 }
 
 // handleTask handles a task to run by the worker
-func (w *Worker) handleTask(ctx context.Context, t *entity.Task) error {
+func (w *Worker) handleTask(ctx context.Context, task *entity.Task) error {
 	var workingDir string
 	var workspace service.Workspacer
 	var err error
 
-	t.Accepted()
+	task.Accepted()
 
-	workspace, err = w.createWorkspace(t)
+	workspace, err = w.createWorkspace(task)
 	if err != nil {
+		errMsg := fmt.Sprintf("%s: %s", ErrPreparingWorkspace, err.Error())
+		task.Failed(errMsg)
+		w.logger.Error(errMsg, map[string]interface{}{
+			"component": "Worker.handleTask",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
+			"task_id":   task.ID,
+		})
 		return err
 	}
 	defer func() {
@@ -141,61 +158,87 @@ func (w *Worker) handleTask(ctx context.Context, t *entity.Task) error {
 	workingDir, err = workspace.GetWorkingDir()
 	if err != nil {
 		errMsg := fmt.Sprintf("%s: %s", ErrGettingWorkingDir, err.Error())
-		t.Failed(errMsg)
+		task.Failed(errMsg)
 		w.logger.Error(errMsg, map[string]interface{}{
 			"component": "Worker.handleTask",
 			"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
-			"task_id":   t.ID,
+			"task_id":   task.ID,
 		})
 		err = fmt.Errorf("%s", errMsg)
 		return err
 	}
 
-	switch t.Command {
+	switch task.Command {
 	case entity.AnsiblePlaybookCommand:
-		w.logger.Debug(fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, "Running a playbook"))
-		_, ok := t.Parameters.(*entity.AnsiblePlaybookParameters)
+		// w.logger.Debug(fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, "Running a playbook"))
+		// _, ok := t.Parameters.(*entity.AnsiblePlaybookParameters)
+		// if !ok {
+		// 	errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, ErrTaskInvalidParameters)
+		// 	t.Failed(errorMsg)
+		// 	w.logger.Error(errorMsg, map[string]interface{}{
+		// 		"component": "Worker.handleTask",
+		// 		"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
+		// 		"task_id":   t.ID,
+		// 	})
+
+		// 	return fmt.Errorf("%s", errorMsg)
+		// }
+
+		// t.Running()
+		// ansibleplaybook := executor.NewAnsiblePlaybook()
+		// errRunAnsiblePlaybook := ansibleplaybook.Run(ctx, workingDir, t.Parameters.(*entity.AnsiblePlaybookParameters))
+		// if errRunAnsiblePlaybook != nil {
+		// 	errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, errRunAnsiblePlaybook)
+		// 	t.Failed(errorMsg)
+		// 	w.logger.Error(errorMsg, map[string]interface{}{
+		// 		"component": "Worker.handleTask",
+		// 		"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
+		// 		"task_id":   t.ID,
+		// 	})
+
+		// 	return fmt.Errorf("%s", errorMsg)
+		// }
+
+		_, ok := task.Parameters.(*entity.AnsiblePlaybookParameters)
 		if !ok {
-			errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, ErrTaskInvalidParameters)
-			t.Failed(errorMsg)
+			errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, task.ID, ErrTaskInvalidParameters)
 			w.logger.Error(errorMsg, map[string]interface{}{
 				"component": "Worker.handleTask",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
-				"task_id":   t.ID,
+				"task_id":   task.ID,
 			})
 
 			return fmt.Errorf("%s", errorMsg)
 		}
 
-		t.Running()
-		ansibleplaybook := executor.NewAnsiblePlaybook()
-		errRunAnsiblePlaybook := ansibleplaybook.Run(ctx, workingDir, t.Parameters.(*entity.AnsiblePlaybookParameters))
-		if errRunAnsiblePlaybook != nil {
-			errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, errRunAnsiblePlaybook)
-			t.Failed(errorMsg)
+		task.Running()
+		err = w.handleAnsiblePlaybookTask(ctx, task, workingDir)
+		if err != nil {
+			errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, task.ID, err)
+			task.Failed(errorMsg)
 			w.logger.Error(errorMsg, map[string]interface{}{
 				"component": "Worker.handleTask",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
-				"task_id":   t.ID,
+				"task_id":   task.ID,
 			})
 
 			return fmt.Errorf("%s", errorMsg)
 		}
 
-		t.Success()
-		w.logger.Debug(fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, "Playbook successfully executed"), map[string]interface{}{
+		task.Success()
+		w.logger.Debug(fmt.Sprintf(WorkerTaskMessagePrefix, w.id, task.ID, "Playbook successfully executed"), map[string]interface{}{
 			"component": "Worker.handleTask",
 			"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
-			"task_id":   t.ID,
+			"task_id":   task.ID,
 		})
 
 	default:
-		errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, t.ID, "Task with an unknown command")
-		t.Failed(errorMsg)
+		errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, task.ID, "Task with an unknown command")
+		task.Failed(errorMsg)
 		w.logger.Error(errorMsg, map[string]interface{}{
 			"component": "Worker.handleTask",
 			"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
-			"task_id":   t.ID,
+			"task_id":   task.ID,
 		})
 
 		return fmt.Errorf("%s", errorMsg)
@@ -204,24 +247,59 @@ func (w *Worker) handleTask(ctx context.Context, t *entity.Task) error {
 	return nil
 }
 
-// Execute executes a task
-func (w *Worker) createWorkspace(t *entity.Task) (service.Workspacer, error) {
+// createWorkspace creates a workspace for a task
+func (w *Worker) createWorkspace(task *entity.Task) (service.Workspacer, error) {
 
 	// the wsp and err are defined in the return statement to be able to handle the error in the defer function
-	wsp := w.workspaceBuilder.WithTask(t).Build()
+	wsp := w.workspaceBuilder.WithTask(task).Build()
 
 	err := wsp.Prepare()
 	if err != nil {
 		errMssg := fmt.Sprintf("%s: %s", ErrPreparingWorkspace, err.Error())
-		t.Failed(errMssg)
 		w.logger.Error(errMssg, map[string]interface{}{
 			"component": "Worker.createWorkspace",
 			"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
-			"task_id":   t.ID,
+			"task_id":   task.ID,
 		})
 		err = fmt.Errorf("%s", errMssg)
 		return nil, err
 	}
 
 	return wsp, nil
+}
+
+// handleAnsiblePlaybookTask runs an ansible-playbook task
+func (w *Worker) handleAnsiblePlaybookTask(ctx context.Context, task *entity.Task, workingDir string) error {
+
+	if w.ansiblePlaybookExecutor == nil {
+		errMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, task.ID, ErrAnsiblePlaybookExecutorDefined)
+		w.logger.Error(errMsg, map[string]interface{}{
+			"component": "Worker.handleAnsiblePlaybookTask",
+			"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
+			"task_id":   task.ID,
+		})
+
+		return fmt.Errorf("%s", errMsg)
+	}
+
+	w.logger.Debug(fmt.Sprintf(WorkerTaskMessagePrefix, w.id, task.ID, "Running a playbook"), map[string]interface{}{
+		"component": "Worker.handleAnsiblePlaybookTask",
+		"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
+		"task_id":   task.ID,
+	})
+
+	// ansibleplaybook := executor.NewAnsiblePlaybook()
+	errRunAnsiblePlaybook := w.ansiblePlaybookExecutor.Run(ctx, workingDir, task.Parameters.(*entity.AnsiblePlaybookParameters))
+	if errRunAnsiblePlaybook != nil {
+		errorMsg := fmt.Sprintf(WorkerTaskMessagePrefix, w.id, task.ID, errRunAnsiblePlaybook)
+		w.logger.Error(errorMsg, map[string]interface{}{
+			"component": "Worker.handleAnsiblePlaybookTask",
+			"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
+			"task_id":   task.ID,
+		})
+
+		return fmt.Errorf("%s", errorMsg)
+	}
+
+	return nil
 }

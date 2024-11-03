@@ -16,6 +16,7 @@ import (
 	server "github.com/apenella/ransidble/internal/handler/http"
 	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
 	taskHandler "github.com/apenella/ransidble/internal/handler/http/task"
+	ansibleexecutor "github.com/apenella/ransidble/internal/infrastructure/executor"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch"
 	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
@@ -97,6 +98,7 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			dispatcher := executor.NewDispatch(
 				config.Server.WorkerPoolSize,
 				workspaceBuilder,
+				ansibleexecutor.NewAnsiblePlaybook(),
 				log,
 			)
 

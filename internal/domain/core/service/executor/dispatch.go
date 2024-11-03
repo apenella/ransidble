@@ -38,22 +38,30 @@ type Dispatch struct {
 	workers []*Worker
 	// workspaceBuilder is the workspace builder
 	workspaceBuilder service.WorkspaceBuilder
+	// ansiblePlaybookExecutor is the ansible playbook executor
+	ansiblePlaybookExecutor AnsiblePlaybookExecutor
 }
 
 // NewDispatch creates a new dispatcher to run tasks
-func NewDispatch(workers int, workspaceBuilder service.WorkspaceBuilder, logger repository.Logger) *Dispatch {
+func NewDispatch(
+	workers int,
+	workspaceBuilder service.WorkspaceBuilder,
+	ansiblePlaybookExecutor AnsiblePlaybookExecutor,
+	logger repository.Logger,
+) *Dispatch {
 
 	if workers == 0 {
 		workers = DefaultWorkerPoolSize
 	}
 
 	return &Dispatch{
-		logger:           logger,
-		queue:            make(chan *entity.Task, workers),
-		stopCh:           make(chan struct{}),
-		workerPool:       make(chan chan *entity.Task, workers),
-		workers:          make([]*Worker, 0, workers),
-		workspaceBuilder: workspaceBuilder,
+		ansiblePlaybookExecutor: ansiblePlaybookExecutor,
+		logger:                  logger,
+		queue:                   make(chan *entity.Task, workers),
+		stopCh:                  make(chan struct{}),
+		workerPool:              make(chan chan *entity.Task, workers),
+		workers:                 make([]*Worker, 0, workers),
+		workspaceBuilder:        workspaceBuilder,
 	}
 }
 
@@ -63,7 +71,11 @@ func (d *Dispatch) Start(ctx context.Context) (err error) {
 	d.onceStart.Do(func() {
 
 		for i := 0; i < cap(d.queue); i++ {
-			worker := NewWorker(d.workerPool, d.workspaceBuilder, d.logger)
+			worker := NewWorker(
+				d.workerPool,
+				d.workspaceBuilder,
+				d.ansiblePlaybookExecutor,
+				d.logger)
 			d.workers = append(d.workers, worker)
 			workerStartErr := worker.Start(ctx)
 
