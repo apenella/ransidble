@@ -1,4 +1,4 @@
-package local
+package repository
 
 import (
 	"fmt"
