@@ -111,6 +111,7 @@ func (d *Dispatch) Start(ctx context.Context) (err error) {
 						"component": "Dispatch.Start",
 						"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
 					})
+					close(d.queue)
 					return
 				}
 			}
