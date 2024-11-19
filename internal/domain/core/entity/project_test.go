@@ -7,6 +7,9 @@ import (
 )
 
 func TestNewProject(t *testing.T) {
+	t.Log("Testing project entity creation")
+	t.Parallel()
+
 	project := NewProject("project", "reference", "plain", "local")
 
 	assert.Equal(t, "plain", project.Format)
@@ -101,6 +104,8 @@ func TestProjectValidate(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
+			t.Parallel()
+
 			p := &Project{
 				Format:    test.fields.Format,
 				Name:      test.fields.Name,

@@ -55,6 +55,7 @@ func (m *TaskMapper) TestToTaskResponse(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
+			t.Parallel()
 
 			res := m.ToTaskResponse(test.task)
 			assert.Equal(t, test.expected, res)

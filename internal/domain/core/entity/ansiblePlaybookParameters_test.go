@@ -95,6 +95,7 @@ func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 	for _, test := range test {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
+			t.Parallel()
 
 			params := &AnsiblePlaybookParameters{
 				Playbooks:     test.fields.Playbooks,

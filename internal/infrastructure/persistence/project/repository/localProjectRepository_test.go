@@ -11,6 +11,9 @@ import (
 
 // TestNewLocalProjectRepository tests the NewLocalProjectRepository method
 func TestNewLocalProjectRepository(t *testing.T) {
+	t.Parallel()
+	t.Log("Testing NewLocalProjectRepository")
+
 	fs := afero.NewMemMapFs()
 	persistence := NewLocalProjectRepository(fs, "/tmp", nil)
 	expected := &LocalProjectRepository{
@@ -57,6 +60,7 @@ func TestLocalProjectRepository_Find(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 
 			project, err := test.persistence.Find(test.name)
@@ -102,6 +106,7 @@ func TestLocalProjectRepository_FindAll(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 
 			projects, err := test.persistence.FindAll()
@@ -154,6 +159,7 @@ func TestLocalProjectRepository_Remove(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 
 			err := test.persistence.Remove(test.name)
@@ -213,6 +219,7 @@ func TestLocalProjectRepository_SafeStore(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 
 			err := test.persistence.SafeStore(test.name, test.project)
@@ -254,6 +261,7 @@ func TestLocalProjectRepository_Store(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 
 			err := test.persistence.Store(test.name, test.project)
@@ -316,6 +324,7 @@ func TestLocalProjectRepository_Update(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 
 			err := test.persistence.Update(test.name, test.project)

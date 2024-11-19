@@ -8,6 +8,9 @@ import (
 )
 
 func TestNewMemoryTaskRepository(t *testing.T) {
+	t.Parallel()
+	t.Log("Testing NewMemoryTaskRepository")
+
 	persistence := NewMemoryTaskRepository()
 	expected := &MemoryTaskRepository{
 		store: make(map[string]*entity.Task),
@@ -60,6 +63,7 @@ func TestMemoryTaskRepository_Find(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 			task, err := test.persistence.Find(test.id)
 			if err != nil {
@@ -102,6 +106,7 @@ func TestMemoryTaskRepository_FindAll(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 			tasks, err := test.persistence.FindAll()
 			if err != nil {
@@ -159,6 +164,7 @@ func TestMemoryTaskRepository_Remove(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 			err := test.persistence.Remove(test.id)
 			if err != nil {
@@ -220,6 +226,7 @@ func TestMemoryTaskRepository_SafeStore(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 			err := test.persistence.SafeStore(test.id, test.task)
 			if err != nil {
@@ -285,6 +292,7 @@ func TestMemoryTaskRepository_Store(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 			err := test.persistence.Store(test.id, test.task)
 			if err != nil {
@@ -352,6 +360,7 @@ func TestMemoryTaskRepository_Update(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 			err := test.persistence.Update(test.id, test.task)
 			if err != nil {

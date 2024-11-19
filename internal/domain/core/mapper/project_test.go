@@ -45,6 +45,7 @@ func (m *ProjectMapper) TestToProjectResponse(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
+			t.Parallel()
 
 			res := m.ToProjectResponse(test.project)
 			assert.Equal(t, test.expected, res)

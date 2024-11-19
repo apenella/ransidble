@@ -124,6 +124,7 @@ func TestToAnsiblePlaybookParametersEntity(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
+			t.Parallel()
 
 			res := test.mapper.ToAnsiblePlaybookParametersEntity(test.source)
 
@@ -180,6 +181,7 @@ func TestToAnsiblePLaybookParametersDependenciesEntity(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
+			t.Parallel()
 
 			res := test.mapper.toAnsiblePLaybookParametersDependenciesEntity(test.source)
 
@@ -241,6 +243,7 @@ func TestToAnsiblePLaybookParametersRolesDependenciesEntity(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
+			t.Parallel()
 
 			res := test.mapper.toAnsiblePLaybookParametersRolesDependenciesEntity(test.source)
 
@@ -304,6 +307,7 @@ func TestToAnsiblePLaybookParametersCollectionsDependenciesEntity(t *testing.T) 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
+			t.Parallel()
 
 			res := test.mapper.toAnsiblePLaybookParametersCollectionsDependenciesEntity(test.source)
 
@@ -354,6 +358,7 @@ func TestToAnsiblePlaybookParametersExtraVarsEntity(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
+			t.Parallel()
 
 			res := test.mapper.toAnsiblePlaybookParametersExtraVarsEntity(test.source)
 
@@ -404,6 +409,7 @@ func TestCopyMap(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
+			t.Parallel()
 
 			res := test.mapper.copyMap(test.source)
 			assert.Equal(t, test.expected, res)
@@ -453,6 +459,7 @@ func TestCopySlice(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
+			t.Parallel()
 
 			res := test.mapper.copySlice(test.source)
 			assert.Equal(t, test.expected, res)

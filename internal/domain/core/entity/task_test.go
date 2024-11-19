@@ -7,6 +7,9 @@ import (
 )
 
 func TestNewTask(t *testing.T) {
+	t.Log("Testing task entity creation")
+	t.Parallel()
+
 	task := NewTask("id", "project-id", "command", map[string]interface{}{})
 
 	assert.Equal(t, "id", task.ID)

@@ -16,12 +16,11 @@ import (
 )
 
 func TestWorkerGenerateID(t *testing.T) {
-	t.Parallel()
-
 	id := genereteID()
 	// ensure the id is a valid uuid
 
 	t.Run("ID is not empty", func(t *testing.T) {
+		t.Parallel()
 		t.Log("Testing generateID for a worker is not empty")
 		if id == "" {
 			assert.NotEmpty(t, id, "ID must not be empty")
@@ -29,11 +28,13 @@ func TestWorkerGenerateID(t *testing.T) {
 	})
 
 	t.Run("ID has 36 characters", func(t *testing.T) {
+		t.Parallel()
 		t.Log("Testing generateID for a worker has 36 characters")
 		assert.Len(t, id, 36, "ID must be a valid uuid with 36 characters")
 	})
 
 	t.Run("ID is a valid uuid", func(t *testing.T) {
+		t.Parallel()
 		t.Log("Testing generateID for a worker is a valid uuid")
 		uuidRegex := regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
 		assert.True(t, uuidRegex.MatchString(id), "ID is not a valid uuid")
@@ -41,8 +42,6 @@ func TestWorkerGenerateID(t *testing.T) {
 }
 
 func TestCreateWorkspace(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		desc    string
 		worker  *Worker
@@ -124,6 +123,7 @@ func TestCreateWorkspace(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 
 			if test.arrange != nil {
@@ -145,8 +145,6 @@ func TestCreateWorkspace(t *testing.T) {
 }
 
 func TestHandleAnsiblePlaybookTask(t *testing.T) {
-
-	t.Parallel()
 
 	tests := []struct {
 		desc       string
@@ -251,6 +249,7 @@ func TestHandleAnsiblePlaybookTask(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 
 			if test.arrange != nil {
@@ -271,7 +270,6 @@ func TestHandleAnsiblePlaybookTask(t *testing.T) {
 }
 
 func TestHandleTask(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		desc         string
@@ -579,6 +577,7 @@ func TestHandleTask(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 
 			if test.arrange != nil {
@@ -600,7 +599,6 @@ func TestHandleTask(t *testing.T) {
 	}
 }
 func TestWorkerStop(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		desc   string
@@ -621,6 +619,7 @@ func TestWorkerStop(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 
 			// Start the worker
@@ -641,33 +640,8 @@ func TestWorkerStop(t *testing.T) {
 			}
 		})
 	}
-
-	// for _, test := range tests {
-	// 	t.Run(test.desc, func(t *testing.T) {
-	// 		t.Log(test.desc)
-
-	// 		// Start the worker
-	// 		ctx, cancel := context.WithCancel(context.TODO())
-	// 		defer cancel()
-	// 		err := test.worker.Start(ctx)
-	// 		assert.NoError(t, err, "Starting worker should not return an error")
-
-	// 		// Stop the worker
-	// 		test.worker.Stop()
-
-	// 		// Ensure the worker is stopped
-	// 		select {
-	// 		case <-test.worker.stopCh:
-	// 			t.Log("Worker stopped successfully")
-	// 		default:
-	// 			t.Error("Worker did not stop as expected")
-	// 		}
-	// 	})
-	// }
 }
 func TestWorkerStart(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		desc        string
 		worker      *Worker
@@ -753,6 +727,7 @@ func TestWorkerStart(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 			t.Log(test.desc)
 
 			// Setup the worker
