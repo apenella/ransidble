@@ -112,7 +112,7 @@ func TestMemoryTaskRepository_FindAll(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Equal(t, test.expected, tasks)
+				assert.ElementsMatch(t, test.expected, tasks)
 			}
 		})
 	}

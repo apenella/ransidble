@@ -1,4 +1,4 @@
-package persistence
+package repository
 
 import (
 	"github.com/apenella/ransidble/internal/domain/core/entity"

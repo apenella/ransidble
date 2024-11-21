@@ -13,7 +13,13 @@ type Builder struct {
 }
 
 // NewBuilder creates a new Builder
-func NewBuilder(fs afero.Fs, fetchFactory repository.SourceCodeFetchFactory, unpackFactory repository.SourceCodeUnpackFactory, repository repository.ProjectRepository, logger repository.Logger) *Builder {
+func NewBuilder(
+	fs afero.Fs,
+	fetchFactory repository.SourceCodeFetchFactory,
+	unpackFactory repository.SourceCodeUnpackFactory,
+	repository repository.ProjectRepository,
+	logger repository.Logger,
+) *Builder {
 	// The builder receives all the common dependencies required to create a workspace. It simplifies the creation of a workspace by providing only the custom dependencies required to create a workspace.
 	return &Builder{
 		options: []FuncOptions{

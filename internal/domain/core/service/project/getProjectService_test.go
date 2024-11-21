@@ -7,8 +7,8 @@ import (
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
+	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
-	repository "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
 	"github.com/stretchr/testify/assert"
 )
 

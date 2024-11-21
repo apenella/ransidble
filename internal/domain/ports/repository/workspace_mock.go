@@ -1,8 +1,6 @@
-package workspace
+package repository
 
 import (
-	"github.com/apenella/ransidble/internal/domain/core/entity"
-	"github.com/apenella/ransidble/internal/domain/ports/service"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -27,23 +25,4 @@ func (m *MockWorkspace) Cleanup() error {
 func (m *MockWorkspace) GetWorkingDir() (string, error) {
 	args := m.Called()
 	return args.String(0), args.Error(1)
-}
-
-// MockBuilder represents a mock builder
-type MockBuilder struct {
-	Workspace *MockWorkspace
-}
-
-// WithTask sets the task of the mock builder
-func (m *MockBuilder) WithTask(task *entity.Task) service.WorkspaceBuilder {
-	return m
-}
-
-// Build creates a new mock workspace
-func (m *MockBuilder) Build() service.Workspacer {
-	if m.Workspace == nil {
-		m.Workspace = &MockWorkspace{}
-	}
-
-	return m.Workspace
 }

@@ -113,7 +113,7 @@ func TestLocalProjectRepository_FindAll(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Equal(t, test.expected, projects)
+				assert.ElementsMatch(t, test.expected, projects)
 			}
 		})
 	}

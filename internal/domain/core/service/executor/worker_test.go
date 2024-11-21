@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
-	"github.com/apenella/ransidble/internal/domain/core/service/workspace"
+	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/infrastructure/executor"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/go-errors/errors"
@@ -53,8 +53,8 @@ func TestCreateWorkspace(t *testing.T) {
 			desc: "Testing create a workspace for a task",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
 				executor.NewAnsiblePlaybook(),
 				nil,
@@ -73,12 +73,12 @@ func TestCreateWorkspace(t *testing.T) {
 					return fmt.Errorf("Workspace builder must not be nil")
 				}
 
-				_, ok := w.workspaceBuilder.(*workspace.MockBuilder)
+				_, ok := w.workspaceBuilder.(*repository.MockBuilder)
 				if !ok {
 					return fmt.Errorf("Workspace builder must have expectations")
 				}
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Prepare").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Prepare").Return(nil)
 
 				return nil
 			},
@@ -88,8 +88,8 @@ func TestCreateWorkspace(t *testing.T) {
 			desc: "Testing error creating a workspace for a task",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
 				executor.NewAnsiblePlaybook(),
 				logger.NewFakeLogger(),
@@ -108,12 +108,12 @@ func TestCreateWorkspace(t *testing.T) {
 					return fmt.Errorf("Workspace builder must not be nil")
 				}
 
-				_, ok := w.workspaceBuilder.(*workspace.MockBuilder)
+				_, ok := w.workspaceBuilder.(*repository.MockBuilder)
 				if !ok {
 					return fmt.Errorf("Workspace builder must have expectations")
 				}
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Prepare").Return(fmt.Errorf("Error preparing workspace"))
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Prepare").Return(fmt.Errorf("Error preparing workspace"))
 
 				return nil
 			},
@@ -138,7 +138,7 @@ func TestCreateWorkspace(t *testing.T) {
 				assert.Equal(t, test.err, err, "Error must be the expected")
 			} else {
 				assert.NotNil(t, wsp, "Workspace must not be nil")
-				test.worker.workspaceBuilder.(*workspace.MockBuilder).Workspace.AssertExpectations(t)
+				test.worker.workspaceBuilder.(*repository.MockBuilder).Workspace.AssertExpectations(t)
 			}
 		})
 	}
@@ -158,10 +158,10 @@ func TestHandleAnsiblePlaybookTask(t *testing.T) {
 			desc: "Testing handle an ansible-playbook task",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewMockAnsiblePlaybook(),
+				NewMockAnsiblePlaybookExecutor(),
 				logger.NewFakeLogger(),
 			),
 			task: &entity.Task{
@@ -179,12 +179,12 @@ func TestHandleAnsiblePlaybookTask(t *testing.T) {
 					return fmt.Errorf("Ansible playbook executor must not be nil")
 				}
 
-				_, ok := w.ansiblePlaybookExecutor.(*executor.MockAnsiblePlaybook)
+				_, ok := w.ansiblePlaybookExecutor.(*MockAnsiblePlaybookExecutor)
 				if !ok {
 					return fmt.Errorf("Ansible playbook executor must have expectations")
 				}
 
-				w.ansiblePlaybookExecutor.(*executor.MockAnsiblePlaybook).On("Run", context.TODO(), "/tmp", &entity.AnsiblePlaybookParameters{}).Return(nil)
+				w.ansiblePlaybookExecutor.(*MockAnsiblePlaybookExecutor).On("Run", context.TODO(), "/tmp", &entity.AnsiblePlaybookParameters{}).Return(nil)
 
 				return nil
 			},
@@ -193,8 +193,8 @@ func TestHandleAnsiblePlaybookTask(t *testing.T) {
 			desc: "Testing error handling an ansible-playbook task when ansible playbook executor is nil",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
 				nil,
 				logger.NewFakeLogger(),
@@ -213,10 +213,10 @@ func TestHandleAnsiblePlaybookTask(t *testing.T) {
 			desc: "Testing error handling an ansible-playbook when ansible playbook executor returns an error",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewMockAnsiblePlaybook(),
+				NewMockAnsiblePlaybookExecutor(),
 				logger.NewFakeLogger(),
 			),
 			task: &entity.Task{
@@ -234,12 +234,12 @@ func TestHandleAnsiblePlaybookTask(t *testing.T) {
 					return fmt.Errorf("Ansible playbook executor must not be nil")
 				}
 
-				_, ok := w.ansiblePlaybookExecutor.(*executor.MockAnsiblePlaybook)
+				_, ok := w.ansiblePlaybookExecutor.(*MockAnsiblePlaybookExecutor)
 				if !ok {
 					return fmt.Errorf("Ansible playbook executor must have expectations")
 				}
 
-				w.ansiblePlaybookExecutor.(*executor.MockAnsiblePlaybook).On("Run", context.TODO(), "/tmp", &entity.AnsiblePlaybookParameters{}).Return(fmt.Errorf("error running ansible playbook"))
+				w.ansiblePlaybookExecutor.(*MockAnsiblePlaybookExecutor).On("Run", context.TODO(), "/tmp", &entity.AnsiblePlaybookParameters{}).Return(fmt.Errorf("error running ansible playbook"))
 
 				return nil
 			},
@@ -263,7 +263,7 @@ func TestHandleAnsiblePlaybookTask(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err.Error(), err.Error(), "Error must be the expected")
 			} else {
-				test.worker.workspaceBuilder.(*workspace.MockBuilder).Workspace.AssertExpectations(t)
+				test.worker.workspaceBuilder.(*repository.MockBuilder).Workspace.AssertExpectations(t)
 			}
 		})
 	}
@@ -283,10 +283,10 @@ func TestHandleTask(t *testing.T) {
 			desc: "Testing error handling a task when there is an error creating a workspace",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewMockAnsiblePlaybook(),
+				NewMockAnsiblePlaybookExecutor(),
 				logger.NewFakeLogger(),
 			),
 			task: &entity.Task{
@@ -303,12 +303,12 @@ func TestHandleTask(t *testing.T) {
 					return fmt.Errorf("Workspace builder must not be nil")
 				}
 
-				_, ok := w.workspaceBuilder.(*workspace.MockBuilder)
+				_, ok := w.workspaceBuilder.(*repository.MockBuilder)
 				if !ok {
 					return fmt.Errorf("Workspace builder must have expectations")
 				}
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Prepare").Return(fmt.Errorf("error preparing workspace"))
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Prepare").Return(fmt.Errorf("error preparing workspace"))
 
 				return nil
 			},
@@ -325,10 +325,10 @@ func TestHandleTask(t *testing.T) {
 			desc: "Testing error handling a task when there is an error getting the working directory from the workspace",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewMockAnsiblePlaybook(),
+				NewMockAnsiblePlaybookExecutor(),
 				logger.NewFakeLogger(),
 			),
 			task: &entity.Task{
@@ -345,16 +345,16 @@ func TestHandleTask(t *testing.T) {
 					return fmt.Errorf("Workspace builder must not be nil")
 				}
 
-				_, ok := w.workspaceBuilder.(*workspace.MockBuilder)
+				_, ok := w.workspaceBuilder.(*repository.MockBuilder)
 				if !ok {
 					return fmt.Errorf("Workspace builder must have expectations")
 				}
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Prepare").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Prepare").Return(nil)
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("GetWorkingDir").Return("", fmt.Errorf("error getting working directory"))
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("GetWorkingDir").Return("", fmt.Errorf("error getting working directory"))
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Cleanup").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Cleanup").Return(nil)
 
 				return nil
 			},
@@ -371,10 +371,10 @@ func TestHandleTask(t *testing.T) {
 			desc: "Testing error handling a task when the task command is not an ansible-playbook command",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewMockAnsiblePlaybook(),
+				NewMockAnsiblePlaybookExecutor(),
 				logger.NewFakeLogger(),
 			),
 			task: &entity.Task{
@@ -391,16 +391,16 @@ func TestHandleTask(t *testing.T) {
 					return fmt.Errorf("Workspace builder must not be nil")
 				}
 
-				_, ok := w.workspaceBuilder.(*workspace.MockBuilder)
+				_, ok := w.workspaceBuilder.(*repository.MockBuilder)
 				if !ok {
 					return fmt.Errorf("Workspace builder must have expectations")
 				}
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Prepare").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Prepare").Return(nil)
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("GetWorkingDir").Return("/tmp", nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("GetWorkingDir").Return("/tmp", nil)
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Cleanup").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Cleanup").Return(nil)
 
 				return nil
 			},
@@ -417,10 +417,10 @@ func TestHandleTask(t *testing.T) {
 			desc: "Testing error handling a task when the task parameters are not an ansible-playbook parameters",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewMockAnsiblePlaybook(),
+				NewMockAnsiblePlaybookExecutor(),
 				logger.NewFakeLogger(),
 			),
 			task: &entity.Task{
@@ -437,16 +437,16 @@ func TestHandleTask(t *testing.T) {
 					return fmt.Errorf("Workspace builder must not be nil")
 				}
 
-				_, ok := w.workspaceBuilder.(*workspace.MockBuilder)
+				_, ok := w.workspaceBuilder.(*repository.MockBuilder)
 				if !ok {
 					return fmt.Errorf("Workspace builder must have expectations")
 				}
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Prepare").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Prepare").Return(nil)
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("GetWorkingDir").Return("/tmp", nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("GetWorkingDir").Return("/tmp", nil)
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Cleanup").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Cleanup").Return(nil)
 
 				return nil
 			},
@@ -463,10 +463,10 @@ func TestHandleTask(t *testing.T) {
 			desc: "Testing error handling a task when ansible playbook executor returns an error",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewMockAnsiblePlaybook(),
+				NewMockAnsiblePlaybookExecutor(),
 				logger.NewFakeLogger(),
 			),
 			task: &entity.Task{
@@ -483,27 +483,27 @@ func TestHandleTask(t *testing.T) {
 					return fmt.Errorf("Workspace builder must not be nil")
 				}
 
-				_, ok := w.workspaceBuilder.(*workspace.MockBuilder)
+				_, ok := w.workspaceBuilder.(*repository.MockBuilder)
 				if !ok {
 					return fmt.Errorf("Workspace builder must have expectations")
 				}
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Prepare").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Prepare").Return(nil)
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("GetWorkingDir").Return("/tmp", nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("GetWorkingDir").Return("/tmp", nil)
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Cleanup").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Cleanup").Return(nil)
 
 				if w.ansiblePlaybookExecutor == nil {
 					return fmt.Errorf("Ansible playbook executor must not be nil")
 				}
 
-				_, ok = w.ansiblePlaybookExecutor.(*executor.MockAnsiblePlaybook)
+				_, ok = w.ansiblePlaybookExecutor.(*MockAnsiblePlaybookExecutor)
 				if !ok {
 					return fmt.Errorf("Ansible playbook executor must have expectations")
 				}
 
-				w.ansiblePlaybookExecutor.(*executor.MockAnsiblePlaybook).On("Run", context.TODO(), "/tmp", &entity.AnsiblePlaybookParameters{}).Return(fmt.Errorf("error running ansible playbook"))
+				w.ansiblePlaybookExecutor.(*MockAnsiblePlaybookExecutor).On("Run", context.TODO(), "/tmp", &entity.AnsiblePlaybookParameters{}).Return(fmt.Errorf("error running ansible playbook"))
 
 				return nil
 			},
@@ -520,10 +520,10 @@ func TestHandleTask(t *testing.T) {
 			desc: "Testing handle an ansible-playbook task",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewMockAnsiblePlaybook(),
+				NewMockAnsiblePlaybookExecutor(),
 				logger.NewFakeLogger(),
 			),
 			task: &entity.Task{
@@ -540,27 +540,27 @@ func TestHandleTask(t *testing.T) {
 					return fmt.Errorf("Workspace builder must not be nil")
 				}
 
-				_, ok := w.workspaceBuilder.(*workspace.MockBuilder)
+				_, ok := w.workspaceBuilder.(*repository.MockBuilder)
 				if !ok {
 					return fmt.Errorf("Workspace builder must have expectations")
 				}
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Prepare").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Prepare").Return(nil)
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("GetWorkingDir").Return("/tmp", nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("GetWorkingDir").Return("/tmp", nil)
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Cleanup").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Cleanup").Return(nil)
 
 				if w.ansiblePlaybookExecutor == nil {
 					return fmt.Errorf("Ansible playbook executor must not be nil")
 				}
 
-				_, ok = w.ansiblePlaybookExecutor.(*executor.MockAnsiblePlaybook)
+				_, ok = w.ansiblePlaybookExecutor.(*MockAnsiblePlaybookExecutor)
 				if !ok {
 					return fmt.Errorf("Ansible playbook executor must have expectations")
 				}
 
-				w.ansiblePlaybookExecutor.(*executor.MockAnsiblePlaybook).On("Run", context.TODO(), "/tmp", &entity.AnsiblePlaybookParameters{}).Return(nil)
+				w.ansiblePlaybookExecutor.(*MockAnsiblePlaybookExecutor).On("Run", context.TODO(), "/tmp", &entity.AnsiblePlaybookParameters{}).Return(nil)
 
 				return nil
 			},
@@ -592,7 +592,7 @@ func TestHandleTask(t *testing.T) {
 				t.Log(err)
 				assert.Equal(t, test.err.Error(), err.Error(), "Error must be the expected")
 			} else {
-				test.worker.workspaceBuilder.(*workspace.MockBuilder).Workspace.AssertExpectations(t)
+				test.worker.workspaceBuilder.(*repository.MockBuilder).Workspace.AssertExpectations(t)
 			}
 			assert.Equal(t, test.expectedTask.Status, test.task.Status, "Task must be the expected")
 		})
@@ -608,10 +608,10 @@ func TestWorkerStop(t *testing.T) {
 			desc: "Testing stopping a worker",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewMockAnsiblePlaybook(),
+				NewMockAnsiblePlaybookExecutor(),
 				logger.NewFakeLogger(),
 			),
 		},
@@ -654,10 +654,10 @@ func TestWorkerStart(t *testing.T) {
 			desc: "Testing executor worker starts successfully",
 			worker: NewWorker(
 				make(chan chan *entity.Task),
-				&workspace.MockBuilder{
-					Workspace: &workspace.MockWorkspace{},
+				&repository.MockBuilder{
+					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewMockAnsiblePlaybook(),
+				NewMockAnsiblePlaybookExecutor(),
 				logger.NewFakeLogger(),
 			),
 			arrangeFunc: func(t *testing.T, w *Worker) error {
@@ -666,27 +666,27 @@ func TestWorkerStart(t *testing.T) {
 					return fmt.Errorf("Workspace builder must not be nil")
 				}
 
-				_, ok := w.workspaceBuilder.(*workspace.MockBuilder)
+				_, ok := w.workspaceBuilder.(*repository.MockBuilder)
 				if !ok {
 					return fmt.Errorf("Workspace builder must have expectations")
 				}
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Prepare").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Prepare").Return(nil)
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("GetWorkingDir").Return("/tmp", nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("GetWorkingDir").Return("/tmp", nil)
 
-				w.workspaceBuilder.(*workspace.MockBuilder).Workspace.On("Cleanup").Return(nil)
+				w.workspaceBuilder.(*repository.MockBuilder).Workspace.On("Cleanup").Return(nil)
 
 				if w.ansiblePlaybookExecutor == nil {
 					return fmt.Errorf("Ansible playbook executor must not be nil")
 				}
 
-				_, ok = w.ansiblePlaybookExecutor.(*executor.MockAnsiblePlaybook)
+				_, ok = w.ansiblePlaybookExecutor.(*MockAnsiblePlaybookExecutor)
 				if !ok {
 					return fmt.Errorf("Ansible playbook executor must have expectations")
 				}
 
-				w.ansiblePlaybookExecutor.(*executor.MockAnsiblePlaybook).On("Run", context.TODO(), "/tmp", &entity.AnsiblePlaybookParameters{}).Return(nil)
+				w.ansiblePlaybookExecutor.(*MockAnsiblePlaybookExecutor).On("Run", context.TODO(), "/tmp", &entity.AnsiblePlaybookParameters{}).Return(nil)
 
 				return nil
 			},

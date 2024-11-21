@@ -8,10 +8,8 @@ import (
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
-	"github.com/apenella/ransidble/internal/domain/core/service/executor"
+	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
-	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
-	persistence "github.com/apenella/ransidble/internal/infrastructure/persistence/task"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -56,7 +54,7 @@ func TestRun(t *testing.T) {
 			desc: "Testing error running a task on the CreateTaskAnsiblePlaybookService having a nil task repository",
 			err:  ErrTaskRepositoryNotInitialized,
 			service: NewCreateTaskAnsiblePlaybookService(
-				executor.NewMockExecutor(),
+				repository.NewMockTaskExecutor(),
 				nil,
 				nil,
 				logger.NewFakeLogger(),
@@ -68,8 +66,8 @@ func TestRun(t *testing.T) {
 			desc: "Testing error running a task on the CreateTaskAnsiblePlaybookService having a nil project repository",
 			err:  ErrProjectRepositoryNotInitialized,
 			service: NewCreateTaskAnsiblePlaybookService(
-				executor.NewMockExecutor(),
-				persistence.NewMockTaskRepository(),
+				repository.NewMockTaskExecutor(),
+				repository.NewMockTaskRepository(),
 				nil,
 				logger.NewFakeLogger(),
 			),
@@ -80,8 +78,8 @@ func TestRun(t *testing.T) {
 			desc: "Testing error running a task on the CreateTaskAnsiblePlaybookService having a nil task",
 			err:  ErrTaskNotProvided,
 			service: NewCreateTaskAnsiblePlaybookService(
-				executor.NewMockExecutor(),
-				persistence.NewMockTaskRepository(),
+				repository.NewMockTaskExecutor(),
+				repository.NewMockTaskRepository(),
 				repository.NewMockProjectRepository(),
 				logger.NewFakeLogger(),
 			),
@@ -92,8 +90,8 @@ func TestRun(t *testing.T) {
 			desc: "Testing error running a task on the CreateTaskAnsiblePlaybookService having a nil project id",
 			err:  domainerror.NewProjectNotProvidedError(ErrProjectNotProvided),
 			service: NewCreateTaskAnsiblePlaybookService(
-				executor.NewMockExecutor(),
-				persistence.NewMockTaskRepository(),
+				repository.NewMockTaskExecutor(),
+				repository.NewMockTaskRepository(),
 				repository.NewMockProjectRepository(),
 				logger.NewFakeLogger(),
 			),
@@ -106,8 +104,8 @@ func TestRun(t *testing.T) {
 			desc: "Testing error running a task on the CreateTaskAnsiblePlaybookService having an error on find project into the repository",
 			err:  domainerror.NewProjectNotFoundError(ErrFindingProject),
 			service: NewCreateTaskAnsiblePlaybookService(
-				executor.NewMockExecutor(),
-				persistence.NewMockTaskRepository(),
+				repository.NewMockTaskExecutor(),
+				repository.NewMockTaskRepository(),
 				repository.NewMockProjectRepository(),
 				logger.NewFakeLogger(),
 			),
@@ -122,8 +120,8 @@ func TestRun(t *testing.T) {
 			desc: "Testing error running a task on the CreateTaskAnsiblePlaybookService having an error on store the task into the repository",
 			err:  fmt.Errorf("%s: %w", ErrorStoreTask, errors.New("error storing task")),
 			service: NewCreateTaskAnsiblePlaybookService(
-				executor.NewMockExecutor(),
-				persistence.NewMockTaskRepository(),
+				repository.NewMockTaskExecutor(),
+				repository.NewMockTaskRepository(),
 				repository.NewMockProjectRepository(),
 				logger.NewFakeLogger(),
 			),
@@ -141,7 +139,7 @@ func TestRun(t *testing.T) {
 					Format:    "plain",
 					Storage:   "local",
 				}, nil)
-				service.taskRepository.(*persistence.MockTaskRepository).On("SafeStore", "task-id", &entity.Task{
+				service.taskRepository.(*repository.MockTaskRepository).On("SafeStore", "task-id", &entity.Task{
 					ID:         "task-id",
 					Status:     "PENDING",
 					Parameters: &entity.AnsiblePlaybookParameters{},
@@ -154,8 +152,8 @@ func TestRun(t *testing.T) {
 			desc: "Testing error running a task on the CreateTaskAnsiblePlaybookService having an error on execute the task",
 			err:  fmt.Errorf("%s: %w", ErrorExecuteTask, errors.New("error executing task")),
 			service: NewCreateTaskAnsiblePlaybookService(
-				executor.NewMockExecutor(),
-				persistence.NewMockTaskRepository(),
+				repository.NewMockTaskExecutor(),
+				repository.NewMockTaskRepository(),
 				repository.NewMockProjectRepository(),
 				logger.NewFakeLogger(),
 			),
@@ -173,14 +171,14 @@ func TestRun(t *testing.T) {
 					Format:    "plain",
 					Storage:   "local",
 				}, nil)
-				service.taskRepository.(*persistence.MockTaskRepository).On("SafeStore", "task-id", &entity.Task{
+				service.taskRepository.(*repository.MockTaskRepository).On("SafeStore", "task-id", &entity.Task{
 					ID:         "task-id",
 					Status:     "PENDING",
 					Parameters: &entity.AnsiblePlaybookParameters{},
 					Command:    "ansible-playbook",
 					ProjectID:  "project-id",
 				}).Return(nil)
-				service.executor.(*executor.MockExecutor).On("Execute", &entity.Task{
+				service.executor.(*repository.MockTaskExecutor).On("Execute", &entity.Task{
 					ID:         "task-id",
 					Status:     "PENDING",
 					Parameters: &entity.AnsiblePlaybookParameters{},
@@ -193,8 +191,8 @@ func TestRun(t *testing.T) {
 			desc: "Testing success running a task on the CreateTaskAnsiblePlaybookService",
 			err:  errors.New(""),
 			service: NewCreateTaskAnsiblePlaybookService(
-				executor.NewMockExecutor(),
-				persistence.NewMockTaskRepository(),
+				repository.NewMockTaskExecutor(),
+				repository.NewMockTaskRepository(),
 				repository.NewMockProjectRepository(),
 				logger.NewFakeLogger(),
 			),
@@ -212,14 +210,14 @@ func TestRun(t *testing.T) {
 					Format:    "plain",
 					Storage:   "local",
 				}, nil)
-				service.taskRepository.(*persistence.MockTaskRepository).On("SafeStore", "task-id", &entity.Task{
+				service.taskRepository.(*repository.MockTaskRepository).On("SafeStore", "task-id", &entity.Task{
 					ID:         "task-id",
 					Status:     "PENDING",
 					Parameters: &entity.AnsiblePlaybookParameters{},
 					Command:    "ansible-playbook",
 					ProjectID:  "project-id",
 				}).Return(nil)
-				service.executor.(*executor.MockExecutor).On("Execute", &entity.Task{
+				service.executor.(*repository.MockTaskExecutor).On("Execute", &entity.Task{
 					ID:         "task-id",
 					Status:     "PENDING",
 					Parameters: &entity.AnsiblePlaybookParameters{},

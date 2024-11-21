@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
-	"github.com/apenella/ransidble/internal/domain/core/service/workspace"
-	"github.com/apenella/ransidble/internal/infrastructure/executor"
+	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,15 +19,15 @@ func TestDispatchTaskExecution(t *testing.T) {
 		t.Log("Testing the execution dispatcher flow")
 
 		// arrange workspace mocks for testing the dispatcher
-		mockWorkspace := &workspace.MockWorkspace{}
+		mockWorkspace := &repository.MockWorkspace{}
 		mockWorkspace.On("Prepare").Return(nil)
 		mockWorkspace.On("GetWorkingDir").Return("/tmp", nil)
 		mockWorkspace.On("Cleanup").Return(nil)
 		// arrange ansible playbook executor mocks for testing the dispatcher
-		ansiblePlaybookExecutor := executor.NewMockAnsiblePlaybook()
+		ansiblePlaybookExecutor := NewMockAnsiblePlaybookExecutor()
 		ansiblePlaybookExecutor.On("Run", context.TODO(), "/tmp", &entity.AnsiblePlaybookParameters{}).Return(nil)
 
-		workspaceBuilder := &workspace.MockBuilder{
+		workspaceBuilder := &repository.MockBuilder{
 			Workspace: mockWorkspace,
 		}
 
@@ -87,9 +86,9 @@ func TestDispatchTaskExecutionContextCancelled(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		mockWorkspace := &workspace.MockWorkspace{}
-		ansiblePlaybookExecutor := executor.NewMockAnsiblePlaybook()
-		workspaceBuilder := &workspace.MockBuilder{
+		mockWorkspace := &repository.MockWorkspace{}
+		ansiblePlaybookExecutor := NewMockAnsiblePlaybookExecutor()
+		workspaceBuilder := &repository.MockBuilder{
 			Workspace: mockWorkspace,
 		}
 

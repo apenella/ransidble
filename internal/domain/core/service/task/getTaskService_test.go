@@ -7,8 +7,8 @@ import (
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
+	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
-	persistence "github.com/apenella/ransidble/internal/infrastructure/persistence/task"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,11 +33,11 @@ func TestGetTask(t *testing.T) {
 				ProjectID:  "project-id",
 			},
 			service: NewGetTaskService(
-				persistence.NewMockTaskRepository(),
+				repository.NewMockTaskRepository(),
 				logger.NewFakeLogger(),
 			),
 			arrangeFunc: func(t *testing.T, service *GetTaskService) {
-				service.repository.(*persistence.MockTaskRepository).On("Find", "task-id").Return(&entity.Task{
+				service.repository.(*repository.MockTaskRepository).On("Find", "task-id").Return(&entity.Task{
 					ID:         "task-id",
 					Status:     "PENDING",
 					Parameters: &entity.AnsiblePlaybookParameters{},
@@ -63,7 +63,7 @@ func TestGetTask(t *testing.T) {
 			err:      domainerror.NewTaskNotProvidedError(ErrTaskIDNotProvided),
 			expected: nil,
 			service: NewGetTaskService(
-				persistence.NewMockTaskRepository(),
+				repository.NewMockTaskRepository(),
 				logger.NewFakeLogger(),
 			),
 			arrangeFunc: nil,
@@ -76,11 +76,11 @@ func TestGetTask(t *testing.T) {
 			),
 			expected: nil,
 			service: NewGetTaskService(
-				persistence.NewMockTaskRepository(),
+				repository.NewMockTaskRepository(),
 				logger.NewFakeLogger(),
 			),
 			arrangeFunc: func(t *testing.T, service *GetTaskService) {
-				service.repository.(*persistence.MockTaskRepository).On("Find", "task-id").Return(nil, errors.New("error finding task"))
+				service.repository.(*repository.MockTaskRepository).On("Find", "task-id").Return(nil, errors.New("error finding task"))
 			},
 		},
 	}
