@@ -17,6 +17,7 @@ import (
 	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
 	taskHandler "github.com/apenella/ransidble/internal/handler/http/task"
 	ansibleexecutor "github.com/apenella/ransidble/internal/infrastructure/executor"
+	"github.com/apenella/ransidble/internal/infrastructure/filesystem"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch"
 	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
@@ -54,11 +55,12 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 
 			ctx := cmd.Context()
 			log := logger.NewLogger()
-			filesystem := afero.NewOsFs()
+			afs := afero.NewOsFs()
+			fs := filesystem.NewFilesystem(afs)
 
 			// At the moment, the project repository loads the projects from the local storage. In the future, the plan is to have a database where you need to create a project before running it.
 			projectsRepository := localprojectpersistence.NewLocalProjectRepository(
-				filesystem,
+				afs,
 				config.Server.Project.LocalStoragePath,
 				log,
 			)
@@ -72,23 +74,23 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			fetchFactory.Register(
 				entity.ProjectTypeLocal,
 				fetch.NewLocalStorage(
-					filesystem,
+					afs,
 					log,
 				),
 			)
 
 			unpackFactory := unpack.NewFactory()
 			unpackFactory.Register(entity.ProjectFormatPlain, unpack.NewPlainFormat(
-				filesystem,
+				afs,
 				log,
 			))
 			unpackFactory.Register(entity.ProjectFormatTarGz, unpack.NewTarGzipFormat(
-				filesystem,
+				afs,
 				log,
 			))
 
 			workspaceBuilder := workspace.NewBuilder(
-				filesystem,
+				fs,
 				fetchFactory,
 				unpackFactory,
 				projectsRepository,
