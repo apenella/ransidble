@@ -43,9 +43,9 @@ golint: ci-go-tools-docker-image ## Executes Go linter (golint)
 	@echo
 	@docker run --rm -v "${PWD}":/app -w /app ci-go-tools-docker-image golint ./internal/... && echo "$(COLOR_GREEN) golint: all files linted$(COLOR_END)" || echo "$(COLOR_RED)golint: some files not linted$(COLOR_END)"
 
-tests: test-unit ## Executes tests
+tests: unit-tests ## Executes tests
 
-tests-unit: ## Executes unit test
+unit-tests: ## Executes unit test
 	@echo
 	@echo "$(COLOR_BLUE) Executing unit test$(COLOR_END)"
 	@echo
