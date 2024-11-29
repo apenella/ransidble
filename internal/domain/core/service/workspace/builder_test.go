@@ -8,7 +8,6 @@ import (
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch"
 	"github.com/apenella/ransidble/internal/infrastructure/unpack"
-	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +15,8 @@ func TestBuildWorkspace(t *testing.T) {
 	t.Parallel()
 	t.Log("Testing the BuildWorkspace function")
 
-	fs := afero.NewMemMapFs()
+	// fs := afero.NewMemMapFs()
+	fs := repository.NewMockFilesystemer()
 	fetchFactory := fetch.NewFactory()
 	unpackFactory := unpack.NewFactory()
 	repository := repository.NewMockProjectRepository()

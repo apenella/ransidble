@@ -7,7 +7,6 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
-	"github.com/spf13/afero"
 )
 
 var (
@@ -37,6 +36,10 @@ var (
 	ErrWorkingDirAlreadyExists = fmt.Errorf("working directory already exists")
 	// ErrCreatingWorkingDirFolder represents an error when the working directory cannot be created
 	ErrCreatingWorkingDirFolder = fmt.Errorf("error creating working directory folder")
+	// ErrFilesystemNotProvided represents an error when the filesystem is not provided
+	ErrFilesystemNotProvided = fmt.Errorf("filesystem not provided")
+	// ErrRemoveWorkingDir represents an error when the working directory cannot be removed
+	ErrRemoveWorkingDir = fmt.Errorf("error removing working directory")
 )
 
 // FuncOptions represents the function to set the options
@@ -47,7 +50,7 @@ type Workspace struct {
 	// fetchFactory returns the fetcher to get the project from the catalog
 	fetchFactory repository.SourceCodeFetchFactory
 	// fs is the filesystem
-	fs afero.Fs
+	fs repository.Filesystemer
 	// workingDir is the working directory path, where the project source code is stored
 	workingDir string
 	// repository is the repository to get the project from the catalog
@@ -116,6 +119,15 @@ func (w *Workspace) Prepare() error {
 		})
 
 		return ErrTaskNotProvided
+	}
+
+	if w.fs == nil {
+		w.logger.Error(ErrFilesystemNotProvided.Error(), map[string]interface{}{
+			"component": "Workspace.Prepare",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/workspace",
+		})
+
+		return ErrFilesystemNotProvided
 	}
 
 	projectID := w.task.ProjectID
@@ -249,7 +261,38 @@ func (w *Workspace) Prepare() error {
 // generateWorkingDirPath generates the workspace path
 func (w *Workspace) generateWorkingDirPath(projectID, taskID string) (string, error) {
 
-	workspaceBaseDir, err := afero.TempDir(w.fs, "", "ransidble")
+	if projectID == "" {
+		w.logger.Error(ErrProjectNotProvided.Error(), map[string]interface{}{
+			"component": "Workspace.generateWorkingDirPath",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/workspace",
+		})
+
+		return "", ErrProjectNotProvided
+	}
+
+	if taskID == "" {
+		w.logger.Error(ErrTaskNotProvided.Error(), map[string]interface{}{
+			"component":  "Workspace.generateWorkingDirPath",
+			"package":    "github.com/apenella/ransidble/internal/domain/core/service/workspace",
+			"project_id": projectID,
+		})
+
+		return "", ErrTaskNotProvided
+	}
+
+	if w.fs == nil {
+		w.logger.Error(ErrFilesystemNotProvided.Error(), map[string]interface{}{
+			"component":  "Workspace.generateWorkingDirPath",
+			"package":    "github.com/apenella/ransidble/internal/domain/core/service/workspace",
+			"project_id": projectID,
+			"task_id":    taskID,
+		})
+
+		return "", ErrFilesystemNotProvided
+	}
+
+	workspaceBaseDir, err := w.fs.TempDir("", "ransidble")
+	// workspaceBaseDir, err := afero.TempDir(w.fs, "", "ransidble")
 	if err != nil {
 		w.logger.Error(fmt.Sprintf("%s %s %s: %s", "temporal directory cannot be created", projectID, taskID, err), map[string]interface{}{
 			"component":  "Workspace.generateWorkingDirPath",
@@ -268,6 +311,14 @@ func (w *Workspace) generateWorkingDirPath(projectID, taskID string) (string, er
 // GetWorkingDir returns the working directory
 func (w *Workspace) GetWorkingDir() (string, error) {
 
+	if w.task == nil {
+		w.logger.Error(ErrTaskNotProvided.Error(), map[string]interface{}{
+			"component": "Workspace.GetWorkingDir",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/workspace",
+		})
+		return "", ErrTaskNotProvided
+	}
+
 	if w.workingDir == "" {
 		w.logger.Error(ErrWorkingDirNotDefined.Error(), map[string]interface{}{
 			"component": "Workspace.GetWorkingDir",
@@ -282,6 +333,16 @@ func (w *Workspace) GetWorkingDir() (string, error) {
 
 // Cleanup cleans the workspace
 func (w *Workspace) Cleanup() error {
+
+	if w.fs == nil {
+		w.logger.Error(ErrFilesystemNotProvided.Error(), map[string]interface{}{
+			"component": "Workspace.Cleanup",
+			"package":   "github.com/apenella/ransidble/internal/domain/core/service/workspace",
+			"task_id":   w.task.ID,
+		})
+
+		return ErrFilesystemNotProvided
+	}
 
 	if w.workingDir == "" {
 		w.logger.Error(ErrWorkingDirNotDefined.Error(), map[string]interface{}{
@@ -301,13 +362,13 @@ func (w *Workspace) Cleanup() error {
 
 	err := w.fs.RemoveAll(w.workingDir)
 	if err != nil {
-		w.logger.Error(fmt.Sprintf("%s: %s", "error removing working directory", err.Error()), map[string]interface{}{
+		w.logger.Error(fmt.Sprintf("%s: %s", ErrRemoveWorkingDir.Error(), err.Error()), map[string]interface{}{
 			"component":   "Workspace.Cleanup",
 			"package":     "github.com/apenella/ransidble/internal/domain/core/service/workspace",
 			"task_id":     w.task.ID,
 			"working_dir": w.workingDir,
 		})
-		return fmt.Errorf("%s: %w", "error removing working directory", err)
+		return fmt.Errorf("%s: %w", ErrRemoveWorkingDir, err)
 	}
 
 	return nil

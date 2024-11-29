@@ -4,7 +4,6 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
-	"github.com/spf13/afero"
 )
 
 // Builder represents the location where the project is stored before being executed
@@ -14,7 +13,7 @@ type Builder struct {
 
 // NewBuilder creates a new Builder
 func NewBuilder(
-	fs afero.Fs,
+	fs repository.Filesystemer,
 	fetchFactory repository.SourceCodeFetchFactory,
 	unpackFactory repository.SourceCodeUnpackFactory,
 	repository repository.ProjectRepository,
@@ -52,9 +51,5 @@ func (w *Builder) WithTask(task *entity.Task) service.WorkspaceBuilder {
 
 // Build creates a new workspace
 func (w *Builder) Build() service.Workspacer {
-	workspace := &Workspace{}
-	for _, option := range w.options {
-		option(workspace)
-	}
-	return workspace
+	return NewWorkspace(w.options...)
 }
