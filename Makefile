@@ -9,6 +9,7 @@ COLOR_END=\033[0m
 
 .DEFAULT_GOAL := help
 
+
 ifneq (,$(wildcard ./.env))
     include .env
     export
@@ -17,7 +18,7 @@ endif
 help: ## Lists available targets
 	@echo
 	@echo "Makefile usage:"
-	@grep -E '^[a-zA-Z1-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[1;32m%-25s\033[0m %s\n", $$1, $$2}' | sort
+	@grep -E '^[a-zA-Z1-9_-]+:.*?## .*$$'  $(filter-out .env, $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[1;32m%-25s\033[0m %s\n", $$1, $$2}' | sort
 	@echo
 
 #
