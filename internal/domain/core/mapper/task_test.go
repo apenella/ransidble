@@ -9,10 +9,11 @@ import (
 )
 
 // TestToTaskResponse maps a task entity to a task response
-func (m *TaskMapper) TestToTaskResponse(t *testing.T) {
+func TestToTaskResponse(t *testing.T) {
 	tests := []struct {
 		desc     string
 		task     *entity.Task
+		mapper   *TaskMapper
 		expected *response.TaskResponse
 	}{
 		{
@@ -39,16 +40,19 @@ func (m *TaskMapper) TestToTaskResponse(t *testing.T) {
 				ProjectID:    "task-project-id",
 				Status:       "task-status",
 			},
+			mapper: NewTaskMapper(),
 		},
 		{
 			desc:     "Testing task mapping with empty task",
 			task:     &entity.Task{},
 			expected: &response.TaskResponse{},
+			mapper:   NewTaskMapper(),
 		},
 		{
 			desc:     "Testing task mapping with nil task",
 			task:     nil,
 			expected: &response.TaskResponse{},
+			mapper:   NewTaskMapper(),
 		},
 	}
 
@@ -57,7 +61,7 @@ func (m *TaskMapper) TestToTaskResponse(t *testing.T) {
 			t.Log(test.desc)
 			t.Parallel()
 
-			res := m.ToTaskResponse(test.task)
+			res := test.mapper.ToTaskResponse(test.task)
 			assert.Equal(t, test.expected, res)
 		})
 	}

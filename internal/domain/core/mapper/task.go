@@ -16,6 +16,10 @@ func NewTaskMapper() *TaskMapper {
 // ToTaskResponse maps a task entity to a task response
 func (m *TaskMapper) ToTaskResponse(task *entity.Task) *response.TaskResponse {
 
+	if task == nil {
+		return &response.TaskResponse{}
+	}
+
 	return &response.TaskResponse{
 		Command:      task.Command,
 		CompletedAt:  task.CompletedAt,

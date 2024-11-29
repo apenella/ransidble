@@ -9,10 +9,11 @@ import (
 )
 
 // TestToProjectResponse maps a project entity to a project response
-func (m *ProjectMapper) TestToProjectResponse(t *testing.T) {
+func TestToProjectResponse(t *testing.T) {
 	tests := []struct {
 		desc     string
 		project  *entity.Project
+		mapper   *ProjectMapper
 		expected *response.ProjectResponse
 	}{
 		{
@@ -29,16 +30,19 @@ func (m *ProjectMapper) TestToProjectResponse(t *testing.T) {
 				Reference: "project-reference",
 				Storage:   "project-storage",
 			},
+			mapper: NewProjectMapper(),
 		},
 		{
 			desc:     "Testing project mapping with empty project",
 			project:  &entity.Project{},
 			expected: &response.ProjectResponse{},
+			mapper:   NewProjectMapper(),
 		},
 		{
 			desc:     "Testing project mapping with nil project",
 			project:  nil,
 			expected: &response.ProjectResponse{},
+			mapper:   NewProjectMapper(),
 		},
 	}
 
@@ -47,7 +51,7 @@ func (m *ProjectMapper) TestToProjectResponse(t *testing.T) {
 			t.Log(test.desc)
 			t.Parallel()
 
-			res := m.ToProjectResponse(test.project)
+			res := test.mapper.ToProjectResponse(test.project)
 			assert.Equal(t, test.expected, res)
 
 		})
