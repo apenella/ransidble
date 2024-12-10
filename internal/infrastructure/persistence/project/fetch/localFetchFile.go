@@ -86,6 +86,7 @@ func (s *LocalFetchFile) Fetch(source string, workingDir string) (err error) {
 	defer func() {
 		err = dstFile.Close()
 	}()
+
 	if err != nil {
 		errorMsg := fmt.Sprintf("error creating file %s: %s", destPath, err)
 		s.logger.Error(

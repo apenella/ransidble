@@ -1,0 +1,9 @@
+---
+- hosts: all
+  gather_facts: false
+
+  tasks:
+
+    - name: persistence_project_fetch
+      debug:
+        msg: Your are running 'persistence_project_fetch' test

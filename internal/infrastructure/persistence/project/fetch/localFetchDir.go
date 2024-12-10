@@ -27,16 +27,16 @@ func NewLocalFetchDir(fs afero.Fs, logger repository.Logger) *LocalFetchDir {
 }
 
 // Fetch method copies the project from local storage to working directory
-func (s *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
+func (l *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 
 	var workingDirExist bool
 	var sourceDirExist bool
 
-	_, err = s.fs.Stat(source)
+	_, err = l.fs.Stat(source)
 	if err != nil {
-		sourceDirExist, err = afero.DirExists(s.fs, source)
+		sourceDirExist, err = afero.DirExists(l.fs, source)
 		if sourceDirExist == false || err != nil {
-			s.logger.Error(
+			l.logger.Error(
 				ErrSourceCodeNotExists.Error(),
 				map[string]interface{}{
 					"component":  "LocalFetchDir.Fetch",
@@ -47,11 +47,11 @@ func (s *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 		}
 	}
 
-	_, err = s.fs.Stat(workingDir)
+	_, err = l.fs.Stat(workingDir)
 	if err != nil {
-		workingDirExist, err = afero.DirExists(s.fs, workingDir)
+		workingDirExist, err = afero.DirExists(l.fs, workingDir)
 		if workingDirExist == false || err != nil {
-			s.logger.Error(
+			l.logger.Error(
 				ErrWorkingDirNotExists.Error(),
 				map[string]interface{}{
 					"component":   "LocalFetchDir.Fetch",
@@ -62,10 +62,10 @@ func (s *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 		}
 	}
 
-	err = afero.Walk(s.fs, source, func(path string, info os.FileInfo, err error) error {
+	err = afero.Walk(l.fs, source, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			errorMsg := fmt.Sprintf("error walking through %s: %s", path, err)
-			s.logger.Error(
+			l.logger.Error(
 				errorMsg,
 				map[string]interface{}{
 					"component":   "LocalFetchDir.Fetch",
@@ -79,7 +79,7 @@ func (s *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 		relPath, err := filepath.Rel(source, path)
 		if err != nil {
 			errorMsg := fmt.Sprintf("error getting relative path for %s: %s", path, err)
-			s.logger.Error(
+			l.logger.Error(
 				errorMsg,
 				map[string]interface{}{
 					"component":   "LocalFetchDir.Fetch",
@@ -95,10 +95,10 @@ func (s *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 		}
 
 		if info.IsDir() {
-			err = s.fs.MkdirAll(filepath.Join(workingDir, relPath), 0755)
+			err = l.fs.MkdirAll(filepath.Join(workingDir, relPath), 0755)
 			if err != nil {
 				errorMsg := fmt.Sprintf("error creating directory %s: %s", filepath.Join(workingDir, relPath), err)
-				s.logger.Error(
+				l.logger.Error(
 					errorMsg,
 					map[string]interface{}{
 						"component":   "LocalFetchDir.Fetch",
@@ -112,13 +112,13 @@ func (s *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 			}
 		}
 
-		srcFile, err := s.fs.Open(path)
+		srcFile, err := l.fs.Open(path)
 		defer func() {
 			err = srcFile.Close()
 		}()
 		if err != nil {
 			errorMsg := fmt.Sprintf("error opening file %s: %s", path, err)
-			s.logger.Error(
+			l.logger.Error(
 				errorMsg,
 				map[string]interface{}{
 					"component":   "LocalFetchDir.Fetch",
@@ -131,13 +131,13 @@ func (s *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 		}
 
 		destPath := filepath.Join(workingDir, relPath)
-		destFile, err := s.fs.Create(destPath)
+		destFile, err := l.fs.Create(destPath)
 		defer func() {
 			err = destFile.Close()
 		}()
 		if err != nil {
 			errorMsg := fmt.Sprintf("error creating file %s: %s", destPath, err)
-			s.logger.Error(
+			l.logger.Error(
 				errorMsg,
 				map[string]interface{}{
 					"component":   "LocalFetchDir.Fetch",
@@ -152,7 +152,7 @@ func (s *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 		_, err = io.Copy(destFile, srcFile)
 		if err != nil {
 			errorMsg := fmt.Sprintf("%s: From %s to %s: %s", ErrCopyingFilesInWorkingDir, path, destPath, err)
-			s.logger.Error(
+			l.logger.Error(
 				errorMsg,
 				map[string]interface{}{
 					"component":   "LocalFetchDir.Fetch",
@@ -170,7 +170,7 @@ func (s *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 
 	if err != nil {
 		errorMsg := fmt.Sprintf("%s: %s", ErrCopyingFilesInWorkingDir, err)
-		s.logger.Error(
+		l.logger.Error(
 			errorMsg,
 			map[string]interface{}{
 				"component":   "LocalFetchDir.Fetch",
