@@ -1,10 +1,13 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
+	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,13 +20,104 @@ func TestNewLocalProjectRepository(t *testing.T) {
 	fs := afero.NewMemMapFs()
 	persistence := NewLocalProjectRepository(fs, "/tmp", nil)
 	expected := &LocalProjectRepository{
-		Fs:       fs,
+		fs:       fs,
 		logger:   nil,
-		Path:     "/tmp",
-		Projects: make(map[string]*entity.Project),
+		path:     "/tmp",
+		projects: make(map[string]*entity.Project),
 	}
 
 	assert.Equal(t, persistence, expected)
+}
+
+func TestLocalProjectRepository_LoadProjects(t *testing.T) {
+
+	sourceBase := filepath.Join("fixtures", "persistence-project-repository")
+	fs := afero.NewCopyOnWriteFs(
+		afero.NewReadOnlyFs(
+			afero.NewBasePathFs(afero.NewOsFs(), "../../../../../test"),
+		),
+		afero.NewMemMapFs(),
+	)
+
+	tests := []struct {
+		desc       string
+		repository *LocalProjectRepository
+		// path     string
+		// fs       afero.Fs
+		expected map[string]*entity.Project
+		err      error
+	}{
+		{
+			desc: "Testing load projects from local storage",
+			repository: NewLocalProjectRepository(
+				fs,
+				sourceBase,
+				logger.NewFakeLogger(),
+			),
+			expected: map[string]*entity.Project{
+				"project-1": {
+					Name:      "project-1",
+					Format:    "plain",
+					Reference: filepath.Join(sourceBase, "project-1"),
+					Storage:   "local",
+				},
+				"project-2": {
+					Name:      "project-2",
+					Format:    "targz",
+					Reference: filepath.Join(sourceBase, "project-2.tar.gz"),
+					Storage:   "local",
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "Testing error when loading projects from local storage and path does not exists",
+			repository: NewLocalProjectRepository(
+				fs,
+				"not-exists",
+				logger.NewFakeLogger(),
+			),
+			expected: map[string]*entity.Project{},
+			err:      fmt.Errorf(ErrLocalProjectRepositoryPathNotExists),
+		},
+		{
+			desc: "Testing error when loading projects from local storage and path is not a directory",
+			repository: NewLocalProjectRepository(
+				fs,
+				filepath.Join(sourceBase, "project-2.tar.gz"),
+				logger.NewFakeLogger(),
+			),
+			expected: map[string]*entity.Project{},
+			err:      fmt.Errorf(ErrLocalProjectRepositoryPathMustBeDirectory),
+		},
+		{
+			desc: "Testing error when loading projects from local storage and error occurs storing project",
+			repository: &LocalProjectRepository{
+				fs:   fs,
+				path: sourceBase,
+				projects: map[string]*entity.Project{
+					"project-1": {},
+				},
+				logger: logger.NewFakeLogger(),
+			},
+			expected: map[string]*entity.Project{},
+			err:      fmt.Errorf("%s. %w", ErrStoringProjectToLocalProjectRepository, errors.New("project already exists")),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			t.Log(test.desc)
+
+			err := test.repository.LoadProjects()
+			if err != nil {
+				assert.Equal(t, test.err.Error(), err.Error())
+			} else {
+				assert.Equal(t, test.expected, test.repository.projects)
+			}
+		})
+	}
 }
 
 // TestLocalProjectRepository_Find tests the Find method
@@ -39,9 +133,10 @@ func TestLocalProjectRepository_Find(t *testing.T) {
 			desc: "Testing find a project in local persistence",
 			name: "project1",
 			persistence: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
+				projects: map[string]*entity.Project{
 					"project1": {Name: "project1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
 			expected: &entity.Project{Name: "project1"},
 			err:      nil,
@@ -50,9 +145,10 @@ func TestLocalProjectRepository_Find(t *testing.T) {
 			desc: "Testing finding a project error when project does not exist",
 			name: "project2",
 			persistence: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
+				projects: map[string]*entity.Project{
 					"project1": {Name: "project1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
 			expected: nil,
 			err:      fmt.Errorf(ErrProjectNotFound),
@@ -84,10 +180,11 @@ func TestLocalProjectRepository_FindAll(t *testing.T) {
 		{
 			desc: "Testing find all projects in local persistence",
 			persistence: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
+				projects: map[string]*entity.Project{
 					"project1": {Name: "project1"},
 					"project2": {Name: "project2"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
 			expected: []*entity.Project{
 				{Name: "project1"},
@@ -98,7 +195,8 @@ func TestLocalProjectRepository_FindAll(t *testing.T) {
 		{
 			desc: "Testing find all projects in local persistence with empty projects",
 			persistence: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{},
+				projects: map[string]*entity.Project{},
+				logger:   logger.NewFakeLogger(),
 			},
 			expected: []*entity.Project{},
 			err:      nil,
@@ -125,34 +223,32 @@ func TestLocalProjectRepository_Remove(t *testing.T) {
 		desc        string
 		name        string
 		persistence *LocalProjectRepository
-		expected    *LocalProjectRepository
+		expected    map[string]*entity.Project
 		err         error
 	}{
 		{
 			desc: "Testing remove a project in local persistence",
 			name: "project1",
 			persistence: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
+				projects: map[string]*entity.Project{
 					"project1": {Name: "project1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{},
-			},
-			err: nil,
+			expected: map[string]*entity.Project{},
+			err:      nil,
 		},
 		{
 			desc: "Testing remove a project in local persistence when project does not exist",
 			name: "project2",
 			persistence: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
+				projects: map[string]*entity.Project{
 					"project1": {Name: "project1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
-					"project1": {Name: "project1"},
-				},
+			expected: map[string]*entity.Project{
+				"project1": {Name: "project1"},
 			},
 			err: fmt.Errorf(ErrProjectNotFound),
 		},
@@ -166,7 +262,7 @@ func TestLocalProjectRepository_Remove(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Equal(t, test.expected, test.persistence)
+				assert.Equal(t, test.expected, test.persistence.projects)
 			}
 		})
 	}
@@ -179,7 +275,7 @@ func TestLocalProjectRepository_SafeStore(t *testing.T) {
 		name        string
 		project     *entity.Project
 		persistence *LocalProjectRepository
-		expected    *LocalProjectRepository
+		expected    map[string]*entity.Project
 		err         error
 	}{
 		{
@@ -189,12 +285,11 @@ func TestLocalProjectRepository_SafeStore(t *testing.T) {
 				Name: "project1",
 			},
 			persistence: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{},
+				projects: map[string]*entity.Project{},
+				logger:   logger.NewFakeLogger(),
 			},
-			expected: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
-					"project1": {Name: "project1"},
-				},
+			expected: map[string]*entity.Project{
+				"project1": {Name: "project1"},
 			},
 			err: nil,
 		},
@@ -205,14 +300,13 @@ func TestLocalProjectRepository_SafeStore(t *testing.T) {
 				Name: "project1",
 			},
 			persistence: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
+				projects: map[string]*entity.Project{
 					"project1": {Name: "project1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
-					"project1": {Name: "project1"},
-				},
+			expected: map[string]*entity.Project{
+				"project1": {Name: "project1"},
 			},
 			err: fmt.Errorf(ErrProjectAlreadyExists),
 		},
@@ -226,7 +320,7 @@ func TestLocalProjectRepository_SafeStore(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Equal(t, test.expected, test.persistence)
+				assert.Equal(t, test.expected, test.persistence.projects)
 			}
 		})
 	}
@@ -239,7 +333,7 @@ func TestLocalProjectRepository_Store(t *testing.T) {
 		name        string
 		project     *entity.Project
 		persistence *LocalProjectRepository
-		expected    *LocalProjectRepository
+		expected    map[string]*entity.Project
 		err         error
 	}{
 		{
@@ -249,12 +343,11 @@ func TestLocalProjectRepository_Store(t *testing.T) {
 				Name: "project1",
 			},
 			persistence: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{},
+				projects: map[string]*entity.Project{},
+				logger:   logger.NewFakeLogger(),
 			},
-			expected: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
-					"project1": {Name: "project1"},
-				},
+			expected: map[string]*entity.Project{
+				"project1": {Name: "project1"},
 			},
 			err: nil,
 		},
@@ -268,7 +361,7 @@ func TestLocalProjectRepository_Store(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Equal(t, test.expected, test.persistence)
+				assert.Equal(t, test.expected, test.persistence.projects)
 			}
 		})
 	}
@@ -281,7 +374,7 @@ func TestLocalProjectRepository_Update(t *testing.T) {
 		name        string
 		project     *entity.Project
 		persistence *LocalProjectRepository
-		expected    *LocalProjectRepository
+		expected    map[string]*entity.Project
 		err         error
 	}{
 		{
@@ -291,14 +384,13 @@ func TestLocalProjectRepository_Update(t *testing.T) {
 				Name: "project1_new",
 			},
 			persistence: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
+				projects: map[string]*entity.Project{
 					"project1": {Name: "project1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
-					"project1": {Name: "project1_new"},
-				},
+			expected: map[string]*entity.Project{
+				"project1": {Name: "project1_new"},
 			},
 			err: nil,
 		},
@@ -309,14 +401,13 @@ func TestLocalProjectRepository_Update(t *testing.T) {
 				Name: "project2",
 			},
 			persistence: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
+				projects: map[string]*entity.Project{
 					"project1": {Name: "project1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &LocalProjectRepository{
-				Projects: map[string]*entity.Project{
-					"project1": {Name: "project1"},
-				},
+			expected: map[string]*entity.Project{
+				"project1": {Name: "project1"},
 			},
 			err: fmt.Errorf(ErrProjectNotFound),
 		},
@@ -331,7 +422,7 @@ func TestLocalProjectRepository_Update(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Equal(t, test.expected, test.persistence)
+				assert.Equal(t, test.expected, test.persistence.projects)
 			}
 		})
 	}
