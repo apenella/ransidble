@@ -24,4 +24,11 @@ type Filesystemer interface {
 	Stat(path string) (os.FileInfo, error)
 	// TempDir creates a temporary directory
 	TempDir(dir, prefix string) (name string, err error)
+
+	// Create creates a file
+	// Create(name string) (afero.File, error)
+	// DirExists checks if a directory exists
+	// DirExists(path string) (bool, error)
+	// Open opens a file
+	// Open(name string) (afero.File, error)
 }

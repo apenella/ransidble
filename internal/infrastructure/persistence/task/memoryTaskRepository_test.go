@@ -4,19 +4,25 @@ import (
 	"testing"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
+	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewMemoryTaskRepository(t *testing.T) {
-	t.Parallel()
-	t.Log("Testing NewMemoryTaskRepository")
 
-	persistence := NewMemoryTaskRepository()
-	expected := &MemoryTaskRepository{
-		store: make(map[string]*entity.Task),
-	}
+	t.Run("Testing creating a new MemoryTaskRepository", func(t *testing.T) {
+		t.Parallel()
+		t.Log("Testing NewMemoryTaskRepository")
 
-	assert.Equal(t, persistence, expected)
+		persistence := NewMemoryTaskRepository(
+			logger.NewFakeLogger(),
+		)
+
+		assert.NotEmpty(t, persistence)
+		assert.IsType(t, &MemoryTaskRepository{}, persistence)
+		assert.Equal(t, make(map[string]*entity.Task), persistence.store)
+	})
+
 }
 
 // TestMemoryTaskRepository_Find tests the Find method
@@ -35,6 +41,7 @@ func TestMemoryTaskRepository_Find(t *testing.T) {
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
 			expected: &entity.Task{ID: "task1"},
 			err:      nil,
@@ -43,7 +50,8 @@ func TestMemoryTaskRepository_Find(t *testing.T) {
 			desc: "Testing finding a task error when store is not initialized",
 			id:   "task2",
 			persistence: &MemoryTaskRepository{
-				store: nil,
+				store:  nil,
+				logger: logger.NewFakeLogger(),
 			},
 			expected: nil,
 			err:      entity.ErrNotInitializedStorage,
@@ -55,6 +63,7 @@ func TestMemoryTaskRepository_Find(t *testing.T) {
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
 			expected: nil,
 			err:      entity.ErrTaskNotFound,
@@ -90,6 +99,7 @@ func TestMemoryTaskRepository_FindAll(t *testing.T) {
 					"task1": {ID: "task1"},
 					"task2": {ID: "task2"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
 			expected: []*entity.Task{{ID: "task1"}, {ID: "task2"}},
 			err:      nil,
@@ -97,10 +107,11 @@ func TestMemoryTaskRepository_FindAll(t *testing.T) {
 		{
 			desc: "Testing finding all tasks error when store is not initialized",
 			persistence: &MemoryTaskRepository{
-				store: nil,
+				store:  nil,
+				logger: logger.NewFakeLogger(),
 			},
-			expected: []*entity.Task{},
-			err:      nil,
+			expected: nil,
+			err:      entity.ErrNotInitializedStorage,
 		},
 	}
 
@@ -124,7 +135,7 @@ func TestMemoryTaskRepository_Remove(t *testing.T) {
 		desc        string
 		id          string
 		persistence *MemoryTaskRepository
-		expected    *MemoryTaskRepository
+		expected    map[string]*entity.Task
 		err         error
 	}{
 		{
@@ -134,30 +145,31 @@ func TestMemoryTaskRepository_Remove(t *testing.T) {
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{
-				store: make(map[string]*entity.Task),
-			},
-			err: nil,
+			expected: make(map[string]*entity.Task),
+			err:      nil,
 		},
 		{
-			desc: "Testing removing a task error when store is not initialized",
+			desc: "Testing error removing a task in memory persistence when store is not initialized",
 			id:   "task2",
 			persistence: &MemoryTaskRepository{
-				store: nil,
+				store:  nil,
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{},
+			expected: make(map[string]*entity.Task),
 			err:      entity.ErrNotInitializedStorage,
 		},
 		{
-			desc: "Testing removing a task error when task does not exist",
+			desc: "Testing error removing a task in memory persistence when task does not exist",
 			id:   "task3",
 			persistence: &MemoryTaskRepository{
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{},
+			expected: make(map[string]*entity.Task),
 			err:      entity.ErrTaskNotFound,
 		},
 	}
@@ -170,7 +182,7 @@ func TestMemoryTaskRepository_Remove(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Equal(t, test.expected, test.persistence)
+				assert.Equal(t, test.expected, test.persistence.store)
 			}
 		})
 	}
@@ -183,7 +195,7 @@ func TestMemoryTaskRepository_SafeStore(t *testing.T) {
 		id          string
 		task        *entity.Task
 		persistence *MemoryTaskRepository
-		expected    *MemoryTaskRepository
+		expected    map[string]*entity.Task
 		err         error
 	}{
 		{
@@ -191,12 +203,11 @@ func TestMemoryTaskRepository_SafeStore(t *testing.T) {
 			id:   "task1",
 			task: &entity.Task{ID: "task1"},
 			persistence: &MemoryTaskRepository{
-				store: map[string]*entity.Task{},
+				store:  map[string]*entity.Task{},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{
-				store: map[string]*entity.Task{
-					"task1": {ID: "task1"},
-				},
+			expected: map[string]*entity.Task{
+				"task1": {ID: "task1"},
 			},
 			err: nil,
 		},
@@ -208,8 +219,9 @@ func TestMemoryTaskRepository_SafeStore(t *testing.T) {
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{},
+			expected: make(map[string]*entity.Task),
 			err:      entity.ErrTaskAlreadyExists,
 		},
 		{
@@ -217,9 +229,10 @@ func TestMemoryTaskRepository_SafeStore(t *testing.T) {
 			id:   "task2",
 			task: &entity.Task{ID: "task2"},
 			persistence: &MemoryTaskRepository{
-				store: nil,
+				store:  nil,
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{},
+			expected: make(map[string]*entity.Task),
 			err:      entity.ErrNotInitializedStorage,
 		},
 	}
@@ -232,7 +245,7 @@ func TestMemoryTaskRepository_SafeStore(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Equal(t, test.expected, test.persistence)
+				assert.Equal(t, test.expected, test.persistence.store)
 			}
 		})
 	}
@@ -245,7 +258,7 @@ func TestMemoryTaskRepository_Store(t *testing.T) {
 		id          string
 		task        *entity.Task
 		persistence *MemoryTaskRepository
-		expected    *MemoryTaskRepository
+		expected    map[string]*entity.Task
 		err         error
 	}{
 		{
@@ -253,12 +266,11 @@ func TestMemoryTaskRepository_Store(t *testing.T) {
 			id:   "task1",
 			task: &entity.Task{ID: "task1"},
 			persistence: &MemoryTaskRepository{
-				store: map[string]*entity.Task{},
+				store:  map[string]*entity.Task{},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{
-				store: map[string]*entity.Task{
-					"task1": {ID: "task1"},
-				},
+			expected: map[string]*entity.Task{
+				"task1": {ID: "task1"},
 			},
 			err: nil,
 		},
@@ -270,11 +282,10 @@ func TestMemoryTaskRepository_Store(t *testing.T) {
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{
-				store: map[string]*entity.Task{
-					"task1": {ID: "task1_new"},
-				},
+			expected: map[string]*entity.Task{
+				"task1": {ID: "task1_new"},
 			},
 			err: nil,
 		},
@@ -283,9 +294,10 @@ func TestMemoryTaskRepository_Store(t *testing.T) {
 			id:   "task2",
 			task: &entity.Task{ID: "task2"},
 			persistence: &MemoryTaskRepository{
-				store: nil,
+				store:  nil,
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{},
+			expected: make(map[string]*entity.Task),
 			err:      entity.ErrNotInitializedStorage,
 		},
 	}
@@ -298,7 +310,7 @@ func TestMemoryTaskRepository_Store(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Equal(t, test.expected, test.persistence)
+				assert.Equal(t, test.expected, test.persistence.store)
 			}
 		})
 	}
@@ -311,7 +323,7 @@ func TestMemoryTaskRepository_Update(t *testing.T) {
 		id          string
 		task        *entity.Task
 		persistence *MemoryTaskRepository
-		expected    *MemoryTaskRepository
+		expected    map[string]*entity.Task
 		err         error
 	}{
 		{
@@ -322,11 +334,10 @@ func TestMemoryTaskRepository_Update(t *testing.T) {
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{
-				store: map[string]*entity.Task{
-					"task1": {ID: "task1"},
-				},
+			expected: map[string]*entity.Task{
+				"task1": {ID: "task1"},
 			},
 			err: nil,
 		},
@@ -338,11 +349,10 @@ func TestMemoryTaskRepository_Update(t *testing.T) {
 				store: map[string]*entity.Task{
 					"task1": {ID: "task1"},
 				},
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{
-				store: map[string]*entity.Task{
-					"task1": {ID: "task1"},
-				},
+			expected: map[string]*entity.Task{
+				"task1": {ID: "task1"},
 			},
 			err: entity.ErrTaskNotFound,
 		},
@@ -351,9 +361,10 @@ func TestMemoryTaskRepository_Update(t *testing.T) {
 			id:   "task3",
 			task: &entity.Task{ID: "task3"},
 			persistence: &MemoryTaskRepository{
-				store: nil,
+				store:  nil,
+				logger: logger.NewFakeLogger(),
 			},
-			expected: &MemoryTaskRepository{},
+			expected: make(map[string]*entity.Task),
 			err:      entity.ErrNotInitializedStorage,
 		},
 	}
@@ -366,7 +377,7 @@ func TestMemoryTaskRepository_Update(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Equal(t, test.expected, test.persistence)
+				assert.Equal(t, test.expected, test.persistence.store)
 			}
 		})
 	}

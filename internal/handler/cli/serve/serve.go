@@ -118,7 +118,7 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 				Level: 5,
 			}))
 
-			taskRepository := taskpersistence.NewMemoryTaskRepository()
+			taskRepository := taskpersistence.NewMemoryTaskRepository(log)
 			createTaskAnsiblePlaybookService := taskService.NewCreateTaskAnsiblePlaybookService(
 				dispatcher,
 				taskRepository,

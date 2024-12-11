@@ -37,3 +37,18 @@ func (f *Filesystem) RemoveAll(path string) error {
 func (f *Filesystem) TempDir(dir, prefix string) (string, error) {
 	return afero.TempDir(f.fs, dir, prefix)
 }
+
+// DirExists checks if a directory exists
+func (f *Filesystem) DirExists(path string) (bool, error) {
+	return afero.DirExists(f.fs, path)
+}
+
+// Open opens a file
+func (f *Filesystem) Open(name string) (afero.File, error) {
+	return f.fs.Open(name)
+}
+
+// Create creates a file
+func (f *Filesystem) Create(name string) (afero.File, error) {
+	return f.fs.Create(name)
+}
