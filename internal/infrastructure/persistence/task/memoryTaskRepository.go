@@ -1,10 +1,20 @@
 package persistence
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
+)
+
+var (
+	// ErrTaskAlreadyExists is returned when you try to store a task that already exists
+	ErrTaskAlreadyExists = fmt.Errorf("task already exists")
+	// ErrTaskNotFound is returned when a task is not found
+	ErrTaskNotFound = fmt.Errorf("task not found")
+	// ErrTaskNotInitializedStorage is returned when the storage is not initialized
+	ErrTaskNotInitializedStorage = fmt.Errorf("task storage not initialized")
 )
 
 // MemoryTaskRepository struct to store tasks in memory
@@ -27,7 +37,7 @@ func (m *MemoryTaskRepository) Find(id string) (*entity.Task, error) {
 
 	if m.store == nil || m == nil {
 		m.logger.Error(
-			entity.ErrNotInitializedStorage.Error(),
+			ErrTaskNotInitializedStorage.Error(),
 			map[string]interface{}{
 				"component": "MemoryTaskRepository.Find",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/task",
@@ -35,7 +45,7 @@ func (m *MemoryTaskRepository) Find(id string) (*entity.Task, error) {
 			},
 		)
 
-		return nil, entity.ErrNotInitializedStorage
+		return nil, ErrTaskNotInitializedStorage
 	}
 
 	m.logger.Debug(
@@ -53,7 +63,7 @@ func (m *MemoryTaskRepository) Find(id string) (*entity.Task, error) {
 	task, ok := m.store[id]
 	if !ok {
 		m.logger.Error(
-			entity.ErrTaskNotFound.Error(),
+			ErrTaskNotFound.Error(),
 			map[string]interface{}{
 				"component": "MemoryTaskRepository.Find",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/task",
@@ -61,7 +71,7 @@ func (m *MemoryTaskRepository) Find(id string) (*entity.Task, error) {
 			},
 		)
 
-		return nil, entity.ErrTaskNotFound
+		return nil, ErrTaskNotFound
 	}
 
 	return task, nil
@@ -73,14 +83,14 @@ func (m *MemoryTaskRepository) FindAll() ([]*entity.Task, error) {
 
 	if m.store == nil || m == nil {
 		m.logger.Error(
-			entity.ErrNotInitializedStorage.Error(),
+			ErrTaskNotInitializedStorage.Error(),
 			map[string]interface{}{
 				"component": "MemoryTaskRepository.FindAll",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/task",
 			},
 		)
 
-		return nil, entity.ErrNotInitializedStorage
+		return nil, ErrTaskNotInitializedStorage
 	}
 
 	m.logger.Debug(
@@ -106,7 +116,7 @@ func (m *MemoryTaskRepository) Remove(id string) error {
 
 	if m.store == nil || m == nil {
 		m.logger.Error(
-			entity.ErrNotInitializedStorage.Error(),
+			ErrTaskNotInitializedStorage.Error(),
 			map[string]interface{}{
 				"component": "MemoryTaskRepository.Remove",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/task",
@@ -114,13 +124,13 @@ func (m *MemoryTaskRepository) Remove(id string) error {
 			},
 		)
 
-		return entity.ErrNotInitializedStorage
+		return ErrTaskNotInitializedStorage
 	}
 
 	_, ok := m.store[id]
 	if !ok {
 		m.logger.Error(
-			entity.ErrTaskNotFound.Error(),
+			ErrTaskNotFound.Error(),
 			map[string]interface{}{
 				"component": "MemoryTaskRepository.Remove",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/task",
@@ -128,7 +138,7 @@ func (m *MemoryTaskRepository) Remove(id string) error {
 			},
 		)
 
-		return entity.ErrTaskNotFound
+		return ErrTaskNotFound
 	}
 
 	m.mutex.Lock()
@@ -152,7 +162,7 @@ func (m *MemoryTaskRepository) SafeStore(id string, task *entity.Task) error {
 
 	if m.store == nil || m == nil {
 		m.logger.Error(
-			entity.ErrNotInitializedStorage.Error(),
+			ErrTaskNotInitializedStorage.Error(),
 			map[string]interface{}{
 				"component": "MemoryTaskRepository.SafeStore",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/task",
@@ -160,7 +170,7 @@ func (m *MemoryTaskRepository) SafeStore(id string, task *entity.Task) error {
 			},
 		)
 
-		return entity.ErrNotInitializedStorage
+		return ErrTaskNotInitializedStorage
 	}
 
 	m.mutex.Lock()
@@ -169,7 +179,7 @@ func (m *MemoryTaskRepository) SafeStore(id string, task *entity.Task) error {
 	_, ok := m.store[id]
 	if ok {
 		m.logger.Error(
-			entity.ErrTaskAlreadyExists.Error(),
+			ErrTaskAlreadyExists.Error(),
 			map[string]interface{}{
 				"component": "MemoryTaskRepository.SafeStore",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/task",
@@ -177,7 +187,7 @@ func (m *MemoryTaskRepository) SafeStore(id string, task *entity.Task) error {
 			},
 		)
 
-		return entity.ErrTaskAlreadyExists
+		return ErrTaskAlreadyExists
 	}
 
 	m.store[id] = task
@@ -199,7 +209,7 @@ func (m *MemoryTaskRepository) Store(id string, task *entity.Task) error {
 
 	if m.store == nil || m == nil {
 		m.logger.Error(
-			entity.ErrNotInitializedStorage.Error(),
+			ErrTaskNotInitializedStorage.Error(),
 			map[string]interface{}{
 				"component": "MemoryTaskRepository.Store",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/task",
@@ -207,7 +217,7 @@ func (m *MemoryTaskRepository) Store(id string, task *entity.Task) error {
 			},
 		)
 
-		return entity.ErrNotInitializedStorage
+		return ErrTaskNotInitializedStorage
 	}
 
 	m.mutex.Lock()
@@ -231,7 +241,7 @@ func (m *MemoryTaskRepository) Update(id string, task *entity.Task) error {
 
 	if m.store == nil || m == nil {
 		m.logger.Error(
-			entity.ErrNotInitializedStorage.Error(),
+			ErrTaskNotInitializedStorage.Error(),
 			map[string]interface{}{
 				"component": "MemoryTaskRepository.Update",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/task",
@@ -239,13 +249,13 @@ func (m *MemoryTaskRepository) Update(id string, task *entity.Task) error {
 			},
 		)
 
-		return entity.ErrNotInitializedStorage
+		return ErrTaskNotInitializedStorage
 	}
 
 	_, ok := m.store[id]
 	if !ok {
 		m.logger.Error(
-			entity.ErrTaskNotFound.Error(),
+			ErrTaskNotFound.Error(),
 			map[string]interface{}{
 				"component": "MemoryTaskRepository.Update",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/task",
@@ -253,7 +263,7 @@ func (m *MemoryTaskRepository) Update(id string, task *entity.Task) error {
 			},
 		)
 
-		return entity.ErrTaskNotFound
+		return ErrTaskNotFound
 	}
 
 	m.mutex.Lock()

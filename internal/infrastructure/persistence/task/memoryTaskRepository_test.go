@@ -54,7 +54,7 @@ func TestMemoryTaskRepository_Find(t *testing.T) {
 				logger: logger.NewFakeLogger(),
 			},
 			expected: nil,
-			err:      entity.ErrNotInitializedStorage,
+			err:      ErrTaskNotInitializedStorage,
 		},
 		{
 			desc: "Testing finding a task error when task does not exist",
@@ -66,7 +66,7 @@ func TestMemoryTaskRepository_Find(t *testing.T) {
 				logger: logger.NewFakeLogger(),
 			},
 			expected: nil,
-			err:      entity.ErrTaskNotFound,
+			err:      ErrTaskNotFound,
 		},
 	}
 
@@ -111,7 +111,7 @@ func TestMemoryTaskRepository_FindAll(t *testing.T) {
 				logger: logger.NewFakeLogger(),
 			},
 			expected: nil,
-			err:      entity.ErrNotInitializedStorage,
+			err:      ErrTaskNotInitializedStorage,
 		},
 	}
 
@@ -158,7 +158,7 @@ func TestMemoryTaskRepository_Remove(t *testing.T) {
 				logger: logger.NewFakeLogger(),
 			},
 			expected: make(map[string]*entity.Task),
-			err:      entity.ErrNotInitializedStorage,
+			err:      ErrTaskNotInitializedStorage,
 		},
 		{
 			desc: "Testing error removing a task in memory persistence when task does not exist",
@@ -170,7 +170,7 @@ func TestMemoryTaskRepository_Remove(t *testing.T) {
 				logger: logger.NewFakeLogger(),
 			},
 			expected: make(map[string]*entity.Task),
-			err:      entity.ErrTaskNotFound,
+			err:      ErrTaskNotFound,
 		},
 	}
 
@@ -222,7 +222,7 @@ func TestMemoryTaskRepository_SafeStore(t *testing.T) {
 				logger: logger.NewFakeLogger(),
 			},
 			expected: make(map[string]*entity.Task),
-			err:      entity.ErrTaskAlreadyExists,
+			err:      ErrTaskAlreadyExists,
 		},
 		{
 			desc: "Testing safe store a task error when store is not initialized",
@@ -233,7 +233,7 @@ func TestMemoryTaskRepository_SafeStore(t *testing.T) {
 				logger: logger.NewFakeLogger(),
 			},
 			expected: make(map[string]*entity.Task),
-			err:      entity.ErrNotInitializedStorage,
+			err:      ErrTaskNotInitializedStorage,
 		},
 	}
 
@@ -298,7 +298,7 @@ func TestMemoryTaskRepository_Store(t *testing.T) {
 				logger: logger.NewFakeLogger(),
 			},
 			expected: make(map[string]*entity.Task),
-			err:      entity.ErrNotInitializedStorage,
+			err:      ErrTaskNotInitializedStorage,
 		},
 	}
 
@@ -354,7 +354,7 @@ func TestMemoryTaskRepository_Update(t *testing.T) {
 			expected: map[string]*entity.Task{
 				"task1": {ID: "task1"},
 			},
-			err: entity.ErrTaskNotFound,
+			err: ErrTaskNotFound,
 		},
 		{
 			desc: "Testing update a task error when store is not initialized",
@@ -365,7 +365,7 @@ func TestMemoryTaskRepository_Update(t *testing.T) {
 				logger: logger.NewFakeLogger(),
 			},
 			expected: make(map[string]*entity.Task),
-			err:      entity.ErrNotInitializedStorage,
+			err:      ErrTaskNotInitializedStorage,
 		},
 	}
 

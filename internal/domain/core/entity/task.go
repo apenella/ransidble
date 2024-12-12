@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -22,17 +21,6 @@ const (
 
 	// AnsiblePlaybookCommand identifies the task as an Ansible playbook task
 	AnsiblePlaybookCommand = "ansible-playbook"
-)
-
-var (
-	// Errors
-
-	// ErrTaskNotFound is returned when a task is not found
-	ErrTaskNotFound = fmt.Errorf("task not found")
-	// ErrTaskAlreadyExists is returned when you try to store a task that already exists
-	ErrTaskAlreadyExists = fmt.Errorf("task already exists")
-	// ErrNotInitializedStorage is returned when the storage is not initialized
-	ErrNotInitializedStorage = fmt.Errorf("storage not initialized")
 )
 
 // Task entity represents a task to be executed
