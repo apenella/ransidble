@@ -1,6 +1,8 @@
 package entity
 
-import "github.com/go-playground/validator/v10"
+import (
+	"github.com/go-playground/validator/v10"
+)
 
 const (
 	// ProjectTypeLocal represents a local project
@@ -9,6 +11,9 @@ const (
 	ProjectFormatPlain = "plain"
 	// ProjectFormatTarGz represents a project in tar.gz format
 	ProjectFormatTarGz = "targz"
+
+	// ExtensionTarGz represents the tar.gz extension
+	ExtensionTarGz = ".tar.gz"
 )
 
 // Project entity represents a project

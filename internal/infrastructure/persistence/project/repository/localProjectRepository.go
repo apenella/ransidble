@@ -11,30 +11,33 @@ import (
 	"github.com/spf13/afero"
 )
 
-const (
-	// ErrProjectNotFound represents a project not found error
-	ErrProjectNotFound = "project not found"
-	// ErrProjectAlreadyExists represents a project already exists error
-	ErrProjectAlreadyExists = "project already exists"
-	// ErrLocalProjectRepositoryPathNotExists represents a path not exists error
-	ErrLocalProjectRepositoryPathNotExists = "path not exists"
+var (
+	// ErrLocalProjectRepositoryCheckPathIsDirectory represents an error checking if path for a local project repository is a directory
+	ErrLocalProjectRepositoryCheckPathIsDirectory = fmt.Errorf("an error occurred checking if path for a local project repository is a directory")
 	// ErrLocalProjectRepositoryPathMustBeDirectory represents a path must be a directory error
-	ErrLocalProjectRepositoryPathMustBeDirectory = "path must be a directory"
+	ErrLocalProjectRepositoryPathMustBeDirectory = fmt.Errorf("path must be a directory")
+	// ErrLocalProjectRepositoryPathNotExists represents a path not exists error
+	ErrLocalProjectRepositoryPathNotExists = fmt.Errorf("path not exists")
+	// ErrProjectAlreadyExists represents a project already exists error
+	ErrProjectAlreadyExists = fmt.Errorf("project already exists")
+	// ErrProjectNotFound represents a project not found error
+	ErrProjectNotFound = fmt.Errorf("project not found")
+	// ErrProjectNotInitializedStorage is returned when the storage is not initialized
+	ErrProjectNotInitializedStorage = fmt.Errorf("project storage not initialized")
+	// ErrReadingLocalProjectRepositoryPath represents an error reading directory for a local project repository
+	ErrReadingLocalProjectRepositoryPath = fmt.Errorf("an error occurred reading directory for a local project repository")
 	// ErrStoringProjectToLocalProjectRepository represents an error storing a project to local project repository
-	ErrStoringProjectToLocalProjectRepository = "error storing project to local project repository"
-
-	// ExtensionTarGz represents the tar.gz extension
-	ExtensionTarGz = ".tar.gz"
+	ErrStoringProjectToLocalProjectRepository = fmt.Errorf("error storing project to local project repository")
 )
 
 // LocalProjectRepository represents a repository on local storage
 type LocalProjectRepository struct {
-	// Filesystem path where projects are stored
+	// fs path where projects are stored
 	fs afero.Fs
-	// Path represents the local storage path
+	// path represents the local storage path
 	path string
-	// Projects represents the projects
-	projects map[string]*entity.Project
+	// store represents the projects repository
+	store map[string]*entity.Project
 
 	mutex  sync.Mutex
 	logger repository.Logger
@@ -43,10 +46,10 @@ type LocalProjectRepository struct {
 // NewLocalProjectRepository creates a new local project repository
 func NewLocalProjectRepository(fs afero.Fs, path string, logger repository.Logger) *LocalProjectRepository {
 	return &LocalProjectRepository{
-		fs:       fs,
-		path:     path,
-		projects: make(map[string]*entity.Project),
-		logger:   logger,
+		fs:     fs,
+		path:   path,
+		store:  make(map[string]*entity.Project),
+		logger: logger,
 	}
 }
 
@@ -60,58 +63,67 @@ func (r *LocalProjectRepository) LoadProjects() error {
 	var projectName string
 	var projectPath string
 
+	if r.store == nil {
+		r.logger.Error(
+			ErrProjectNotInitializedStorage.Error(),
+			map[string]interface{}{
+				"component": "LocalProjectRepository.LoadProjects",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
+			})
+
+		return ErrProjectNotInitializedStorage
+	}
+
 	_, err = r.fs.Stat(r.path)
 	if err != nil {
 		r.logger.Error(
-			ErrLocalProjectRepositoryPathNotExists,
+			ErrLocalProjectRepositoryPathNotExists.Error(),
 			map[string]interface{}{
 				"component": "LocalProjectRepository.LoadProjects",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
 				"path":      r.path,
 			})
 
-		return fmt.Errorf(ErrLocalProjectRepositoryPathNotExists)
+		return ErrLocalProjectRepositoryPathNotExists
 	}
 
 	pathIsDir, err = afero.IsDir(r.fs, r.path)
 	if err != nil {
-		// This block handles an unexpected error returned by afero.IsDir
-		errMsg := "An error occurred checking if path for a local project repository is a directory"
+		// This block handles an unexpected error returned by afero.IsDir. Since received error is not expected, it is logged and returned to avoid unexpected behavior
 		r.logger.Error(
-			errMsg,
+			ErrLocalProjectRepositoryCheckPathIsDirectory.Error(),
 			map[string]interface{}{
 				"component": "LocalProjectRepository.LoadProjects",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
 				"path":      r.path,
 			})
 
-		return fmt.Errorf(errMsg, err)
+		return fmt.Errorf("%s: %w", ErrLocalProjectRepositoryCheckPathIsDirectory, err)
 	}
 	if !pathIsDir {
 		r.logger.Error(
-			ErrLocalProjectRepositoryPathMustBeDirectory,
+			ErrLocalProjectRepositoryPathMustBeDirectory.Error(),
 			map[string]interface{}{
 				"component": "LocalProjectRepository.LoadProjects",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
 				"path":      r.path,
 			})
 
-		return fmt.Errorf(ErrLocalProjectRepositoryPathMustBeDirectory)
+		return ErrLocalProjectRepositoryPathMustBeDirectory
 	}
 
 	projects, err := afero.ReadDir(r.fs, r.path)
 	if err != nil {
-		// This block handles an unexpected error returned by afero.ReadDir
-		errMsg := "An error occurred reading directory for a local project repository"
+		// This block handles an unexpected error returned by afero.ReadDir. Since received error is not expected, it is logged and returned to avoid unexpected behavior
 		r.logger.Error(
-			errMsg,
+			ErrReadingLocalProjectRepositoryPath.Error(),
 			map[string]interface{}{
 				"component": "LocalProjectRepository.LoadProjects",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
 				"path":      r.path,
 			})
 
-		return fmt.Errorf(errMsg, err)
+		return fmt.Errorf("%s: %w", ErrReadingLocalProjectRepositoryPath, err)
 	}
 
 	for _, project := range projects {
@@ -120,9 +132,9 @@ func (r *LocalProjectRepository) LoadProjects() error {
 
 		if project.Mode().IsRegular() {
 			// When is found a regular file and project name ends with .tar.gz we consider it as a tar.gz file, otherwise we skip the file
-			if strings.HasSuffix(project.Name(), ExtensionTarGz) {
+			if strings.HasSuffix(project.Name(), entity.ExtensionTarGz) {
 				projectFormat = entity.ProjectFormatTarGz
-				projectName = strings.TrimSuffix(project.Name(), ExtensionTarGz)
+				projectName = strings.TrimSuffix(project.Name(), entity.ExtensionTarGz)
 			} else {
 				continue
 			}
@@ -135,12 +147,19 @@ func (r *LocalProjectRepository) LoadProjects() error {
 		projectPath = filepath.Join(r.path, project.Name())
 		projectEntity = entity.NewProject(projectName, projectPath, projectFormat, entity.ProjectTypeLocal)
 
-		r.logger.Debug(fmt.Sprintf("Loading project %s from %s", project.Name(), projectPath))
+		r.logger.Debug(
+			"Loading project",
+			map[string]interface{}{
+				"component":    "LocalProjectRepository.LoadProjects",
+				"package":      "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
+				"project_id":   project.Name(),
+				"project_path": projectPath,
+			})
 
 		err = r.SafeStore(projectName, projectEntity)
 		if err != nil {
 			r.logger.Error(
-				ErrStoringProjectToLocalProjectRepository,
+				ErrStoringProjectToLocalProjectRepository.Error(),
 				map[string]interface{}{
 					"component":  "LocalProjectRepository.LoadProjects",
 					"package":    "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
@@ -157,20 +176,32 @@ func (r *LocalProjectRepository) LoadProjects() error {
 // Find returns a project by id
 func (r *LocalProjectRepository) Find(id string) (*entity.Project, error) {
 
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-
-	project, ok := r.projects[id]
-	if !ok {
+	if r.store == nil {
 		r.logger.Error(
-			ErrProjectNotFound,
+			ErrProjectNotInitializedStorage.Error(),
 			map[string]interface{}{
 				"component":  "LocalProjectRepository.Find",
 				"package":    "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
 				"project_id": id,
 			})
 
-		return nil, fmt.Errorf(ErrProjectNotFound)
+		return nil, ErrProjectNotInitializedStorage
+	}
+
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	project, ok := r.store[id]
+	if !ok {
+		r.logger.Error(
+			ErrProjectNotFound.Error(),
+			map[string]interface{}{
+				"component":  "LocalProjectRepository.Find",
+				"package":    "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
+				"project_id": id,
+			})
+
+		return nil, ErrProjectNotFound
 	}
 
 	return project, nil
@@ -186,7 +217,7 @@ func (r *LocalProjectRepository) FindAll() ([]*entity.Project, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	for _, project := range r.projects {
+	for _, project := range r.store {
 		projects = append(projects, project)
 	}
 
@@ -199,19 +230,19 @@ func (r *LocalProjectRepository) Remove(id string) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	if _, ok := r.projects[id]; !ok {
+	if _, ok := r.store[id]; !ok {
 		r.logger.Error(
-			ErrProjectNotFound,
+			ErrProjectNotFound.Error(),
 			map[string]interface{}{
 				"component":  "LocalProjectRepository.Remove",
 				"package":    "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
 				"project_id": id,
 			})
 
-		return fmt.Errorf(ErrProjectNotFound)
+		return ErrProjectNotFound
 	}
 
-	delete(r.projects, id)
+	delete(r.store, id)
 
 	return nil
 }
@@ -222,19 +253,19 @@ func (r *LocalProjectRepository) SafeStore(id string, project *entity.Project) e
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	if _, ok := r.projects[id]; ok {
+	if _, ok := r.store[id]; ok {
 		r.logger.Error(
-			ErrProjectAlreadyExists,
+			ErrProjectAlreadyExists.Error(),
 			map[string]interface{}{
 				"component":  "LocalProjectRepository.SafeStore",
 				"package":    "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
 				"project_id": id,
 			})
 
-		return fmt.Errorf(ErrProjectAlreadyExists)
+		return ErrProjectAlreadyExists
 	}
 
-	r.projects[id] = project
+	r.store[id] = project
 
 	return nil
 }
@@ -245,7 +276,7 @@ func (r *LocalProjectRepository) Store(id string, project *entity.Project) error
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	r.projects[id] = project
+	r.store[id] = project
 
 	return nil
 }
@@ -256,19 +287,19 @@ func (r *LocalProjectRepository) Update(id string, project *entity.Project) erro
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	if _, ok := r.projects[id]; !ok {
+	if _, ok := r.store[id]; !ok {
 		r.logger.Error(
-			ErrProjectNotFound,
+			ErrProjectNotFound.Error(),
 			map[string]interface{}{
 				"component":  "LocalProjectRepository.Update",
 				"package":    "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository",
 				"project_id": id,
 			})
 
-		return fmt.Errorf(ErrProjectNotFound)
+		return ErrProjectNotFound
 	}
 
-	r.projects[id] = project
+	r.store[id] = project
 
 	return nil
 }
