@@ -33,6 +33,16 @@ func (s *LocalFetchFile) Fetch(source string, workingDir string) (err error) {
 	var sourceFileExist bool
 	var sourceFileInfo os.FileInfo
 
+	if s.fs == nil {
+		s.logger.Error(
+			ErrFileSystemNotInitialized.Error(),
+			map[string]interface{}{
+				"component": "LocalFetchFile.Fetch",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+			})
+		return ErrFileSystemNotInitialized
+	}
+
 	sourceFileInfo, err = s.fs.Stat(source)
 	if err != nil {
 		sourceFileExist, err = afero.Exists(s.fs, source)
@@ -68,9 +78,8 @@ func (s *LocalFetchFile) Fetch(source string, workingDir string) (err error) {
 		err = srcFile.Close()
 	}()
 	if err != nil {
-		errorMsg := fmt.Sprintf("error opening file %s: %s", source, err)
 		s.logger.Error(
-			errorMsg,
+			fmt.Sprintf("%s: %s", ErrOpeningASourceCodeFileFromLocalDir, err),
 			map[string]interface{}{
 				"component":   "LocalFetchFile.Fetch",
 				"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
@@ -78,7 +87,7 @@ func (s *LocalFetchFile) Fetch(source string, workingDir string) (err error) {
 				"working_dir": workingDir,
 			})
 
-		return fmt.Errorf("%s", errorMsg)
+		return fmt.Errorf("%s: %w", ErrOpeningASourceCodeFileFromLocalDir, err)
 	}
 
 	destPath := filepath.Join(workingDir, sourceFileInfo.Name())
@@ -88,30 +97,29 @@ func (s *LocalFetchFile) Fetch(source string, workingDir string) (err error) {
 	}()
 
 	if err != nil {
-		errorMsg := fmt.Sprintf("error creating file %s: %s", destPath, err)
 		s.logger.Error(
-			errorMsg,
+			fmt.Sprintf("%s: %s", ErrCreatingAFileFromLocalToDirWorkingDir, err),
 			map[string]interface{}{
 				"component":   "LocalFetchFile.Fetch",
 				"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
 				"source_dir":  source,
 				"working_dir": workingDir,
 			})
-		return fmt.Errorf("%s", errorMsg)
+		return fmt.Errorf("%s: %w", ErrCreatingAFileFromLocalToDirWorkingDir, err)
 	}
 
 	_, err = io.Copy(dstFile, srcFile)
 	if err != nil {
-		errorMsg := fmt.Sprintf("%s: From %s to %s: %s", ErrCopyingFilesInWorkingDir, source, destPath, err)
 		s.logger.Error(
-			errorMsg,
+			fmt.Sprintf("%s: %s", ErrCopyingAFileFromLocalToDirWorkingDir, err),
 			map[string]interface{}{
-				"component":   "LocalFetchFile.Fetch",
-				"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
-				"source_dir":  source,
-				"working_dir": workingDir,
+				"component":        "LocalFetchFile.Fetch",
+				"destination_path": destPath,
+				"package":          "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+				"source_file":      source,
+				"working_dir":      workingDir,
 			})
-		return fmt.Errorf("%s", errorMsg)
+		return fmt.Errorf("%s: %w", ErrCopyingAFileFromLocalToDirWorkingDir, err)
 	}
 
 	return nil

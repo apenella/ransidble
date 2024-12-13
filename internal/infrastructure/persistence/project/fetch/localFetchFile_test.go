@@ -47,6 +47,13 @@ func TestFetchFileFromLocalFilesystem(t *testing.T) {
 			},
 		},
 		{
+			desc:       "Testing error fetching file from local filesystem when filesystem is not initialized",
+			fetch:      NewLocalFetchFile(nil, logger.NewFakeLogger()),
+			source:     source,
+			workingDir: workingDir,
+			err:        ErrFileSystemNotInitialized,
+		},
+		{
 			desc:       "Testing error fetching file from local filesystem when source file does exists",
 			fetch:      NewLocalFetchFile(fs, logger.NewFakeLogger()),
 			source:     "not-exists",
@@ -78,6 +85,7 @@ func TestFetchFileFromLocalFilesystem(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
+				assert.Nil(t, err)
 				test.assertFunc(t, test.fetch)
 			}
 		})

@@ -32,6 +32,16 @@ func (l *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 	var workingDirExist bool
 	var sourceDirExist bool
 
+	if l.fs == nil {
+		l.logger.Error(
+			ErrFileSystemNotInitialized.Error(),
+			map[string]interface{}{
+				"component": "LocalFetchDir.Fetch",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+			})
+		return ErrFileSystemNotInitialized
+	}
+
 	_, err = l.fs.Stat(source)
 	if err != nil {
 		sourceDirExist, err = afero.DirExists(l.fs, source)
@@ -64,30 +74,30 @@ func (l *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 
 	err = afero.Walk(l.fs, source, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			errorMsg := fmt.Sprintf("error walking through %s: %s", path, err)
 			l.logger.Error(
-				errorMsg,
+				fmt.Sprintf("%s: %s", ErrWalkingDirToFetchSourceCodeFromLocalDir, err),
 				map[string]interface{}{
 					"component":   "LocalFetchDir.Fetch",
 					"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+					"path":        path,
 					"source_dir":  source,
 					"working_dir": workingDir,
 				})
-			return fmt.Errorf("%s", errorMsg)
+			return fmt.Errorf("%s: %w", ErrWalkingDirToFetchSourceCodeFromLocalDir, err)
 		}
 
 		relPath, err := filepath.Rel(source, path)
 		if err != nil {
-			errorMsg := fmt.Sprintf("error getting relative path for %s: %s", path, err)
 			l.logger.Error(
-				errorMsg,
+				fmt.Sprintf("%s: %s", ErrGettingSourceCodeRelativePathFromLocalDir, err),
 				map[string]interface{}{
 					"component":   "LocalFetchDir.Fetch",
 					"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+					"path":        path,
 					"source_dir":  source,
 					"working_dir": workingDir,
 				})
-			return fmt.Errorf("%s", errorMsg)
+			return fmt.Errorf("%s: %w", ErrGettingSourceCodeRelativePathFromLocalDir, err)
 		}
 
 		if source == path && info.IsDir() {
@@ -97,17 +107,18 @@ func (l *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 		if info.IsDir() {
 			err = l.fs.MkdirAll(filepath.Join(workingDir, relPath), 0755)
 			if err != nil {
-				errorMsg := fmt.Sprintf("error creating directory %s: %s", filepath.Join(workingDir, relPath), err)
 				l.logger.Error(
-					errorMsg,
+					fmt.Sprintf("%s: %s", ErrCreatingADirectoryInLocalDirWorkingDir, err),
 					map[string]interface{}{
-						"component":   "LocalFetchDir.Fetch",
-						"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
-						"source_dir":  source,
-						"working_dir": workingDir,
+						"component":     "LocalFetchDir.Fetch",
+						"package":       "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+						"path":          path,
+						"relative_path": relPath,
+						"source_dir":    source,
+						"working_dir":   workingDir,
 					})
 
-				return fmt.Errorf("%s", errorMsg)
+				return fmt.Errorf("%s: %w", ErrCreatingADirectoryInLocalDirWorkingDir, err)
 
 			}
 		}
@@ -117,17 +128,18 @@ func (l *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 			err = srcFile.Close()
 		}()
 		if err != nil {
-			errorMsg := fmt.Sprintf("error opening file %s: %s", path, err)
+			// errorMsg := fmt.Sprintf("error opening file %s: %s", path, err)
 			l.logger.Error(
-				errorMsg,
+				fmt.Sprintf("%s: %s", ErrOpeningASourceCodeFileFromLocalDir, err),
 				map[string]interface{}{
 					"component":   "LocalFetchDir.Fetch",
 					"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+					"path":        path,
 					"source_dir":  source,
 					"working_dir": workingDir,
 				})
 
-			return fmt.Errorf("%s", errorMsg)
+			return fmt.Errorf("%s: %w", ErrOpeningASourceCodeFileFromLocalDir, err)
 		}
 
 		destPath := filepath.Join(workingDir, relPath)
@@ -136,32 +148,34 @@ func (l *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 			err = destFile.Close()
 		}()
 		if err != nil {
-			errorMsg := fmt.Sprintf("error creating file %s: %s", destPath, err)
 			l.logger.Error(
-				errorMsg,
+				fmt.Sprintf("%s: %s", ErrCreatingAFileFromLocalToDirWorkingDir, err),
 				map[string]interface{}{
 					"component":   "LocalFetchDir.Fetch",
+					"destiantion": destPath,
 					"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+					"path":        path,
 					"source_dir":  source,
 					"working_dir": workingDir,
 				})
 
-			return fmt.Errorf("%s", errorMsg)
+			return fmt.Errorf("%s: %w", ErrCreatingAFileFromLocalToDirWorkingDir, err)
 		}
 
 		_, err = io.Copy(destFile, srcFile)
 		if err != nil {
-			errorMsg := fmt.Sprintf("%s: From %s to %s: %s", ErrCopyingFilesInWorkingDir, path, destPath, err)
 			l.logger.Error(
-				errorMsg,
+				fmt.Sprintf("%s: %s", ErrCopyingAFileFromLocalToDirWorkingDir, err),
 				map[string]interface{}{
-					"component":   "LocalFetchDir.Fetch",
-					"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
-					"source_dir":  source,
-					"working_dir": workingDir,
+					"component":        "LocalFetchDir.Fetch",
+					"destiantion_path": destPath,
+					"package":          "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+					"source_dir":       source,
+					"source_file":      path,
+					"working_dir":      workingDir,
 				})
 
-			return fmt.Errorf("%s", errorMsg)
+			return fmt.Errorf("%s: %w", ErrCopyingAFileFromLocalToDirWorkingDir, err)
 		}
 
 		return nil
@@ -169,9 +183,8 @@ func (l *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 	})
 
 	if err != nil {
-		errorMsg := fmt.Sprintf("%s: %s", ErrCopyingFilesInWorkingDir, err)
 		l.logger.Error(
-			errorMsg,
+			fmt.Sprintf("%s: %s", ErrCopyingFilesToWorkingDir, err),
 			map[string]interface{}{
 				"component":   "LocalFetchDir.Fetch",
 				"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
@@ -179,7 +192,7 @@ func (l *LocalFetchDir) Fetch(source string, workingDir string) (err error) {
 				"working_dir": workingDir,
 			})
 
-		return fmt.Errorf("%s", errorMsg)
+		return fmt.Errorf("%s: %w", ErrCopyingFilesToWorkingDir, err)
 	}
 
 	return nil

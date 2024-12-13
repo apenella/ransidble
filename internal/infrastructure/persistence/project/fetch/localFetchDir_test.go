@@ -49,6 +49,13 @@ func TestLocalFetchDirFromLocalFilesystem(t *testing.T) {
 			},
 		},
 		{
+			desc:       "Testing error fetching directory from local filesystem when filesystem is not initialized",
+			fetch:      NewLocalFetchDir(nil, logger.NewFakeLogger()),
+			source:     source,
+			workingDir: workingDir,
+			err:        ErrFileSystemNotInitialized,
+		},
+		{
 			desc:       "Testing error fetching directory from local filesystem when source directory does exists",
 			fetch:      NewLocalFetchDir(fs, logger.NewFakeLogger()),
 			source:     "not-exists",
@@ -80,7 +87,7 @@ func TestLocalFetchDirFromLocalFilesystem(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Empty(t, test.err)
+				assert.Nil(t, test.err)
 
 				if test.assertFunc != nil {
 					test.assertFunc(t, test.fetch)
@@ -88,28 +95,4 @@ func TestLocalFetchDirFromLocalFilesystem(t *testing.T) {
 			}
 		})
 	}
-
-	// content, err := afero.ReadFile(fs, filepath.Join(source, "site.yaml"))
-	// if err != nil {
-	// 	t.Errorf("Error reading file: %s", err)
-	// }
-
-	// fmt.Println(string(content))
-
-	// fetcher := NewLocalFetchDir(fs, logger.NewFakeLogger())
-	// err := fetcher.Fetch(source, workingDir)
-
-	// err = afero.Walk(fs, workingDir, func(path string, info os.FileInfo, err error) error {
-	// 	if err != nil {
-	// 		t.Errorf("error walking through %s: %s", path, err)
-	// 	}
-
-	// 	fmt.Println(path)
-	// 	return nil
-	// })
-
-	// if err != nil {
-	// 	t.Errorf("Error fetching directory: %s", err)
-	// }
-
 }

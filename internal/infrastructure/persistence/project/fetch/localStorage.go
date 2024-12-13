@@ -1,22 +1,11 @@
 package fetch
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/spf13/afero"
-)
-
-const (
-	// ExtensionTarGz represents the tar.gz extension
-	ExtensionTarGz = ".tar.gz"
-)
-
-var (
-	// ErrProjectNotProvided represents an error when the project is not provided
-	ErrProjectNotProvided = errors.New("project not provided")
 )
 
 // LocalStorage represents a repository on local storage
@@ -51,6 +40,26 @@ func (s *LocalStorage) Fetch(project *entity.Project, workingDir string) (err er
 		return ErrProjectNotProvided
 	}
 
+	if workingDir == "" {
+		s.logger.Error(
+			ErrWorkingDirNotProvided.Error(),
+			map[string]interface{}{
+				"component": "LocalStorage.Fetch",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+			})
+		return ErrWorkingDirNotProvided
+	}
+
+	if s.fs == nil {
+		s.logger.Error(
+			ErrFileSystemNotInitialized.Error(),
+			map[string]interface{}{
+				"component": "LocalStorage.Fetch",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+			})
+		return ErrFileSystemNotInitialized
+	}
+
 	_, err = s.fs.Stat(workingDir)
 	if err != nil {
 		workingDirExist, err = afero.DirExists(s.fs, workingDir)
@@ -66,22 +75,29 @@ func (s *LocalStorage) Fetch(project *entity.Project, workingDir string) (err er
 		}
 	}
 
-	s.logger.Debug("fetching project", map[string]interface{}{
-		"component":   "LocalStorage.Fetch",
-		"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
-		"project_id":  project.Name,
-		"working_dir": workingDir,
-	})
+	if project.Reference == "" {
+		s.logger.Error(
+			ErrProjectReferenceNotProvided.Error(),
+			map[string]interface{}{
+				"component":   "LocalStorage.Fetch",
+				"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+				"project_id":  project.Name,
+				"working_dir": workingDir,
+			})
+
+		return ErrProjectReferenceNotProvided
+	}
 
 	infoProjectReference, err := s.fs.Stat(project.Reference)
 	if err != nil {
 		s.logger.Error(
+			fmt.Sprintf("%s: %s", ErrInvalidProjectReference, err),
 			err.Error(),
 			map[string]interface{}{
 				"component": "LocalStorage.Fetch",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
 			})
-		return fmt.Errorf("%w", err)
+		return fmt.Errorf("%s: %w", ErrInvalidProjectReference, err)
 	}
 
 	if infoProjectReference.IsDir() {
@@ -90,16 +106,23 @@ func (s *LocalStorage) Fetch(project *entity.Project, workingDir string) (err er
 		sourceCodeFetcher = NewLocalFetchFile(s.fs, s.logger)
 	}
 
+	s.logger.Debug("fetching project", map[string]interface{}{
+		"component":   "LocalStorage.Fetch",
+		"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
+		"project_id":  project.Name,
+		"working_dir": workingDir,
+	})
+
 	err = sourceCodeFetcher.Fetch(project.Reference, workingDir)
 	if err != nil {
 		s.logger.Error(
-			err.Error(),
+			fmt.Sprintf("%s: %s", ErrFetchingProjectFromLocalStorage, err),
 			map[string]interface{}{
 				"component": "LocalStorage.Fetch",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
 			})
 
-		return fmt.Errorf("%w", err)
+		return fmt.Errorf("%s: %w", ErrFetchingProjectFromLocalStorage, err)
 	}
 
 	return nil
