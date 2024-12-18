@@ -74,7 +74,6 @@ func TestFetchFileFromLocalFilesystem(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
 			t.Log(test.desc)
 
 			if test.arrangeFunc != nil {
