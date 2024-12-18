@@ -13,15 +13,23 @@ import (
 
 var (
 	// ErrUnableToUntar is returned when the tar file is unable to be untarred
-	ErrUnableToUntar = fmt.Errorf("Unable to untar")
+	ErrUnableToUntar = fmt.Errorf("unable to untar")
 	// ErrExtractingFileFromTar is returned when the file is unable to be extracted from the tar file
-	ErrExtractingFileFromTar = fmt.Errorf("Unable to extract file from tar")
+	ErrExtractingFileFromTar = fmt.Errorf("unable to extract file from tar")
 	// ErrTarReading is returned when the tar file is unable to be read
-	ErrTarReading = fmt.Errorf("Unable to read tar file")
+	ErrTarReading = fmt.Errorf("unable to read tar file")
 	// ErrCopyingContentFromTar is returned when the content is unable to be copied from the tar file
-	ErrCopyingContentFromTar = fmt.Errorf("Unable to copy content from tar")
+	ErrCopyingContentFromTar = fmt.Errorf("unable to copy content from tar")
 	// ErrCreatingFileFromTar is returned when the file is unable to be created from the tar file
-	ErrCreatingFileFromTar = fmt.Errorf("Unable to create file from tar")
+	ErrCreatingFileFromTar = fmt.Errorf("unable to create file from tar")
+	// ErrReaderNotProvided is returned when the reader is not provided
+	ErrReaderNotProvided = fmt.Errorf("reader not provided")
+	// ErrDestinationNotProvided is returned when the destination is not provided
+	ErrDestinationNotProvided = fmt.Errorf("destination not provided")
+	// ErrFilesystemNotProvided is returned when the filesystem is not provided
+	ErrFilesystemNotProvided = fmt.Errorf("filesystem not provided")
+	// ErrTarFileHeaderNotProvided is returned when the tar file header is not provided
+	ErrTarFileHeaderNotProvided = fmt.Errorf("tar file header not provided")
 )
 
 // Tar is a struct that implements the Tar operations
@@ -42,6 +50,36 @@ func NewTar(fs afero.Fs, logger repository.Logger) *Tar {
 
 // Extract untar the io.Reader into the destination
 func (t *Tar) Extract(r io.Reader, destination string) error {
+
+	if r == nil {
+		t.logger.Error(
+			ErrReaderNotProvided.Error(),
+			map[string]interface{}{
+				"component": "Tar.Extract",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/tar",
+			})
+		return ErrReaderNotProvided
+	}
+
+	if destination == "" {
+		t.logger.Error(
+			ErrDestinationNotProvided.Error(),
+			map[string]interface{}{
+				"component": "Tar.Extract",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/tar",
+			})
+		return ErrDestinationNotProvided
+	}
+
+	if t.fs == nil {
+		t.logger.Error(
+			ErrFilesystemNotProvided.Error(),
+			map[string]interface{}{
+				"component": "Tar.Extract",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/tar",
+			})
+		return ErrFilesystemNotProvided
+	}
 
 	tr := tar.NewReader(r)
 
@@ -66,7 +104,8 @@ func (t *Tar) Extract(r io.Reader, destination string) error {
 
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := t.fs.MkdirAll(target, os.FileMode(header.Mode)); err != nil {
+			err := t.fs.MkdirAll(target, os.FileMode(header.Mode))
+			if err != nil {
 				t.logger.Error(
 					fmt.Sprintf("%s: %s", ErrUnableToUntar, err),
 					map[string]interface{}{
@@ -95,13 +134,16 @@ func (t *Tar) Extract(r io.Reader, destination string) error {
 		// case tar.TypeXGlobalHeader:
 		// 	// git archive generates these. Ignore them.
 		default:
-			t.logger.Error(ErrUnableToUntar.Error(), map[string]interface{}{
-				"component": "Tar.Extract",
-				"package":   "github.com/apenella/ransidble/internal/infrastructure/tar",
-				"file":      header.Name,
-			})
+			t.logger.Error(
+				ErrUnableToUntar.Error(),
+				map[string]interface{}{
+					"component": "Tar.Extract",
+					"package":   "github.com/apenella/ransidble/internal/infrastructure/tar",
+					"file":      header.Name,
+					"type":      string(header.Typeflag),
+				})
 
-			return fmt.Errorf("Unable to untar type : %c in file %s", header.Typeflag, header.Name)
+			return ErrUnableToUntar
 		}
 	}
 
@@ -111,6 +153,41 @@ func (t *Tar) Extract(r io.Reader, destination string) error {
 // extractRegularFile extracts a regular file from the tar file
 func (t *Tar) extractRegularFile(tr *tar.Reader, header *tar.Header, destination string) (err error) {
 	var file afero.File
+
+	if header == nil {
+		t.logger.Error(
+			ErrTarFileHeaderNotProvided.Error(),
+			map[string]interface{}{
+				"component": "Tar.extractRegularFile",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/tar",
+			})
+		return ErrTarFileHeaderNotProvided
+	}
+
+	if destination == "" {
+		t.logger.Error(
+			ErrDestinationNotProvided.Error(),
+			map[string]interface{}{
+				"component": "Tar.extractRegularFile",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/tar",
+				"file":      header.Name,
+				"type":      "file",
+			})
+		return ErrDestinationNotProvided
+	}
+
+	if tr == nil {
+		t.logger.Error(
+			ErrReaderNotProvided.Error(),
+			map[string]interface{}{
+				"component":   "Tar.extractRegularFile",
+				"destination": destination,
+				"file":        header.Name,
+				"package":     "github.com/apenella/ransidble/internal/infrastructure/tar",
+				"type":        "file",
+			})
+		return ErrReaderNotProvided
+	}
 
 	file, err = t.fs.OpenFile(destination, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
 	defer func() {
@@ -129,6 +206,7 @@ func (t *Tar) extractRegularFile(tr *tar.Reader, header *tar.Header, destination
 
 		return fmt.Errorf("%s: %w", ErrCreatingFileFromTar, err)
 	}
+
 	if _, err = io.Copy(file, tr); err != nil {
 		t.logger.Error(
 			fmt.Sprintf("%s: %s", ErrCopyingContentFromTar, err),
