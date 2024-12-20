@@ -2,6 +2,7 @@ package unpack
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
@@ -15,11 +16,6 @@ type PlainFormat struct {
 	// logger is the logger
 	logger repository.Logger
 }
-
-var (
-	// ErrWorkingDirNotExists represents an error when the destination to fetch does not exists
-	ErrWorkingDirNotExists = fmt.Errorf("working directory does not exists")
-)
 
 // NewPlainFormat method creates a new PlainFormat struct
 func NewPlainFormat(fs afero.Fs, logger repository.Logger) *PlainFormat {
@@ -45,20 +41,63 @@ func (p *PlainFormat) Unpack(project *entity.Project, workingDir string) error {
 		return ErrProjectNotProvided
 	}
 
+	if workingDir == "" {
+		p.logger.Error(
+			ErrWorkingDirNotProvided.Error(),
+			map[string]interface{}{
+				"component": "PlainFormat.Unpack",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/unpack",
+			})
+		return ErrWorkingDirNotProvided
+	}
+
+	if p.fs == nil {
+		p.logger.Error(
+			ErrFilesystemNotProvided.Error(),
+			map[string]interface{}{
+				"component": "PlainFormat.Unpack",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/unpack",
+			})
+		return ErrFilesystemNotProvided
+	}
+
 	_, err = p.fs.Stat(workingDir)
 	if err != nil {
-		workingDirExist, err = afero.DirExists(p.fs, workingDir)
-		if workingDirExist == false || err != nil {
-			errorMsg := fmt.Errorf("%s. %w", ErrWorkingDirNotExists, err)
+
+		if os.IsNotExist(err) {
 			p.logger.Error(
-				errorMsg.Error(),
+				fmt.Sprintf("%s: %s", ErrWorkingDirNotExists, err),
 				map[string]interface{}{
-					"component": "PlainFormat.Unpack",
-					"package":   "github.com/apenella/ransidble/internal/infrastructure/unpack",
+					"component":   "PlainFormat.Unpack",
+					"package":     "github.com/apenella/ransidble/internal/infrastructure/unpack",
+					"working_dir": workingDir,
 				})
 
-			return errorMsg
+			return fmt.Errorf("%s: %w", ErrWorkingDirNotExists, err)
 		}
+
+		p.logger.Error(
+			fmt.Sprintf("%s: %s", ErrDescribingWorkingDir, err),
+			map[string]interface{}{
+				"component":   "PlainFormat.Unpack",
+				"package":     "github.com/apenella/ransidble/internal/infrastructure/unpack",
+				"working_dir": workingDir,
+			})
+
+		return fmt.Errorf("%s: %w", ErrDescribingWorkingDir, err)
+	}
+
+	workingDirExist, _ = afero.IsDir(p.fs, workingDir)
+	if workingDirExist == false {
+		p.logger.Error(
+			fmt.Sprintf("%s: %s", ErrWorkingDirIsNotDirectory, err),
+			map[string]interface{}{
+				"component":   "PlainFormat.Unpack",
+				"package":     "github.com/apenella/ransidble/internal/infrastructure/unpack",
+				"working_dir": workingDir,
+			})
+
+		return ErrWorkingDirIsNotDirectory
 	}
 
 	return nil

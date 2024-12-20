@@ -9,28 +9,22 @@ import (
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
-	"github.com/apenella/ransidble/internal/infrastructure/tar"
 	"github.com/spf13/afero"
-)
-
-var (
-	// ErrTarExtractorNotProvided is returned when the tar extractor is not provided
-	ErrTarExtractorNotProvided = fmt.Errorf("Tar extractor not provided")
 )
 
 // TarGzipFormat struct used to unpack tar.gz files
 type TarGzipFormat struct {
 	fs        afero.Fs
 	logger    repository.Logger
-	extractor *tar.Tar
+	extractor TarExtractorer
 }
 
 // NewTarGzipFormat method creates a new TarGzipFormat struct
-func NewTarGzipFormat(fs afero.Fs, logger repository.Logger) *TarGzipFormat {
+func NewTarGzipFormat(fs afero.Fs, extractor TarExtractorer, logger repository.Logger) *TarGzipFormat {
 	return &TarGzipFormat{
 		fs:        fs,
 		logger:    logger,
-		extractor: tar.NewTar(fs, logger),
+		extractor: extractor,
 	}
 }
 
@@ -51,6 +45,24 @@ func (a *TarGzipFormat) Unpack(project *entity.Project, workingDir string) error
 		return ErrProjectNotProvided
 	}
 
+	if workingDir == "" {
+		a.logger.Error(ErrWorkingDirNotProvided.Error(),
+			map[string]interface{}{
+				"component": "TarGzipFormat.Unpack",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/archive",
+			})
+		return ErrWorkingDirNotProvided
+	}
+
+	if a.fs == nil {
+		a.logger.Error(ErrFilesystemNotProvided.Error(),
+			map[string]interface{}{
+				"component": "TarGzipFormat.Unpack",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/archive",
+			})
+		return ErrFilesystemNotProvided
+	}
+
 	if a.extractor == nil {
 		a.logger.Error(ErrTarExtractorNotProvided.Error(),
 			map[string]interface{}{
@@ -60,59 +72,77 @@ func (a *TarGzipFormat) Unpack(project *entity.Project, workingDir string) error
 		return ErrTarExtractorNotProvided
 	}
 
-	// It should be received instead of being figured out here
-	sourceFileInfo, _ = a.fs.Stat(project.Reference)
-	sourceCodeFile = filepath.Join(workingDir, sourceFileInfo.Name())
-
-	_, err = a.fs.Stat(sourceCodeFile)
-	// error if the file does not exists
-	if err != nil {
-		errorMsg := fmt.Sprintf("source code file %s does not exists", sourceCodeFile)
-		a.logger.Error(errorMsg,
+	if project.Reference == "" {
+		a.logger.Error(ErrProjectReferenceNotProvided.Error(),
 			map[string]interface{}{
 				"component": "TarGzipFormat.Unpack",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/archive",
-				"file":      sourceCodeFile,
+			})
+		return ErrProjectReferenceNotProvided
+	}
+
+	// It should be received instead of being figured out here
+	sourceFileInfo, err = a.fs.Stat(project.Reference)
+	if err != nil {
+		a.logger.Error(
+			fmt.Sprintf("%s: %s", ErrDescribingProjectReferenece, err),
+			map[string]interface{}{
+				"component": "TarGzipFormat.Unpack",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/archive",
+			})
+		return fmt.Errorf("%s: %w", ErrDescribingProjectReferenece, err)
+	}
+
+	sourceCodeFile = filepath.Join(workingDir, sourceFileInfo.Name())
+	_, err = a.fs.Stat(sourceCodeFile)
+	if err != nil {
+		// error if the file does not exists
+		a.logger.Error(
+			ErrSourceCodeFileNotExist.Error(),
+			map[string]interface{}{
+				"component":   "TarGzipFormat.Unpack",
+				"package":     "github.com/apenella/ransidble/internal/infrastructure/archive",
+				"source_file": sourceCodeFile,
 			})
 
-		return fmt.Errorf("%s", errorMsg)
+		return ErrSourceCodeFileNotExist
 	}
 
 	sourceCodeFileReader, err = a.fs.Open(sourceCodeFile)
 	if err != nil {
-		errorMsg := fmt.Sprintf("error opening source code file %s", sourceCodeFile)
-		a.logger.Error(errorMsg,
+		a.logger.Error(
+			fmt.Sprintf("%s: %s", ErrOpeningSourceCodeFile, err),
 			map[string]interface{}{
-				"component": "TarGzipFormat.Unpack",
-				"package":   "github.com/apenella/ransidble/internal/infrastructure/archive",
-				"file":      sourceCodeFile,
+				"component":   "TarGzipFormat.Unpack",
+				"package":     "github.com/apenella/ransidble/internal/infrastructure/archive",
+				"source_file": sourceCodeFile,
 			})
-		return fmt.Errorf("%s", errorMsg)
+		return fmt.Errorf("%s: %w", ErrOpeningSourceCodeFile, err)
 	}
 
 	gzipReader, err = gzip.NewReader(sourceCodeFileReader)
 	if err != nil {
-		errorMsg := fmt.Sprintf("error creating gzip reader from %s", sourceCodeFile)
-		a.logger.Error(errorMsg,
+		a.logger.Error(
+			fmt.Sprintf("%s: %s", ErrCreatingGzipReader, err),
 			map[string]interface{}{
-				"component": "TarGzipFormat.Unpack",
-				"package":   "github.com/apenella/ransidble/internal/infrastructure/archive",
-				"file":      sourceCodeFile,
+				"component":   "TarGzipFormat.Unpack",
+				"package":     "github.com/apenella/ransidble/internal/infrastructure/archive",
+				"source_file": sourceCodeFile,
 			})
-		return fmt.Errorf("%s", errorMsg)
+		return fmt.Errorf("%s: %w", ErrCreatingGzipReader, err)
 	}
 
 	err = a.extractor.Extract(gzipReader, workingDir)
 	if err != nil {
-		errorMsg := fmt.Sprintf("error extracting tar file %s into %s", sourceCodeFile, workingDir)
-		a.logger.Error(errorMsg,
+		a.logger.Error(
+			fmt.Sprintf("%s: %s", ErrExtractingSourceCodeFile, err),
 			map[string]interface{}{
 				"component":   "TarGzipFormat.Unpack",
 				"package":     "github.com/apenella/ransidble/internal/infrastructure/archive",
-				"file":        sourceCodeFile,
+				"source_file": sourceCodeFile,
 				"working_dir": workingDir,
 			})
-		return fmt.Errorf("%s", errorMsg)
+		return fmt.Errorf("%s: %w", ErrExtractingSourceCodeFile, err)
 	}
 
 	return nil
