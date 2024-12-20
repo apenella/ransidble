@@ -84,7 +84,7 @@ func TestFetchFileFromLocalFilesystem(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
-				assert.Nil(t, err)
+				assert.Nil(t, test.err)
 				test.assertFunc(t, test.fetch)
 			}
 		})

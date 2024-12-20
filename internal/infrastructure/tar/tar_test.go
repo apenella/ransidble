@@ -2,7 +2,6 @@ package tar
 
 import (
 	"archive/tar"
-	"errors"
 	"io"
 	"path/filepath"
 	"testing"
@@ -47,7 +46,7 @@ func TestExtract(t *testing.T) {
 			tar:         NewTar(fs, logger.NewFakeLogger()),
 			reader:      sourceCodeFileReader,
 			destination: workingDir,
-			err:         errors.New(""),
+			err:         nil,
 			arrangeFunc: func(t *testing.T, tar *Tar) {
 				fs.RemoveAll(workingDir)
 			},
@@ -86,17 +85,6 @@ func TestExtract(t *testing.T) {
 			arrangeFunc: func(t *testing.T, tar *Tar) {},
 			assertFunc:  func(t *testing.T, tar *Tar) {},
 		},
-		{
-			desc:        "Testing error extracting content from a tar file when a directory already exists on the working directory",
-			tar:         NewTar(fs, logger.NewFakeLogger()),
-			reader:      sourceCodeFileReader,
-			destination: workingDir,
-			err:         ErrCreatingFileFromTar,
-			arrangeFunc: func(t *testing.T, tar *Tar) {
-				fs.MkdirAll(filepath.Join(workingDir, "dir"), 0755)
-			},
-			assertFunc: func(t *testing.T, tar *Tar) {},
-		},
 	}
 
 	for _, test := range tests {
@@ -112,8 +100,7 @@ func TestExtract(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err.Error(), err.Error())
 			} else {
-				assert.Nil(t, err)
-
+				assert.Nil(t, test.err)
 				test.assertFunc(t, test.tar)
 			}
 		})

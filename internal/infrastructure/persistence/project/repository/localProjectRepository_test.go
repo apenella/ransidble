@@ -42,10 +42,8 @@ func TestLocalProjectRepository_LoadProjects(t *testing.T) {
 	tests := []struct {
 		desc       string
 		repository *LocalProjectRepository
-		// path     string
-		// fs       afero.Fs
-		expected map[string]*entity.Project
-		err      error
+		expected   map[string]*entity.Project
+		err        error
 	}{
 		{
 			desc: "Testing load projects from local storage",
@@ -114,6 +112,7 @@ func TestLocalProjectRepository_LoadProjects(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err.Error(), err.Error())
 			} else {
+				assert.Nil(t, test.err)
 				assert.Equal(t, test.expected, test.repository.store)
 			}
 		})

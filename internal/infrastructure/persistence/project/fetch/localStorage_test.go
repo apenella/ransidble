@@ -164,10 +164,10 @@ func TestFetch(t *testing.T) {
 			}
 
 			err := test.storage.Fetch(test.project, test.workingDir)
-			if test.err != nil {
+			if err != nil {
 				assert.Equal(t, test.err.Error(), err.Error())
 			} else {
-				assert.Nil(t, err)
+				assert.Nil(t, test.err)
 
 				if test.assertFunc != nil {
 					test.assertFunc(t, test.storage)

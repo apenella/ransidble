@@ -78,6 +78,7 @@ func TestMemoryTaskRepository_Find(t *testing.T) {
 			if err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
+				assert.Nil(t, test.err)
 				assert.Equal(t, test.expected, task)
 			}
 		})
