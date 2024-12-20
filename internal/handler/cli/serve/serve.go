@@ -22,6 +22,7 @@ import (
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch"
 	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
 	taskpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/task"
+	"github.com/apenella/ransidble/internal/infrastructure/tar"
 	"github.com/apenella/ransidble/internal/infrastructure/unpack"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -79,6 +80,7 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 				),
 			)
 
+			tarExtractor := tar.NewTar(afs, log)
 			unpackFactory := unpack.NewFactory()
 			unpackFactory.Register(entity.ProjectFormatPlain, unpack.NewPlainFormat(
 				afs,
@@ -86,6 +88,7 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			))
 			unpackFactory.Register(entity.ProjectFormatTarGz, unpack.NewTarGzipFormat(
 				afs,
+				tarExtractor,
 				log,
 			))
 
