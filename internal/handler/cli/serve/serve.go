@@ -103,7 +103,7 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			dispatcher := executor.NewDispatch(
 				config.Server.WorkerPoolSize,
 				workspaceBuilder,
-				ansibleexecutor.NewAnsiblePlaybook(),
+				ansibleexecutor.NewAnsiblePlaybook(log),
 				log,
 			)
 

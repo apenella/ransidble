@@ -56,7 +56,9 @@ func TestCreateWorkspace(t *testing.T) {
 				&repository.MockBuilder{
 					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewAnsiblePlaybook(),
+				executor.NewAnsiblePlaybook(
+					logger.NewFakeLogger(),
+				),
 				nil,
 			),
 			task: &entity.Task{
@@ -91,7 +93,9 @@ func TestCreateWorkspace(t *testing.T) {
 				&repository.MockBuilder{
 					Workspace: &repository.MockWorkspace{},
 				},
-				executor.NewAnsiblePlaybook(),
+				executor.NewAnsiblePlaybook(
+					logger.NewFakeLogger(),
+				),
 				logger.NewFakeLogger(),
 			),
 			task: &entity.Task{

@@ -70,7 +70,7 @@ run-task-2: ## Make a request to create an ansible-playbook task
 	@echo
 	@echo " Making a request to the server"
 	@echo
-	curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/tasks/ansible-playbook/project-2 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local", "dependencies": {"collections": {"requirements_file": "requirements.yml"}}}'
+	curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/tasks/ansible-playbook/project-2 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local", "dependencies": {"collections": {"requirements_file": "requirements.yml", "force_with_deps": true}}}'
 
 run-task-3: ## Make a request to create an ansible-playbook task
 	@echo
