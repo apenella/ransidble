@@ -24,7 +24,7 @@ func (m *AnsiblePlaybookParametersMapper) ToAnsiblePlaybookParametersEntity(para
 		Playbooks:         append([]string{}, parameters.Playbooks...),
 		Check:             parameters.Check,
 		Diff:              parameters.Diff,
-		Dependencies:      m.toAnsiblePLaybookParametersDependenciesEntity(parameters.Dependencies),
+		Requirements:      m.toAnsiblePLaybookParametersRequirementsEntity(parameters.Requirements),
 		ExtraVars:         m.toAnsiblePlaybookParametersExtraVarsEntity(parameters.ExtraVars),
 		ExtraVarsFile:     append([]string{}, parameters.ExtraVarsFile...),
 		FlushCache:        parameters.FlushCache,
@@ -56,27 +56,27 @@ func (m *AnsiblePlaybookParametersMapper) ToAnsiblePlaybookParametersEntity(para
 	}
 }
 
-// ToAnsiblePLaybookParametersDependenciesEntity maps a request.AnsiblePlaybookParametersDependencies to a entity.AnsiblePlaybookParametersDependencies
-func (m *AnsiblePlaybookParametersMapper) toAnsiblePLaybookParametersDependenciesEntity(dependencies *request.AnsiblePlaybookDependencies) *entity.AnsiblePlaybookDependencies {
+// ToAnsiblePLaybookParametersRequirementsEntity maps a request.AnsiblePlaybookParametersDependencies to a entity.AnsiblePlaybookParametersDependencies
+func (m *AnsiblePlaybookParametersMapper) toAnsiblePLaybookParametersRequirementsEntity(dependencies *request.AnsiblePlaybookRequirements) *entity.AnsiblePlaybookRequirements {
 
 	if dependencies == nil {
-		return &entity.AnsiblePlaybookDependencies{}
+		return &entity.AnsiblePlaybookRequirements{}
 	}
 
-	return &entity.AnsiblePlaybookDependencies{
-		Roles:       m.toAnsiblePLaybookParametersRolesDependenciesEntity(dependencies.Roles),
-		Collections: m.toAnsiblePLaybookParametersCollectionsDependenciesEntity(dependencies.Collections),
+	return &entity.AnsiblePlaybookRequirements{
+		Roles:       m.toAnsiblePLaybookParametersRolesRequirementsEntity(dependencies.Roles),
+		Collections: m.toAnsiblePLaybookParametersCollectionsRequirementsEntity(dependencies.Collections),
 	}
 }
 
-// toAnsiblePLaybookParametersRolesDependenciesEntity
-func (m *AnsiblePlaybookParametersMapper) toAnsiblePLaybookParametersRolesDependenciesEntity(parameters *request.AnsiblePlaybookRoleDependencies) *entity.AnsiblePlaybookRoleDependencies {
+// toAnsiblePLaybookParametersRolesRequirementsEntity
+func (m *AnsiblePlaybookParametersMapper) toAnsiblePLaybookParametersRolesRequirementsEntity(parameters *request.AnsiblePlaybookRoleRequirements) *entity.AnsiblePlaybookRoleRequirements {
 
 	if parameters == nil {
-		return &entity.AnsiblePlaybookRoleDependencies{}
+		return &entity.AnsiblePlaybookRoleRequirements{}
 	}
 
-	return &entity.AnsiblePlaybookRoleDependencies{
+	return &entity.AnsiblePlaybookRoleRequirements{
 		Roles:        append([]string{}, parameters.Roles...),
 		APIKey:       parameters.APIKey,
 		IgnoreErrors: parameters.IgnoreErrors,
@@ -89,14 +89,14 @@ func (m *AnsiblePlaybookParametersMapper) toAnsiblePLaybookParametersRolesDepend
 	}
 }
 
-// toAnsiblePLaybookParametersCollectionsDependenciesEntity
-func (m *AnsiblePlaybookParametersMapper) toAnsiblePLaybookParametersCollectionsDependenciesEntity(paremeters *request.AnsiblePlaybookCollectionDependencies) *entity.AnsiblePlaybookCollectionDependencies {
+// toAnsiblePLaybookParametersCollectionsRequirementsEntity
+func (m *AnsiblePlaybookParametersMapper) toAnsiblePLaybookParametersCollectionsRequirementsEntity(paremeters *request.AnsiblePlaybookCollectionRequirements) *entity.AnsiblePlaybookCollectionRequirements {
 
 	if paremeters == nil {
-		return &entity.AnsiblePlaybookCollectionDependencies{}
+		return &entity.AnsiblePlaybookCollectionRequirements{}
 	}
 
-	return &entity.AnsiblePlaybookCollectionDependencies{
+	return &entity.AnsiblePlaybookCollectionRequirements{
 		Collections:      append([]string{}, paremeters.Collections...),
 		APIKey:           paremeters.APIKey,
 		ForceWithDeps:    paremeters.ForceWithDeps,

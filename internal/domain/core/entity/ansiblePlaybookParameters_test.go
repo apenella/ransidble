@@ -8,7 +8,7 @@ import (
 
 func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 	type fields struct {
-		Playbooks     []string
+		Become        bool
 		Check         bool
 		Diff          bool
 		FlushCache    bool
@@ -18,11 +18,12 @@ func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 		ListHosts     bool
 		ListTags      bool
 		ListTasks     bool
+		Playbooks     []string
+		Requirements  *AnsiblePlaybookRequirements
 		SyntaxCheck   bool
+		Timeout       int
 		Verbose       bool
 		Version       bool
-		Timeout       int
-		Become        bool
 	}
 	test := []struct {
 		desc    string
@@ -32,7 +33,7 @@ func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 		{
 			desc: "Validating a AnsiblePlaybookParameters entity",
 			fields: fields{
-				Playbooks:     []string{"playbook.yml"},
+				Become:        false,
 				Check:         false,
 				Diff:          false,
 				FlushCache:    false,
@@ -42,11 +43,36 @@ func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 				ListHosts:     false,
 				ListTags:      false,
 				ListTasks:     false,
-				SyntaxCheck:   false,
-				Verbose:       false,
-				Version:       false,
-				Timeout:       30,
-				Become:        false,
+				Playbooks:     []string{"playbook.yml"},
+				Requirements: &AnsiblePlaybookRequirements{
+					Roles: &AnsiblePlaybookRoleRequirements{
+						Roles:        []string{"roles"},
+						APIKey:       "apikey",
+						IgnoreErrors: true,
+						NoDeps:       true,
+						RoleFile:     "rolefile",
+						Server:       "server",
+						Timeout:      "30",
+						Token:        "token",
+						Verbose:      true,
+					},
+					Collections: &AnsiblePlaybookCollectionRequirements{
+						Collections:      []string{"collections"},
+						APIKey:           "apikey",
+						ForceWithDeps:    true,
+						Pre:              true,
+						Timeout:          "30",
+						Token:            "token",
+						IgnoreErrors:     true,
+						RequirementsFile: "requirementsfile",
+						Server:           "server",
+						Verbose:          true,
+					},
+				},
+				SyntaxCheck: false,
+				Timeout:     30,
+				Verbose:     false,
+				Version:     false,
 			},
 			wantErr: false,
 		},
@@ -113,6 +139,7 @@ func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 				Version:       test.fields.Version,
 				Timeout:       test.fields.Timeout,
 				Become:        test.fields.Become,
+				Requirements:  test.fields.Requirements,
 			}
 
 			err := params.Validate()

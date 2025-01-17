@@ -14,7 +14,7 @@
     "diff": {
       "type": "boolean"
     },
-    "dependencies": {
+    "requirements": {
       "type": "object",
       "properties": {
         "roles": {

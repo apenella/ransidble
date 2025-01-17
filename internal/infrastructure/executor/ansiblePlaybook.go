@@ -122,14 +122,14 @@ func (a *AnsiblePlaybook) createGalaxyCollectionInstallExecutor(workingDir strin
 
 	optionsFuncs := make([]collection.AnsibleGalaxyCollectionInstallOptionsFunc, 0)
 
-	if parameters.Dependencies != nil {
-		if parameters.Dependencies.Collections != nil {
+	if parameters.Requirements != nil {
+		if parameters.Requirements.Collections != nil {
 
-			if len(parameters.Dependencies.Collections.Collections) > 0 {
-				optionsFuncs = append(optionsFuncs, collection.WithCollectionNames(parameters.Dependencies.Collections.Collections...))
+			if len(parameters.Requirements.Collections.Collections) > 0 {
+				optionsFuncs = append(optionsFuncs, collection.WithCollectionNames(parameters.Requirements.Collections.Collections...))
 			}
 
-			options := ansibleGalaxyCollectionInstallOptionsMapper(parameters.Dependencies.Collections)
+			options := ansibleGalaxyCollectionInstallOptionsMapper(parameters.Requirements.Collections)
 
 			optionsFuncs = append(optionsFuncs, collection.WithGalaxyCollectionInstallOptions(options))
 			galaxyInstallCollectionCmd := collection.NewAnsibleGalaxyCollectionInstallCmd(optionsFuncs...)
@@ -332,7 +332,7 @@ func ansiblePlaybookOptionsMapper(parameters *entity.AnsiblePlaybookParameters) 
 	return ansiblePlaybookOptions
 }
 
-func ansibleGalaxyCollectionInstallOptionsMapper(parameters *entity.AnsiblePlaybookCollectionDependencies) *collection.AnsibleGalaxyCollectionInstallOptions {
+func ansibleGalaxyCollectionInstallOptionsMapper(parameters *entity.AnsiblePlaybookCollectionRequirements) *collection.AnsibleGalaxyCollectionInstallOptions {
 
 	options := &collection.AnsibleGalaxyCollectionInstallOptions{}
 

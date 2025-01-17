@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// AnsiblePlaybookParameters represents an entity containing the parameters to execute an ansible-playbook command
 type AnsiblePlaybookParameters struct {
 
 	// Playbooks is the ansible's playbooks list to be executed
@@ -17,8 +18,8 @@ type AnsiblePlaybookParameters struct {
 	// Diff when changing (small) files and templates, show the differences in those files; works great with --check
 	Diff bool `json:"diff,omitempty" validate:"boolean"`
 
-	// Dependencies is a list of role and collection dependencies
-	Dependencies *AnsiblePlaybookDependencies `json:"dependencies,omitempty"`
+	// Requirements is a list of role and collection dependencies
+	Requirements *AnsiblePlaybookRequirements `json:"requirements,omitempty"`
 
 	// ExtraVars is a map of extra variables used on ansible-playbook execution
 	ExtraVars map[string]interface{} `json:"extra_vars,omitempty"`
@@ -136,14 +137,16 @@ type AnsiblePlaybookParameters struct {
 	BecomeUser string `json:"become_user,omitempty"`
 }
 
-type AnsiblePlaybookDependencies struct {
+// AnsiblePlaybookRequirements represents an entity containing the parameters to install roles and collections dependencies
+type AnsiblePlaybookRequirements struct {
 	// Roles defines how to install roles dependencies
-	Roles *AnsiblePlaybookRoleDependencies `json:"roles,omitempty"`
+	Roles *AnsiblePlaybookRoleRequirements `json:"roles,omitempty"`
 	// Collections defines how to install collections dependencies
-	Collections *AnsiblePlaybookCollectionDependencies `json:"collections,omitempty"`
+	Collections *AnsiblePlaybookCollectionRequirements `json:"collections,omitempty"`
 }
 
-type AnsiblePlaybookRoleDependencies struct {
+// AnsiblePlaybookRoleRequirements represents an entity containing the parameters to install roles dependencies
+type AnsiblePlaybookRoleRequirements struct {
 
 	// Roles is a list of roles to install
 	Roles []string `json:"roles,omitempty"`
@@ -203,7 +206,8 @@ type AnsiblePlaybookRoleDependencies struct {
 	// Version bool
 }
 
-type AnsiblePlaybookCollectionDependencies struct {
+// AnsiblePlaybookCollectionRequirements represents an entity containing the parameters to install collections dependencies
+type AnsiblePlaybookCollectionRequirements struct {
 
 	// Collections is a list of collections to install.
 	Collections []string `json:"collections,omitempty"`
@@ -281,6 +285,7 @@ type AnsiblePlaybookCollectionDependencies struct {
 	// Version bool
 }
 
+// Validate method validates the AnsiblePlaybookParameters entity struct
 func (params *AnsiblePlaybookParameters) Validate() error {
 	validate := validator.New()
 	return validate.Struct(params)

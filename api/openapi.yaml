@@ -147,7 +147,7 @@ components:
           type: boolean
         diff:
           type: boolean
-        dependencies:
+        Requirements:
           type: object
           properties:
             roles:

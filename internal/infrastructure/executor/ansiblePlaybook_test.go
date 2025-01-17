@@ -103,12 +103,12 @@ func TestAnsiblePlaybookOptionsMapper(t *testing.T) {
 func TestAnsibleGalaxyCollectionInstallOptionsMapper(t *testing.T) {
 	tests := []struct {
 		desc string
-		in   *entity.AnsiblePlaybookCollectionDependencies
+		in   *entity.AnsiblePlaybookCollectionRequirements
 		out  *collection.AnsibleGalaxyCollectionInstallOptions
 	}{
 		{
 			desc: "Testing AnsibleGalaxyCollectionInstallOptionsMapper with all parameters",
-			in: &entity.AnsiblePlaybookCollectionDependencies{
+			in: &entity.AnsiblePlaybookCollectionRequirements{
 				APIKey:           "api-key",
 				ForceWithDeps:    true,
 				Pre:              true,
@@ -183,7 +183,7 @@ func TestCreateGalaxyCollectionInstallExecutor(t *testing.T) {
 			run:        run,
 			workingDir: "/tmp",
 			in: &entity.AnsiblePlaybookParameters{
-				Dependencies: &entity.AnsiblePlaybookDependencies{},
+				Requirements: &entity.AnsiblePlaybookRequirements{},
 			},
 			out: nil,
 		},
@@ -192,8 +192,8 @@ func TestCreateGalaxyCollectionInstallExecutor(t *testing.T) {
 			run:        run,
 			workingDir: "/tmp",
 			in: &entity.AnsiblePlaybookParameters{
-				Dependencies: &entity.AnsiblePlaybookDependencies{
-					Collections: &entity.AnsiblePlaybookCollectionDependencies{
+				Requirements: &entity.AnsiblePlaybookRequirements{
+					Collections: &entity.AnsiblePlaybookCollectionRequirements{
 						Collections: []string{"collection1", "collection2"},
 					},
 				},

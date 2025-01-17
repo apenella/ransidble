@@ -23,11 +23,11 @@ func TestToAnsiblePlaybookParametersEntity(t *testing.T) {
 				Playbooks: []string{"playbook1", "playbook2"},
 				Check:     true,
 				Diff:      true,
-				Dependencies: &request.AnsiblePlaybookDependencies{
-					Roles: &request.AnsiblePlaybookRoleDependencies{
+				Requirements: &request.AnsiblePlaybookRequirements{
+					Roles: &request.AnsiblePlaybookRoleRequirements{
 						Roles: []string{"role1", "role2"},
 					},
-					Collections: &request.AnsiblePlaybookCollectionDependencies{
+					Collections: &request.AnsiblePlaybookCollectionRequirements{
 						Collections: []string{"collection1", "collection2"},
 					},
 				},
@@ -64,11 +64,11 @@ func TestToAnsiblePlaybookParametersEntity(t *testing.T) {
 				Playbooks: []string{"playbook1", "playbook2"},
 				Check:     true,
 				Diff:      true,
-				Dependencies: &entity.AnsiblePlaybookDependencies{
-					Roles: &entity.AnsiblePlaybookRoleDependencies{
+				Requirements: &entity.AnsiblePlaybookRequirements{
+					Roles: &entity.AnsiblePlaybookRoleRequirements{
 						Roles: []string{"role1", "role2"},
 					},
-					Collections: &entity.AnsiblePlaybookCollectionDependencies{
+					Collections: &entity.AnsiblePlaybookCollectionRequirements{
 						Collections: []string{"collection1", "collection2"},
 					},
 				},
@@ -114,7 +114,7 @@ func TestToAnsiblePlaybookParametersEntity(t *testing.T) {
 			source: &request.AnsiblePlaybookParameters{},
 			expected: &entity.AnsiblePlaybookParameters{
 				Playbooks:     []string{},
-				Dependencies:  &entity.AnsiblePlaybookDependencies{},
+				Requirements:  &entity.AnsiblePlaybookRequirements{},
 				ExtraVars:     map[string]interface{}{},
 				ExtraVarsFile: []string{},
 			},
@@ -133,30 +133,30 @@ func TestToAnsiblePlaybookParametersEntity(t *testing.T) {
 	}
 }
 
-// TestToAnsiblePLaybookParametersDependenciesEntity tests ToAnsiblePLaybookParametersDependenciesEntity method
-func TestToAnsiblePLaybookParametersDependenciesEntity(t *testing.T) {
+// TestToAnsiblePLaybookParametersRequirementsEntity tests ToAnsiblePLaybookParametersRequirementsEntity method
+func TestToAnsiblePLaybookParametersRequirementsEntity(t *testing.T) {
 	tests := []struct {
 		desc     string
 		mapper   *AnsiblePlaybookParametersMapper
-		source   *request.AnsiblePlaybookDependencies
-		expected *entity.AnsiblePlaybookDependencies
+		source   *request.AnsiblePlaybookRequirements
+		expected *entity.AnsiblePlaybookRequirements
 	}{
 		{
 			desc:   "Testing to ansible playbook parameters dependencies entity with all fields",
 			mapper: NewAnsiblePlaybookParametersMapper(),
-			source: &request.AnsiblePlaybookDependencies{
-				Roles: &request.AnsiblePlaybookRoleDependencies{
+			source: &request.AnsiblePlaybookRequirements{
+				Roles: &request.AnsiblePlaybookRoleRequirements{
 					Roles: []string{"role1", "role2"},
 				},
-				Collections: &request.AnsiblePlaybookCollectionDependencies{
+				Collections: &request.AnsiblePlaybookCollectionRequirements{
 					Collections: []string{"collection1", "collection2"},
 				},
 			},
-			expected: &entity.AnsiblePlaybookDependencies{
-				Roles: &entity.AnsiblePlaybookRoleDependencies{
+			expected: &entity.AnsiblePlaybookRequirements{
+				Roles: &entity.AnsiblePlaybookRoleRequirements{
 					Roles: []string{"role1", "role2"},
 				},
-				Collections: &entity.AnsiblePlaybookCollectionDependencies{
+				Collections: &entity.AnsiblePlaybookCollectionRequirements{
 					Collections: []string{"collection1", "collection2"},
 				},
 			},
@@ -165,15 +165,15 @@ func TestToAnsiblePLaybookParametersDependenciesEntity(t *testing.T) {
 			desc:     "Testing to ansible playbook parameters dependencies entity with nil source",
 			mapper:   NewAnsiblePlaybookParametersMapper(),
 			source:   nil,
-			expected: &entity.AnsiblePlaybookDependencies{},
+			expected: &entity.AnsiblePlaybookRequirements{},
 		},
 		{
 			desc:   "Testing to ansible playbook parameters dependencies entity with empty source",
 			mapper: NewAnsiblePlaybookParametersMapper(),
-			source: &request.AnsiblePlaybookDependencies{},
-			expected: &entity.AnsiblePlaybookDependencies{
-				Roles:       &entity.AnsiblePlaybookRoleDependencies{},
-				Collections: &entity.AnsiblePlaybookCollectionDependencies{},
+			source: &request.AnsiblePlaybookRequirements{},
+			expected: &entity.AnsiblePlaybookRequirements{
+				Roles:       &entity.AnsiblePlaybookRoleRequirements{},
+				Collections: &entity.AnsiblePlaybookCollectionRequirements{},
 			},
 		},
 	}
@@ -183,25 +183,25 @@ func TestToAnsiblePLaybookParametersDependenciesEntity(t *testing.T) {
 			t.Log(test.desc)
 			t.Parallel()
 
-			res := test.mapper.toAnsiblePLaybookParametersDependenciesEntity(test.source)
+			res := test.mapper.toAnsiblePLaybookParametersRequirementsEntity(test.source)
 
 			assert.Equal(t, test.expected, res)
 		})
 	}
 }
 
-// TestToAnsiblePLaybookParametersRolesDependenciesEntity tests ToAnsiblePLaybookParametersRolesDependenciesEntity method
-func TestToAnsiblePLaybookParametersRolesDependenciesEntity(t *testing.T) {
+// TestToAnsiblePLaybookParametersRolesRequirementsEntity tests ToAnsiblePLaybookParametersRolesRequirementsEntity method
+func TestToAnsiblePLaybookParametersRolesRequirementsEntity(t *testing.T) {
 	tests := []struct {
 		desc     string
 		mapper   *AnsiblePlaybookParametersMapper
-		source   *request.AnsiblePlaybookRoleDependencies
-		expected *entity.AnsiblePlaybookRoleDependencies
+		source   *request.AnsiblePlaybookRoleRequirements
+		expected *entity.AnsiblePlaybookRoleRequirements
 	}{
 		{
 			desc:   "Testing to ansible playbook parameters roles dependencies entity with all fields",
 			mapper: NewAnsiblePlaybookParametersMapper(),
-			source: &request.AnsiblePlaybookRoleDependencies{
+			source: &request.AnsiblePlaybookRoleRequirements{
 				Roles:        []string{"role1", "role2"},
 				APIKey:       "apikey",
 				IgnoreErrors: true,
@@ -212,7 +212,7 @@ func TestToAnsiblePLaybookParametersRolesDependenciesEntity(t *testing.T) {
 				Token:        "token",
 				Verbose:      true,
 			},
-			expected: &entity.AnsiblePlaybookRoleDependencies{
+			expected: &entity.AnsiblePlaybookRoleRequirements{
 				Roles:        []string{"role1", "role2"},
 				APIKey:       "apikey",
 				IgnoreErrors: true,
@@ -228,13 +228,13 @@ func TestToAnsiblePLaybookParametersRolesDependenciesEntity(t *testing.T) {
 			desc:     "Testing to ansible playbook parameters roles dependencies entity with nil source",
 			mapper:   NewAnsiblePlaybookParametersMapper(),
 			source:   nil,
-			expected: &entity.AnsiblePlaybookRoleDependencies{},
+			expected: &entity.AnsiblePlaybookRoleRequirements{},
 		},
 		{
 			desc:   "Testing to ansible playbook parameters roles dependencies entity with empty source",
 			mapper: NewAnsiblePlaybookParametersMapper(),
-			source: &request.AnsiblePlaybookRoleDependencies{},
-			expected: &entity.AnsiblePlaybookRoleDependencies{
+			source: &request.AnsiblePlaybookRoleRequirements{},
+			expected: &entity.AnsiblePlaybookRoleRequirements{
 				Roles: []string{},
 			},
 		},
@@ -245,25 +245,25 @@ func TestToAnsiblePLaybookParametersRolesDependenciesEntity(t *testing.T) {
 			t.Log(test.desc)
 			t.Parallel()
 
-			res := test.mapper.toAnsiblePLaybookParametersRolesDependenciesEntity(test.source)
+			res := test.mapper.toAnsiblePLaybookParametersRolesRequirementsEntity(test.source)
 
 			assert.Equal(t, test.expected, res)
 		})
 	}
 }
 
-// TestToAnsiblePLaybookParametersCollectionsDependenciesEntity tests ToAnsiblePLaybookParametersCollectionsDependenciesEntity method
-func TestToAnsiblePLaybookParametersCollectionsDependenciesEntity(t *testing.T) {
+// TestToAnsiblePLaybookParametersCollectionsRequirementsEntity tests ToAnsiblePLaybookParametersCollectionsRequirementsEntity method
+func TestToAnsiblePLaybookParametersCollectionsRequirementsEntity(t *testing.T) {
 	tests := []struct {
 		desc     string
 		mapper   *AnsiblePlaybookParametersMapper
-		source   *request.AnsiblePlaybookCollectionDependencies
-		expected *entity.AnsiblePlaybookCollectionDependencies
+		source   *request.AnsiblePlaybookCollectionRequirements
+		expected *entity.AnsiblePlaybookCollectionRequirements
 	}{
 		{
 			desc:   "Testing to ansible playbook parameters collections dependencies entity with all fields",
 			mapper: NewAnsiblePlaybookParametersMapper(),
-			source: &request.AnsiblePlaybookCollectionDependencies{
+			source: &request.AnsiblePlaybookCollectionRequirements{
 				Collections:      []string{"collection1", "collection2"},
 				APIKey:           "apikey",
 				ForceWithDeps:    true,
@@ -275,7 +275,7 @@ func TestToAnsiblePLaybookParametersCollectionsDependenciesEntity(t *testing.T) 
 				Server:           "server",
 				Verbose:          true,
 			},
-			expected: &entity.AnsiblePlaybookCollectionDependencies{
+			expected: &entity.AnsiblePlaybookCollectionRequirements{
 				Collections:      []string{"collection1", "collection2"},
 				APIKey:           "apikey",
 				ForceWithDeps:    true,
@@ -292,13 +292,13 @@ func TestToAnsiblePLaybookParametersCollectionsDependenciesEntity(t *testing.T) 
 			desc:     "Testing to ansible playbook parameters collections dependencies entity with nil source",
 			mapper:   NewAnsiblePlaybookParametersMapper(),
 			source:   nil,
-			expected: &entity.AnsiblePlaybookCollectionDependencies{},
+			expected: &entity.AnsiblePlaybookCollectionRequirements{},
 		},
 		{
 			desc:   "Testing to ansible playbook parameters collections dependencies entity with empty source",
 			mapper: NewAnsiblePlaybookParametersMapper(),
-			source: &request.AnsiblePlaybookCollectionDependencies{},
-			expected: &entity.AnsiblePlaybookCollectionDependencies{
+			source: &request.AnsiblePlaybookCollectionRequirements{},
+			expected: &entity.AnsiblePlaybookCollectionRequirements{
 				Collections: []string{},
 			},
 		},
@@ -309,7 +309,7 @@ func TestToAnsiblePLaybookParametersCollectionsDependenciesEntity(t *testing.T) 
 			t.Log(test.desc)
 			t.Parallel()
 
-			res := test.mapper.toAnsiblePLaybookParametersCollectionsDependenciesEntity(test.source)
+			res := test.mapper.toAnsiblePLaybookParametersCollectionsRequirementsEntity(test.source)
 
 			assert.Equal(t, test.expected, res)
 		})
