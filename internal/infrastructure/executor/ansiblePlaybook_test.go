@@ -7,6 +7,7 @@ import (
 	"github.com/apenella/go-ansible/v2/pkg/execute"
 	"github.com/apenella/go-ansible/v2/pkg/execute/configuration"
 	collection "github.com/apenella/go-ansible/v2/pkg/galaxy/collection/install"
+	role "github.com/apenella/go-ansible/v2/pkg/galaxy/role/install"
 	"github.com/apenella/go-ansible/v2/pkg/playbook"
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
@@ -294,6 +295,130 @@ func TestCreateAnsiblePlaybookExecutor(t *testing.T) {
 			t.Parallel()
 
 			res := test.run.createAnsiblePlaybookExecutor(test.workingDir, test.in)
+			assert.Equal(t, test.out, res)
+		})
+	}
+}
+
+func TestAnsibleGalaxyRolesInstallOptionsMapper(t *testing.T) {
+	tests := []struct {
+		desc string
+		in   *entity.AnsiblePlaybookRoleRequirements
+		out  *role.AnsibleGalaxyRoleInstallOptions
+	}{
+		{
+			desc: "Testing AnsibleGalaxyRolesInstallOptionsMapper with all parameters",
+			in: &entity.AnsiblePlaybookRoleRequirements{
+				APIKey:       "api-key",
+				IgnoreErrors: true,
+				NoDeps:       true,
+				RoleFile:     "role-file",
+				Server:       "server",
+				Timeout:      "10",
+				Token:        "token",
+				Verbose:      true,
+			},
+			out: &role.AnsibleGalaxyRoleInstallOptions{
+				ApiKey:       "api-key",
+				IgnoreErrors: true,
+				NoDeps:       true,
+				RoleFile:     "role-file",
+				Server:       "server",
+				Timeout:      "10",
+				Token:        "token",
+				Verbose:      true,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Log(test.desc)
+			t.Parallel()
+
+			res := ansibleGalaxyRolesInstallOptionsMapper(test.in)
+			assert.Equal(t, test.out, res)
+		})
+	}
+}
+
+func TestCreateGalaxyRoleInstallExecutor(t *testing.T) {
+	run := NewAnsiblePlaybook(
+		logger.NewFakeLogger(),
+	)
+	tests := []struct {
+		desc       string
+		workingDir string
+		run        *AnsiblePlaybook
+		in         *entity.AnsiblePlaybookParameters
+		out        *configuration.AnsibleWithConfigurationSettingsExecute
+	}{
+		{
+			desc:       "Testing creating a GalaxyRoleInstallExecutor when parameters are not provided",
+			run:        run,
+			workingDir: "/tmp",
+			in:         nil,
+			out:        nil,
+		},
+		{
+			desc:       "Testing creating a GalaxyRoleInstallExecutor when working directory is not provided",
+			run:        run,
+			workingDir: "",
+			in:         &entity.AnsiblePlaybookParameters{},
+			out:        nil,
+		},
+		{
+			desc:       "Testing creating a GalaxyRoleInstallExecutor when dependency parameters are not provided",
+			run:        run,
+			workingDir: "/tmp",
+			in:         &entity.AnsiblePlaybookParameters{},
+			out:        nil,
+		},
+		{
+			desc:       "Testing creating a GalaxyRoleInstallExecutor when dependency parameters are provided and roles is not provided",
+			run:        run,
+			workingDir: "/tmp",
+			in: &entity.AnsiblePlaybookParameters{
+				Requirements: &entity.AnsiblePlaybookRequirements{},
+			},
+			out: nil,
+		},
+		{
+			desc:       "Testing creating a GalaxyRoleInstallExecutor when role names are provided",
+			run:        run,
+			workingDir: "/tmp",
+			in: &entity.AnsiblePlaybookParameters{
+				Requirements: &entity.AnsiblePlaybookRequirements{
+					Roles: &entity.AnsiblePlaybookRoleRequirements{
+						Roles: []string{"role1", "role2"},
+					},
+				},
+			},
+			out: configuration.NewAnsibleWithConfigurationSettingsExecute(
+				execute.NewDefaultExecute(
+					execute.WithCmd(
+						role.NewAnsibleGalaxyRoleInstallCmd(
+							[]role.AnsibleGalaxyRoleInstallOptionsFunc{
+								role.WithRoleNames("role1", "role2"),
+								role.WithGalaxyRoleInstallOptions(&role.AnsibleGalaxyRoleInstallOptions{}),
+							}...,
+						),
+					),
+					execute.WithCmdRunDir("/tmp"),
+				),
+				configuration.WithAnsibleRolesPath(
+					filepath.Join("/tmp", RolesPath),
+				),
+			),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Log(test.desc)
+			t.Parallel()
+
+			res := test.run.createGalaxyRoleInstallExecutor(test.workingDir, test.in)
 			assert.Equal(t, test.out, res)
 		})
 	}

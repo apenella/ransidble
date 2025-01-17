@@ -3,7 +3,7 @@ module github.com/apenella/ransidble
 go 1.23.0
 
 require (
-	github.com/apenella/go-ansible/v2 v2.0.1
+	github.com/apenella/go-ansible/v2 v2.1.0
 	github.com/go-errors/errors v1.5.1
 	github.com/go-playground/validator/v10 v10.22.1
 	github.com/google/uuid v1.6.0

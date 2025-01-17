@@ -10,6 +10,7 @@ import (
 	"github.com/apenella/go-ansible/v2/pkg/execute/configuration"
 	"github.com/apenella/go-ansible/v2/pkg/execute/workflow"
 	collection "github.com/apenella/go-ansible/v2/pkg/galaxy/collection/install"
+	role "github.com/apenella/go-ansible/v2/pkg/galaxy/role/install"
 	"github.com/apenella/go-ansible/v2/pkg/playbook"
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
@@ -18,6 +19,8 @@ import (
 const (
 	// CollectionsPath represents the path where the collections are stored
 	CollectionsPath = ".collections"
+	// RolesPath represents the path where the roles are stored
+	RolesPath = ".roles"
 )
 
 var (
@@ -75,6 +78,11 @@ func (a *AnsiblePlaybook) Run(ctx context.Context, workingDir string, parameters
 		workflowTasks = append(workflowTasks, galaxyInstallCollectionExecutor)
 	}
 
+	galaxyInstallRoleExecutor := a.createGalaxyRoleInstallExecutor(workingDir, parameters)
+	if galaxyInstallRoleExecutor != nil {
+		workflowTasks = append(workflowTasks, galaxyInstallRoleExecutor)
+	}
+
 	workflowTasks = append(workflowTasks, playbookExecutor)
 
 	workflowExecutor := workflow.NewWorkflowExecute(workflowTasks...)
@@ -93,7 +101,91 @@ func (a *AnsiblePlaybook) Run(ctx context.Context, workingDir string, parameters
 	return nil
 }
 
-// createGalaxyCollectionInstallExecutor
+func (a *AnsiblePlaybook) createGalaxyRoleInstallExecutor(workingDir string, parameters *entity.AnsiblePlaybookParameters) *configuration.AnsibleWithConfigurationSettingsExecute {
+	var galaxyInstallRolesExecutor *configuration.AnsibleWithConfigurationSettingsExecute
+
+	if parameters == nil {
+		a.logger.Debug(
+			"Parameters not provided",
+			map[string]interface{}{
+				"component": "AnsiblePlaybook.createGalaxyRolesInstallExecutor",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
+			})
+
+		return nil
+	}
+
+	if workingDir == "" {
+		a.logger.Debug(
+			"Working directory not provided",
+			map[string]interface{}{
+				"component": "AnsiblePlaybook.createGalaxyRolesInstallExecutor",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
+			})
+
+		return nil
+	}
+
+	optionsFuncs := make([]role.AnsibleGalaxyRoleInstallOptionsFunc, 0)
+
+	if parameters.Requirements != nil {
+		if parameters.Requirements.Roles != nil {
+
+			if len(parameters.Requirements.Roles.Roles) > 0 {
+				optionsFuncs = append(optionsFuncs, role.WithRoleNames(parameters.Requirements.Roles.Roles...))
+			}
+
+			options := ansibleGalaxyRolesInstallOptionsMapper(parameters.Requirements.Roles)
+
+			optionsFuncs = append(optionsFuncs, role.WithGalaxyRoleInstallOptions(options))
+			galaxyInstallRolesCmd := role.NewAnsibleGalaxyRoleInstallCmd(optionsFuncs...)
+
+			galaxyInstallRolesExecutor = configuration.NewAnsibleWithConfigurationSettingsExecute(
+				execute.NewDefaultExecute(
+					execute.WithCmd(galaxyInstallRolesCmd),
+					execute.WithCmdRunDir(workingDir),
+				),
+				configuration.WithAnsibleRolesPath(filepath.Join(workingDir, RolesPath)),
+			)
+		}
+	}
+
+	return galaxyInstallRolesExecutor
+}
+
+func ansibleGalaxyRolesInstallOptionsMapper(parameters *entity.AnsiblePlaybookRoleRequirements) *role.AnsibleGalaxyRoleInstallOptions {
+
+	options := &role.AnsibleGalaxyRoleInstallOptions{}
+
+	if len(parameters.APIKey) > 0 {
+		options.ApiKey = parameters.APIKey
+	}
+
+	options.IgnoreErrors = parameters.IgnoreErrors
+	options.NoDeps = parameters.NoDeps
+
+	if len(parameters.RoleFile) > 0 {
+		options.RoleFile = parameters.RoleFile
+	}
+
+	if len(parameters.Server) > 0 {
+		options.Server = parameters.Server
+	}
+
+	if len(parameters.Timeout) > 0 {
+		options.Timeout = parameters.Timeout
+	}
+
+	if len(parameters.Token) > 0 {
+		options.Token = parameters.Token
+	}
+
+	options.Verbose = parameters.Verbose
+
+	return options
+}
+
+// createGalaxyCollectionInstallExecutor returns an Executor to run the Ansible Galaxy Collection install command
 func (a *AnsiblePlaybook) createGalaxyCollectionInstallExecutor(workingDir string, parameters *entity.AnsiblePlaybookParameters) *configuration.AnsibleWithConfigurationSettingsExecute {
 
 	var galaxyInstallCollectionExecutor *configuration.AnsibleWithConfigurationSettingsExecute
@@ -202,13 +294,9 @@ func ansiblePlaybookOptionsMapper(parameters *entity.AnsiblePlaybookParameters) 
 
 	ansiblePlaybookOptions := &playbook.AnsiblePlaybookOptions{}
 
-	if parameters.Check {
-		ansiblePlaybookOptions.Check = parameters.Check
-	}
+	ansiblePlaybookOptions.Check = parameters.Check
 
-	if parameters.Diff {
-		ansiblePlaybookOptions.Diff = parameters.Diff
-	}
+	ansiblePlaybookOptions.Diff = parameters.Diff
 
 	if len(parameters.ExtraVars) > 0 {
 		if ansiblePlaybookOptions.ExtraVars == nil {
@@ -224,13 +312,9 @@ func ansiblePlaybookOptionsMapper(parameters *entity.AnsiblePlaybookParameters) 
 		ansiblePlaybookOptions.ExtraVarsFile = append([]string{}, parameters.ExtraVarsFile...)
 	}
 
-	if parameters.FlushCache {
-		ansiblePlaybookOptions.FlushCache = parameters.FlushCache
-	}
+	ansiblePlaybookOptions.FlushCache = parameters.FlushCache
 
-	if parameters.ForceHandlers {
-		ansiblePlaybookOptions.ForceHandlers = parameters.ForceHandlers
-	}
+	ansiblePlaybookOptions.ForceHandlers = parameters.ForceHandlers
 
 	if parameters.Forks > 0 {
 		ansiblePlaybookOptions.Forks = strconv.Itoa(parameters.Forks)
@@ -244,17 +328,9 @@ func ansiblePlaybookOptionsMapper(parameters *entity.AnsiblePlaybookParameters) 
 		ansiblePlaybookOptions.Limit = parameters.Limit
 	}
 
-	if parameters.ListHosts {
-		ansiblePlaybookOptions.ListHosts = parameters.ListHosts
-	}
-
-	if parameters.ListTags {
-		ansiblePlaybookOptions.ListTags = parameters.ListTags
-	}
-
-	if parameters.ListTasks {
-		ansiblePlaybookOptions.ListTasks = parameters.ListTasks
-	}
+	ansiblePlaybookOptions.ListHosts = parameters.ListHosts
+	ansiblePlaybookOptions.ListTags = parameters.ListTags
+	ansiblePlaybookOptions.ListTasks = parameters.ListTasks
 
 	if len(parameters.SkipTags) > 0 {
 		ansiblePlaybookOptions.SkipTags = parameters.SkipTags
@@ -264,9 +340,7 @@ func ansiblePlaybookOptionsMapper(parameters *entity.AnsiblePlaybookParameters) 
 		ansiblePlaybookOptions.StartAtTask = parameters.StartAtTask
 	}
 
-	if parameters.SyntaxCheck {
-		ansiblePlaybookOptions.SyntaxCheck = parameters.SyntaxCheck
-	}
+	ansiblePlaybookOptions.SyntaxCheck = parameters.SyntaxCheck
 
 	if len(parameters.Tags) > 0 {
 		ansiblePlaybookOptions.Tags = parameters.Tags
@@ -280,13 +354,9 @@ func ansiblePlaybookOptionsMapper(parameters *entity.AnsiblePlaybookParameters) 
 		ansiblePlaybookOptions.VaultPasswordFile = parameters.VaultPasswordFile
 	}
 
-	if parameters.Verbose {
-		ansiblePlaybookOptions.Verbose = parameters.Verbose
-	}
+	ansiblePlaybookOptions.Verbose = parameters.Verbose
 
-	if parameters.Version {
-		ansiblePlaybookOptions.Version = parameters.Version
-	}
+	ansiblePlaybookOptions.Version = parameters.Version
 
 	// It is temporary enabled. The idea is to remove it in the future to avoid executing playbooks into the server
 	if len(parameters.Connection) > 0 {
@@ -317,9 +387,7 @@ func ansiblePlaybookOptionsMapper(parameters *entity.AnsiblePlaybookParameters) 
 		ansiblePlaybookOptions.User = parameters.User
 	}
 
-	if parameters.Become {
-		ansiblePlaybookOptions.Become = parameters.Become
-	}
+	ansiblePlaybookOptions.Become = parameters.Become
 
 	if len(parameters.BecomeMethod) > 0 {
 		ansiblePlaybookOptions.BecomeMethod = parameters.BecomeMethod
