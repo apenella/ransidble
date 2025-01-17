@@ -26,7 +26,7 @@
                 "type": "string"
               }
             },
-            "api": {
+            "api_key": {
               "type": "string"
             },
             "ignore_errors": {
@@ -61,7 +61,7 @@
                 "type": "string"
               }
             },
-            "api": {
+            "api_key": {
               "type": "string"
             },
             "force_with_deps": {

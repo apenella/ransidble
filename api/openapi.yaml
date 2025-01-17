@@ -157,7 +157,7 @@ components:
                   type: array
                   items:
                     type: string
-                api:
+                api_key:
                   type: string
                 ignore_errors:
                   type: boolean
@@ -180,7 +180,7 @@ components:
                   type: array
                   items:
                     type: string
-                api:
+                api_key:
                   type: string
                 force_with_deps:
                   type: boolean
