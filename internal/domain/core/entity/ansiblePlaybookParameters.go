@@ -1,7 +1,7 @@
 package entity
 
 import (
-	_ "embed"
+	// _ "embed"
 
 	"github.com/go-playground/validator/v10"
 )

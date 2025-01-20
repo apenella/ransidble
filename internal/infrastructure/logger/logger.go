@@ -8,15 +8,20 @@ import (
 )
 
 const (
-	INFO  = "info"
+	// INFO represents the info log level
+	INFO = "info"
+	// ERROR represents the error log level
 	ERROR = "error"
+	// DEBUG represents the debug log level
 	DEBUG = "debug"
-	WARN  = "warn"
+	// WARN represents the warn log level
+	WARN = "warn"
 
 	// DefaultLoggerLevel represents the default logger level
 	DefaultLoggerLevel = logrus.InfoLevel
 )
 
+// LevelMap maps the log level to logrus level
 var LevelMap = map[string]logrus.Level{
 	INFO:  logrus.InfoLevel,
 	ERROR: logrus.ErrorLevel,
@@ -42,6 +47,7 @@ func NewLogger() *Logger {
 	}
 }
 
+// WithLogLevel sets the log level
 func (l *Logger) WithLogLevel(level string) *Logger {
 	level = strings.ToLower(level)
 	_, ok := LevelMap[level]

@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewCommand provides a new cobra command to manage ransidble
 func NewCommand(config *configuration.Configuration) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ransidble",
