@@ -17,22 +17,22 @@ const (
 // ErrGetProjectServiceNotInitialized represents an error when the GetProjectService is not initialized
 )
 
-// GetProjecListtHandler struct to handle get project requests
-type GetProjecListtHandler struct {
+// GetProjectListHandler struct to handle get project requests
+type GetProjectListHandler struct {
 	service service.GetProjectServicer
 	logger  repository.Logger
 }
 
-// NewGetProjecListtHandler creates a new GetProjecListtHandler
-func NewGetProjecListtHandler(s service.GetProjectServicer, logger repository.Logger) *GetProjecListtHandler {
-	return &GetProjecListtHandler{
+// NewGetProjectListHandler creates a new GetProjectListHandler
+func NewGetProjectListHandler(s service.GetProjectServicer, logger repository.Logger) *GetProjectListHandler {
+	return &GetProjectListHandler{
 		service: s,
 		logger:  logger,
 	}
 }
 
 // Handle method to get a task
-func (h *GetProjecListtHandler) Handle(c echo.Context) error {
+func (h *GetProjectListHandler) Handle(c echo.Context) error {
 
 	var errorMsg string
 	var errorResponse *response.ProjectErrorResponse
@@ -45,7 +45,7 @@ func (h *GetProjecListtHandler) Handle(c echo.Context) error {
 		}
 
 		h.logger.Error(ErrGetProjectServiceNotInitialized, map[string]interface{}{
-			"component": "GetProjecListtHandler.Handle",
+			"component": "GetProjectListHandler.Handle",
 			"package":   "github.com/apenella/ransidble/internal/handler/http/project",
 		})
 
@@ -53,7 +53,7 @@ func (h *GetProjecListtHandler) Handle(c echo.Context) error {
 	}
 
 	h.logger.Debug("getting project list", map[string]interface{}{
-		"component": "GetProjecListtHandler.Handle",
+		"component": "GetProjectListHandler.Handle",
 		"package":   "github.com/apenella/ransidble/internal/handler/http/project",
 	})
 
@@ -68,7 +68,7 @@ func (h *GetProjecListtHandler) Handle(c echo.Context) error {
 		errorMsg = fmt.Sprintf("%s: %s", ErrGettingProjectList, err.Error())
 
 		h.logger.Error(errorMsg, map[string]interface{}{
-			"component": "GetProjecListtHandler.Handle",
+			"component": "GetProjectListHandler.Handle",
 			"package":   "github.com/apenella/ransidble/internal/handler/http/project",
 		})
 

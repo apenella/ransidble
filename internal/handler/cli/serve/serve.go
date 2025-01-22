@@ -138,8 +138,8 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			getProjectService := projectService.NewGetProjectService(projectsRepository, log)
 			getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
 			router.GET(getProjectPath, getProjectHandler.Handle)
-			getProjecListtHandler := projectHandler.NewGetProjecListtHandler(getProjectService, log)
-			router.GET(getProjectsPath, getProjecListtHandler.Handle)
+			getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
+			router.GET(getProjectsPath, getProjectListHandler.Handle)
 
 			// Wait for interrupt signal to gracefully shutdown the server
 			quitCh := make(chan os.Signal, 1)
