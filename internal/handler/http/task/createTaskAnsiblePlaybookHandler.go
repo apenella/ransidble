@@ -20,8 +20,6 @@ const (
 	ErrInvalidRequestPayload = "invalid request payload"
 	// ErrBindingRequestPayload represents an error when the request payload can not be binded
 	ErrBindingRequestPayload = "error binding request payload"
-	// ErrStoringTask represents an error when storing a task
-	ErrStoringTask = "error storing task"
 	// ErrRunningAnsiblePlaybook represents an error when running an ansible playbook
 	ErrRunningAnsiblePlaybook = "error running ansible playbook"
 	// ErrInvalidTaskID represents an error when the task id is invalid
