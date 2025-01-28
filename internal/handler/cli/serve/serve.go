@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -54,128 +55,172 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 		Long:  "Serve is a command to start a Ransidble server",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 
-			ctx := cmd.Context()
-			log := logger.NewLogger()
-			afs := afero.NewOsFs()
-			fs := filesystem.NewFilesystem(afs)
-
-			// At the moment, the project repository loads the projects from the local storage. In the future, the plan is to have a database where you need to create a project before running it.
-			projectsRepository := localprojectpersistence.NewLocalProjectRepository(
-				afs,
-				config.Server.Project.LocalStoragePath,
-				log,
-			)
-			errLoadProjects := projectsRepository.LoadProjects()
-			if errLoadProjects != nil {
-				err = fmt.Errorf("%w: %s", ErrLoadProjects, errLoadProjects)
+			err = Serve(cmd.Context(), config)
+			if err != nil {
+				cmd.Println("Ransidble server stopped due to an error:", err)
 				return
 			}
 
-			fetchFactory := fetch.NewFactory()
-			fetchFactory.Register(
-				entity.ProjectTypeLocal,
-				fetch.NewLocalStorage(
-					afs,
-					log,
-				),
-			)
-
-			tarExtractor := tar.NewTar(afs, log)
-			unpackFactory := unpack.NewFactory()
-			unpackFactory.Register(entity.ProjectFormatPlain, unpack.NewPlainFormat(
-				afs,
-				log,
-			))
-			unpackFactory.Register(entity.ProjectFormatTarGz, unpack.NewTarGzipFormat(
-				afs,
-				tarExtractor,
-				log,
-			))
-
-			workspaceBuilder := workspace.NewBuilder(
-				fs,
-				fetchFactory,
-				unpackFactory,
-				projectsRepository,
-				log,
-			)
-
-			dispatcher := executor.NewDispatch(
-				config.Server.WorkerPoolSize,
-				workspaceBuilder,
-				ansibleexecutor.NewAnsiblePlaybook(log),
-				log,
-			)
-
-			go func() {
-				errStartDispatcher := dispatcher.Start(ctx)
-				if errStartDispatcher != nil {
-					err = fmt.Errorf("%w: %s", ErrStartDispatcher, errStartDispatcher)
-					return
-				}
-			}()
-
-			router := echo.New()
-			router.Use(middleware.Logger())
-			router.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-				Level: 5,
-			}))
-
-			taskRepository := taskpersistence.NewMemoryTaskRepository(log)
-			createTaskAnsiblePlaybookService := taskService.NewCreateTaskAnsiblePlaybookService(
-				dispatcher,
-				taskRepository,
-				projectsRepository,
-				log,
-			)
-			createTaskAnsiblePlaybookHandler := taskHandler.NewCreateTaskAnsiblePlaybookHandler(createTaskAnsiblePlaybookService, log)
-			router.POST(createTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
-
-			getTaskService := taskService.NewGetTaskService(taskRepository, log)
-			getTaskHandler := taskHandler.NewGetTaskHandler(getTaskService, log)
-			router.GET(getTaskPath, getTaskHandler.Handle)
-
-			getProjectService := projectService.NewGetProjectService(projectsRepository, log)
-			getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
-			router.GET(getProjectPath, getProjectHandler.Handle)
-			getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
-			router.GET(getProjectsPath, getProjectListHandler.Handle)
-
-			// Wait for interrupt signal to gracefully shutdown the server
-			quitCh := make(chan os.Signal, 1)
-			signal.Notify(quitCh, syscall.SIGINT, syscall.SIGTERM)
-			errListenAndServeCh := make(chan error)
-
-			srv := server.NewServer(config.Server.HTTPListenAddress, router, log)
-
-			var wg sync.WaitGroup
-			wg.Add(1)
-
-			go func() {
-				errListenAndServe := srv.Start(ctx)
-				if errListenAndServe != nil {
-					errListenAndServeCh <- errListenAndServe
-				}
-				wg.Done()
-			}()
-
-			select {
-			case errListenAndServe := <-errListenAndServeCh:
-				if errListenAndServe != nil {
-					cmd.Println("Ransidble server stopped due to an error:", errListenAndServe)
-					err = fmt.Errorf("%w: %s", server.ErrServerStarting, errListenAndServe)
-				}
-			case <-quitCh:
-				cmd.Println("Received signal to stop the Ransidble server...")
-				srv.Stop()
-				dispatcher.Stop()
-			}
-
-			wg.Wait()
+			cmd.Println("Ransidble server stopped")
 
 			return
 		},
 	}
 
 	return cmd
+}
+
+// Serve is a function to start a Ransidble server
+func Serve(ctx context.Context, config *configuration.Configuration) (err error) {
+
+	log := logger.NewLogger()
+	afs := afero.NewOsFs()
+	fs := filesystem.NewFilesystem(afs)
+
+	// At this moment, the project repository loads the projects from the local storage. In the future, the plan is to have a database where you need to create a project before running it.
+	projectsRepository := localprojectpersistence.NewLocalProjectRepository(
+		afs,
+		config.Server.Project.LocalStoragePath,
+		log,
+	)
+
+	errLoadProjects := projectsRepository.LoadProjects()
+	if errLoadProjects != nil {
+		errMsg := fmt.Sprintf("%s: %s", ErrLoadProjects, errLoadProjects)
+
+		log.Error(
+			errMsg,
+			map[string]interface{}{
+				"component": "Serve",
+				"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+			})
+
+		err = fmt.Errorf("%s", errMsg)
+		return
+	}
+
+	fetchFactory := fetch.NewFactory()
+	fetchFactory.Register(
+		entity.ProjectTypeLocal,
+		fetch.NewLocalStorage(
+			afs,
+			log,
+		),
+	)
+
+	unpackFactory := unpack.NewFactory()
+	unpackFactory.Register(entity.ProjectFormatPlain, unpack.NewPlainFormat(
+		afs,
+		log,
+	))
+
+	tarExtractor := tar.NewTar(afs, log)
+	unpackFactory.Register(entity.ProjectFormatTarGz, unpack.NewTarGzipFormat(
+		afs,
+		tarExtractor,
+		log,
+	))
+
+	workspaceBuilder := workspace.NewBuilder(
+		fs,
+		fetchFactory,
+		unpackFactory,
+		projectsRepository,
+		log,
+	)
+
+	dispatcher := executor.NewDispatch(
+		config.Server.WorkerPoolSize,
+		workspaceBuilder,
+		ansibleexecutor.NewAnsiblePlaybook(log),
+		log,
+	)
+
+	go func() {
+		errStartDispatcher := dispatcher.Start(ctx)
+		if errStartDispatcher != nil {
+			errMsg := fmt.Sprintf("%s: %s", ErrStartDispatcher, errStartDispatcher)
+			log.Error(
+				errMsg,
+				map[string]interface{}{
+					"component": "Serve",
+					"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+				})
+
+			err = fmt.Errorf("%s", errMsg)
+			return
+		}
+	}()
+
+	router := echo.New()
+	router.Use(middleware.Logger())
+	router.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+		Level: 5,
+	}))
+
+	taskRepository := taskpersistence.NewMemoryTaskRepository(log)
+	createTaskAnsiblePlaybookService := taskService.NewCreateTaskAnsiblePlaybookService(
+		dispatcher,
+		taskRepository,
+		projectsRepository,
+		log,
+	)
+	createTaskAnsiblePlaybookHandler := taskHandler.NewCreateTaskAnsiblePlaybookHandler(createTaskAnsiblePlaybookService, log)
+	router.POST(createTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
+
+	getTaskService := taskService.NewGetTaskService(taskRepository, log)
+	getTaskHandler := taskHandler.NewGetTaskHandler(getTaskService, log)
+	router.GET(getTaskPath, getTaskHandler.Handle)
+
+	getProjectService := projectService.NewGetProjectService(projectsRepository, log)
+	getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
+	router.GET(getProjectPath, getProjectHandler.Handle)
+	getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
+	router.GET(getProjectsPath, getProjectListHandler.Handle)
+
+	// Wait for interrupt signal to gracefully shutdown the server
+	quitCh := make(chan os.Signal, 1)
+	signal.Notify(quitCh, syscall.SIGINT, syscall.SIGTERM)
+	errListenAndServeCh := make(chan error)
+
+	srv := server.NewServer(config.Server.HTTPListenAddress, router, log)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		errListenAndServe := srv.Start(ctx)
+		if errListenAndServe != nil {
+			errListenAndServeCh <- errListenAndServe
+		}
+		wg.Done()
+	}()
+
+	select {
+	case errListenAndServe := <-errListenAndServeCh:
+		if errListenAndServe != nil {
+			errMsg := fmt.Sprintf("%s: %s", server.ErrServerStarting, errListenAndServe)
+			log.Error(
+				errMsg,
+				map[string]interface{}{
+					"component": "Serve",
+					"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+				})
+			err = fmt.Errorf("%s", errMsg)
+		}
+	case <-quitCh:
+		log.Info(
+			"Received signal to stop the Ransidble server",
+			map[string]interface{}{
+				"component": "Serve",
+				"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+			})
+
+		srv.Stop()
+		dispatcher.Stop()
+	}
+
+	wg.Wait()
+
+	return
 }
