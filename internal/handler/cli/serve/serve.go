@@ -14,6 +14,7 @@ import (
 	projectService "github.com/apenella/ransidble/internal/domain/core/service/project"
 	taskService "github.com/apenella/ransidble/internal/domain/core/service/task"
 	"github.com/apenella/ransidble/internal/domain/core/service/workspace"
+	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	server "github.com/apenella/ransidble/internal/handler/http"
 	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
 	taskHandler "github.com/apenella/ransidble/internal/handler/http/task"
@@ -32,12 +33,12 @@ import (
 )
 
 const (
-	createTaskAnsiblePlaybookPath = "/tasks/ansible-playbook/:project_id"
-	getHealthPath                 = "/health"
-	getProjectPath                = "/projects/:id"
-	getProjectsPath               = "/projects"
-	getTaskPath                   = "/tasks/:id"
-	getTasksPath                  = "/tasks"
+	CreateTaskAnsiblePlaybookPath = "/tasks/ansible-playbook/:project_id"
+	GetHealthPath                 = "/health"
+	GetProjectPath                = "/projects/:id"
+	GetProjectsPath               = "/projects"
+	GetTaskPath                   = "/tasks/:id"
+	GetTasksPath                  = "/tasks"
 )
 
 var (
@@ -55,7 +56,96 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 		Long:  "Serve is a command to start a Ransidble server",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 
-			err = Serve(cmd.Context(), config)
+			log := logger.NewLogger()
+			afs := afero.NewOsFs()
+			fs := filesystem.NewFilesystem(afs)
+
+			// At this moment, the project repository loads the projects from the local storage. In the future, the plan is to have a database where you need to create a project before running it.
+			projectsRepository := localprojectpersistence.NewLocalProjectRepository(
+				afs,
+				config.Server.Project.LocalStoragePath,
+				log,
+			)
+
+			errLoadProjects := projectsRepository.LoadProjects()
+			if errLoadProjects != nil {
+				errMsg := fmt.Sprintf("%s: %s", ErrLoadProjects, errLoadProjects)
+
+				log.Error(
+					errMsg,
+					map[string]interface{}{
+						"component": "Serve",
+						"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+					})
+
+				err = fmt.Errorf("%s", errMsg)
+				return
+			}
+
+			fetchFactory := fetch.NewFactory()
+			fetchFactory.Register(
+				entity.ProjectTypeLocal,
+				fetch.NewLocalStorage(
+					afs,
+					log,
+				),
+			)
+
+			unpackFactory := unpack.NewFactory()
+			unpackFactory.Register(entity.ProjectFormatPlain, unpack.NewPlainFormat(
+				afs,
+				log,
+			))
+
+			tarExtractor := tar.NewTar(afs, log)
+			unpackFactory.Register(entity.ProjectFormatTarGz, unpack.NewTarGzipFormat(
+				afs,
+				tarExtractor,
+				log,
+			))
+
+			workspaceBuilder := workspace.NewBuilder(
+				fs,
+				fetchFactory,
+				unpackFactory,
+				projectsRepository,
+				log,
+			)
+
+			dispatcher := executor.NewDispatch(
+				config.Server.WorkerPoolSize,
+				workspaceBuilder,
+				ansibleexecutor.NewAnsiblePlaybook(log),
+				log,
+			)
+
+			taskRepository := taskpersistence.NewMemoryTaskRepository(log)
+			createTaskAnsiblePlaybookService := taskService.NewCreateTaskAnsiblePlaybookService(
+				dispatcher,
+				taskRepository,
+				projectsRepository,
+				log,
+			)
+
+			createTaskAnsiblePlaybookHandler := taskHandler.NewCreateTaskAnsiblePlaybookHandler(createTaskAnsiblePlaybookService, log)
+
+			getTaskService := taskService.NewGetTaskService(taskRepository, log)
+			getTaskHandler := taskHandler.NewGetTaskHandler(getTaskService, log)
+
+			getProjectService := projectService.NewGetProjectService(projectsRepository, log)
+			getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
+			getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
+
+			err = Serve(
+				cmd.Context(),
+				log,
+				config,
+				dispatcher,
+				createTaskAnsiblePlaybookHandler,
+				getTaskHandler,
+				getProjectHandler,
+				getProjectListHandler,
+			)
 			if err != nil {
 				cmd.Println("Ransidble server stopped due to an error:", err)
 				return
@@ -71,70 +161,16 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 }
 
 // Serve is a function to start a Ransidble server
-func Serve(ctx context.Context, config *configuration.Configuration) (err error) {
-
-	log := logger.NewLogger()
-	afs := afero.NewOsFs()
-	fs := filesystem.NewFilesystem(afs)
-
-	// At this moment, the project repository loads the projects from the local storage. In the future, the plan is to have a database where you need to create a project before running it.
-	projectsRepository := localprojectpersistence.NewLocalProjectRepository(
-		afs,
-		config.Server.Project.LocalStoragePath,
-		log,
-	)
-
-	errLoadProjects := projectsRepository.LoadProjects()
-	if errLoadProjects != nil {
-		errMsg := fmt.Sprintf("%s: %s", ErrLoadProjects, errLoadProjects)
-
-		log.Error(
-			errMsg,
-			map[string]interface{}{
-				"component": "Serve",
-				"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
-			})
-
-		err = fmt.Errorf("%s", errMsg)
-		return
-	}
-
-	fetchFactory := fetch.NewFactory()
-	fetchFactory.Register(
-		entity.ProjectTypeLocal,
-		fetch.NewLocalStorage(
-			afs,
-			log,
-		),
-	)
-
-	unpackFactory := unpack.NewFactory()
-	unpackFactory.Register(entity.ProjectFormatPlain, unpack.NewPlainFormat(
-		afs,
-		log,
-	))
-
-	tarExtractor := tar.NewTar(afs, log)
-	unpackFactory.Register(entity.ProjectFormatTarGz, unpack.NewTarGzipFormat(
-		afs,
-		tarExtractor,
-		log,
-	))
-
-	workspaceBuilder := workspace.NewBuilder(
-		fs,
-		fetchFactory,
-		unpackFactory,
-		projectsRepository,
-		log,
-	)
-
-	dispatcher := executor.NewDispatch(
-		config.Server.WorkerPoolSize,
-		workspaceBuilder,
-		ansibleexecutor.NewAnsiblePlaybook(log),
-		log,
-	)
+func Serve(
+	ctx context.Context,
+	log repository.Logger,
+	config *configuration.Configuration,
+	dispatcher *executor.Dispatch,
+	createTaskAnsiblePlaybookHandler *taskHandler.CreateTaskAnsiblePlaybookHandler,
+	getTaskHandler *taskHandler.GetTaskHandler,
+	getProjectHandler *projectHandler.GetProjectHandler,
+	getProjectListHandler *projectHandler.GetProjectListHandler,
+) (err error) {
 
 	go func() {
 		errStartDispatcher := dispatcher.Start(ctx)
@@ -158,25 +194,10 @@ func Serve(ctx context.Context, config *configuration.Configuration) (err error)
 		Level: 5,
 	}))
 
-	taskRepository := taskpersistence.NewMemoryTaskRepository(log)
-	createTaskAnsiblePlaybookService := taskService.NewCreateTaskAnsiblePlaybookService(
-		dispatcher,
-		taskRepository,
-		projectsRepository,
-		log,
-	)
-	createTaskAnsiblePlaybookHandler := taskHandler.NewCreateTaskAnsiblePlaybookHandler(createTaskAnsiblePlaybookService, log)
-	router.POST(createTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
-
-	getTaskService := taskService.NewGetTaskService(taskRepository, log)
-	getTaskHandler := taskHandler.NewGetTaskHandler(getTaskService, log)
-	router.GET(getTaskPath, getTaskHandler.Handle)
-
-	getProjectService := projectService.NewGetProjectService(projectsRepository, log)
-	getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
-	router.GET(getProjectPath, getProjectHandler.Handle)
-	getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
-	router.GET(getProjectsPath, getProjectListHandler.Handle)
+	router.POST(CreateTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
+	router.GET(GetTaskPath, getTaskHandler.Handle)
+	router.GET(GetProjectPath, getProjectHandler.Handle)
+	router.GET(GetProjectsPath, getProjectListHandler.Handle)
 
 	// Wait for interrupt signal to gracefully shutdown the server
 	quitCh := make(chan os.Signal, 1)
