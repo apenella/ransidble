@@ -342,7 +342,8 @@ components:
       required:
         - name
         - reference
-        - type
+        - format
+        - storage
     ProjectErrorResponse:
       type: object
       properties:
