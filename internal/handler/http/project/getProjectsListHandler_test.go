@@ -2,14 +2,11 @@ package project
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
-	"github.com/apenella/ransidble/internal/domain/core/error"
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
@@ -44,31 +41,6 @@ func TestHandle_GetProjectListHandler(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, expectedBody, body)
 				assert.Equal(t, http.StatusInternalServerError, rec.Code)
-			},
-		},
-		{
-			desc: "Testing GetProjectsListHandler.Handle responding with an error when reciving a projectNotFoundErr and is returning an StatusNotFound",
-			handler: NewGetProjectListHandler(
-				service.NewMockGetProjectService(),
-				logger.NewFakeLogger(),
-			),
-			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
-				return echo.New().NewContext(r, w)
-			},
-			arrangeTestFunc: func(h *GetProjectListHandler) {
-				h.service.(*service.MockGetProjectService).On("GetProjectsList").Return(
-					[]*entity.Project{},
-					error.NewProjectNotFoundError(errors.New("testing project not found")))
-			},
-			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
-				var body *response.ProjectErrorResponse
-				expectedBody := &response.ProjectErrorResponse{
-					Error: fmt.Sprintf("%s: %s", ErrGettingProjectList, "testing project not found"),
-				}
-				err := json.Unmarshal(rec.Body.Bytes(), &body)
-				assert.NoError(t, err)
-				assert.Equal(t, expectedBody, body)
-				assert.Equal(t, http.StatusNotFound, rec.Code)
 			},
 		},
 		{

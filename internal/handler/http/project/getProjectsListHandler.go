@@ -1,11 +1,9 @@
 package project
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
-	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
 	"github.com/apenella/ransidble/internal/domain/core/mapper"
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
@@ -37,7 +35,7 @@ func (h *GetProjectListHandler) Handle(c echo.Context) error {
 	var errorMsg string
 	var errorResponse *response.ProjectErrorResponse
 	var httpStatus int
-	var projectNotFoundErr *domainerror.ProjectNotFoundError
+	// var projectNotFoundErr *domainerror.ProjectNotFoundError
 
 	if h.service == nil {
 		errorResponse = &response.ProjectErrorResponse{
@@ -60,10 +58,6 @@ func (h *GetProjectListHandler) Handle(c echo.Context) error {
 	projects, err := h.service.GetProjectsList()
 	if err != nil {
 		httpStatus = http.StatusInternalServerError
-
-		if errors.As(err, &projectNotFoundErr) {
-			httpStatus = http.StatusNotFound
-		}
 
 		errorMsg = fmt.Sprintf("%s: %s", ErrGettingProjectList, err.Error())
 
