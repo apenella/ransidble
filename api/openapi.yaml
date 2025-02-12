@@ -40,6 +40,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectResponse'
+        400:
+          description: Bad request, such as missing project ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectErrorResponse'
         404:
           description: Project not found
           content:

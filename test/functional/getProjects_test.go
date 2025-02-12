@@ -2,13 +2,16 @@ package functional
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	nethttp "net/http"
 	"testing"
 	"time"
 
+	"github.com/apenella/ransidble/internal/domain/core/entity"
 	projectService "github.com/apenella/ransidble/internal/domain/core/service/project"
+	"github.com/apenella/ransidble/internal/domain/ports/service"
 	serve "github.com/apenella/ransidble/internal/handler/cli/serve"
 	"github.com/apenella/ransidble/internal/handler/http"
 	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
@@ -24,8 +27,8 @@ import (
 type SuiteGetProjects struct {
 	listenAddress    string
 	openAPIValidator *OpenAPIValidator
-	server           *http.Server
 	router           *echo.Echo
+	server           *http.Server
 
 	suite.Suite
 }
@@ -108,10 +111,9 @@ func (suite *SuiteGetProjects) TestGetProjects() {
 		arrangeTest        func(*SuiteGetProjects)
 	}{
 		{
-			desc:               "Functional test to get a list of projects",
-			method:             nethttp.MethodGet,
-			url:                "http://" + suite.listenAddress + serve.GetProjectsPath,
-			expectedStatusCode: nethttp.StatusOK,
+			desc:   "Testing get projects list functinoal behavior when the request is successful",
+			method: nethttp.MethodGet,
+			url:    "http://" + suite.listenAddress + serve.GetProjectsPath,
 			arrangeTest: func(suite *SuiteGetProjects) {
 				log := logger.NewFakeLogger()
 				afs := afero.NewOsFs()
@@ -133,6 +135,40 @@ func (suite *SuiteGetProjects) TestGetProjects() {
 				getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
 				suite.router.GET(serve.GetProjectsPath, getProjectListHandler.Handle)
 			},
+			expectedStatusCode: nethttp.StatusOK,
+		},
+		{
+			desc:   "Testing get projects list functional behaviour when service returns an error getting the projects list",
+			method: nethttp.MethodGet,
+			url:    "http://" + suite.listenAddress + serve.GetProjectsPath,
+			arrangeTest: func(suite *SuiteGetProjects) {
+				log := logger.NewFakeLogger()
+				afs := afero.NewOsFs()
+
+				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
+					afs,
+					"../projects",
+					log,
+				)
+
+				errLoadProjects := projectsRepository.LoadProjects()
+				if errLoadProjects != nil {
+					suite.T().Errorf("Error loading projects: %s", errLoadProjects)
+					suite.T().FailNow()
+					return
+				}
+
+				// This is the mock service that simulates a project not provided error returned by the service
+				getProjectService := service.NewMockGetProjectService()
+				getProjectService.On("GetProjectsList").Return(
+					[]*entity.Project{},
+					errors.New("testing get project list error"),
+				)
+
+				getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
+				suite.router.GET(serve.GetProjectsPath, getProjectListHandler.Handle)
+			},
+			expectedStatusCode: nethttp.StatusInternalServerError,
 		},
 	}
 
@@ -150,8 +186,8 @@ func (suite *SuiteGetProjects) TestGetProjects() {
 			return
 		}
 
-		suite.T().Run(fmt.Sprintf("functional %s", test.desc), func(t *testing.T) {
-			suite.T().Log("Functional: " + test.desc)
+		suite.T().Run(fmt.Sprintf("Functional %s", test.desc), func(t *testing.T) {
+			// suite.T().Log("Functional: " + test.desc)
 
 			if test.arrangeTest != nil {
 				test.arrangeTest(suite)
@@ -177,8 +213,8 @@ func (suite *SuiteGetProjects) TestGetProjects() {
 			assert.Equal(suite.T(), test.expectedStatusCode, httpResp.StatusCode)
 		})
 
-		suite.T().Run(fmt.Sprintf("openapi %s", test.desc), func(t *testing.T) {
-			suite.T().Log("OpenAPI: " + test.desc)
+		suite.T().Run(fmt.Sprintf("OpenAPI %s", test.desc), func(t *testing.T) {
+			// suite.T().Log("OpenAPI: " + test.desc)
 			err = suite.openAPIValidator.ValidateResponse(body, httpReq, httpResp.StatusCode, httpResp.Header)
 			assert.NoError(suite.T(), err)
 		})

@@ -2,13 +2,18 @@ package functional
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	nethttp "net/http"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/apenella/ransidble/internal/domain/core/entity"
+	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
 	projectService "github.com/apenella/ransidble/internal/domain/core/service/project"
+	"github.com/apenella/ransidble/internal/domain/ports/service"
 	serve "github.com/apenella/ransidble/internal/handler/cli/serve"
 	"github.com/apenella/ransidble/internal/handler/http"
 	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
@@ -105,11 +110,12 @@ func (suite *SuiteGetProject) TestGetProjectProject1() {
 		desc               string
 		method             string
 		url                string
+		expectedBody       string
 		expectedStatusCode int
 		arrangeTest        func(*SuiteGetProject)
 	}{
 		{
-			desc:   "Functional test to get an existing project",
+			desc:   "Testing get project functinal behavior when project exists",
 			method: nethttp.MethodGet,
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-1",
 			arrangeTest: func(suite *SuiteGetProject) {
@@ -133,10 +139,11 @@ func (suite *SuiteGetProject) TestGetProjectProject1() {
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
 				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
 			},
+			expectedBody:       "{\"format\":\"plain\",\"name\":\"project-1\",\"reference\":\"../projects/project-1\",\"storage\":\"local\"}",
 			expectedStatusCode: nethttp.StatusOK,
 		},
 		{
-			desc:   "Functional test to get a non-existing project",
+			desc:   "Testing get project functional behavior when project does not exist",
 			method: nethttp.MethodGet,
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-non-existing",
 			arrangeTest: func(suite *SuiteGetProject) {
@@ -160,7 +167,76 @@ func (suite *SuiteGetProject) TestGetProjectProject1() {
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
 				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
 			},
+			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: error finding project: project not found\"}",
 			expectedStatusCode: nethttp.StatusNotFound,
+		},
+		{
+			desc:   "Testing get project functional behaviour when there is an internal error",
+			method: nethttp.MethodGet,
+			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-internal-error",
+			arrangeTest: func(suite *SuiteGetProject) {
+				log := logger.NewFakeLogger()
+				afs := afero.NewOsFs()
+
+				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
+					afs,
+					"../projects",
+					log,
+				)
+
+				errLoadProjects := projectsRepository.LoadProjects()
+				if errLoadProjects != nil {
+					suite.T().Errorf("Error loading projects: %s", errLoadProjects)
+					suite.T().FailNow()
+					return
+				}
+
+				// This is the mock service that simulates an internal error returned by the service
+				getProjectService := service.NewMockGetProjectService()
+				getProjectService.On("GetProject", "project-internal-error").Return(
+					&entity.Project{},
+					errors.New("testing get project internal error"),
+				)
+
+				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
+				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
+			},
+			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: testing get project internal error\"}",
+			expectedStatusCode: nethttp.StatusInternalServerError,
+		},
+		{
+			desc:   "Testing get project functional behaviour when service returns a project not provided error",
+			method: nethttp.MethodGet,
+			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-not-provided",
+			arrangeTest: func(suite *SuiteGetProject) {
+				log := logger.NewFakeLogger()
+				afs := afero.NewOsFs()
+
+				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
+					afs,
+					"../projects",
+					log,
+				)
+
+				errLoadProjects := projectsRepository.LoadProjects()
+				if errLoadProjects != nil {
+					suite.T().Errorf("Error loading projects: %s", errLoadProjects)
+					suite.T().FailNow()
+					return
+				}
+
+				// This is the mock service that simulates a project not provided error returned by the service
+				getProjectService := service.NewMockGetProjectService()
+				getProjectService.On("GetProject", "project-not-provided").Return(
+					&entity.Project{},
+					domainerror.NewProjectNotProvidedError(errors.New("testing get project not provided error")),
+				)
+
+				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
+				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
+			},
+			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: testing get project not provided error\"}",
+			expectedStatusCode: nethttp.StatusBadRequest,
 		},
 	}
 
@@ -178,8 +254,8 @@ func (suite *SuiteGetProject) TestGetProjectProject1() {
 			return
 		}
 
-		suite.T().Run(fmt.Sprintf("functional %s", test.desc), func(t *testing.T) {
-			suite.T().Log("Functional: " + test.desc)
+		suite.T().Run(fmt.Sprintf("Functional %s", test.desc), func(t *testing.T) {
+			// suite.T().Log("Functional: " + test.desc)
 
 			if test.arrangeTest != nil {
 				test.arrangeTest(suite)
@@ -203,10 +279,11 @@ func (suite *SuiteGetProject) TestGetProjectProject1() {
 
 			assert.NoError(suite.T(), err)
 			assert.Equal(suite.T(), test.expectedStatusCode, httpResp.StatusCode)
+			assert.Equal(suite.T(), test.expectedBody, strings.TrimSpace(string(body)))
 		})
 
-		suite.T().Run(fmt.Sprintf("openapi %s", test.desc), func(t *testing.T) {
-			suite.T().Log("OpenAPI: " + test.desc)
+		suite.T().Run(fmt.Sprintf("OpenAPI %s", test.desc), func(t *testing.T) {
+			// suite.T().Log("OpenAPI: " + test.desc)
 			err = suite.openAPIValidator.ValidateResponse(body, httpReq, httpResp.StatusCode, httpResp.Header)
 			assert.NoError(suite.T(), err)
 		})
