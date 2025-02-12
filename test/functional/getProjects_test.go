@@ -187,7 +187,6 @@ func (suite *SuiteGetProjects) TestGetProjects() {
 		}
 
 		suite.T().Run(fmt.Sprintf("Functional %s", test.desc), func(t *testing.T) {
-			// suite.T().Log("Functional: " + test.desc)
 
 			if test.arrangeTest != nil {
 				test.arrangeTest(suite)
@@ -214,7 +213,6 @@ func (suite *SuiteGetProjects) TestGetProjects() {
 		})
 
 		suite.T().Run(fmt.Sprintf("OpenAPI %s", test.desc), func(t *testing.T) {
-			// suite.T().Log("OpenAPI: " + test.desc)
 			err = suite.openAPIValidator.ValidateResponse(body, httpReq, httpResp.StatusCode, httpResp.Header)
 			assert.NoError(suite.T(), err)
 		})
