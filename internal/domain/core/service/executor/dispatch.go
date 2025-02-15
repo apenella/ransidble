@@ -85,7 +85,7 @@ func (d *Dispatch) Start(ctx context.Context) (err error) {
 					"component": "Dispatch.Start",
 					"package":   "github.com/apenella/ransidble/internal/domain/core/service/task",
 				})
-				err = fmt.Errorf(msg)
+				err = fmt.Errorf("%s", msg)
 				return
 			}
 		}

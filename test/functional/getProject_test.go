@@ -63,7 +63,7 @@ func (suite *SuiteGetProject) TearDownSuite() {
 func (suite *SuiteGetProject) TearDownTest() {}
 
 // TestGetProjectProject1 is a functional test for the GetProject endpoint
-func (suite *SuiteGetProject) TestGetProjectProject1() {
+func (suite *SuiteGetProject) TestGetProject() {
 
 	if suite.server == nil {
 		suite.T().Errorf("%s. HTTP server is not initialized", suite.T().Name())

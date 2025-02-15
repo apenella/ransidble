@@ -23,8 +23,8 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// SuiteGetProjects is the test suite for the HTTP server
-type SuiteGetProjects struct {
+// SuiteGetProjectsList is the test suite for the HTTP server
+type SuiteGetProjectsList struct {
 	listenAddress    string
 	openAPIValidator *OpenAPIValidator
 	router           *echo.Echo
@@ -34,7 +34,7 @@ type SuiteGetProjects struct {
 }
 
 // SetupSuite runs once before the suite starts running
-func (suite *SuiteGetProjects) SetupSuite() {
+func (suite *SuiteGetProjectsList) SetupSuite() {
 	var err error
 
 	suite.openAPIValidator, err = PrepareOpenAPIValidator(openAPIDefPath)
@@ -46,22 +46,22 @@ func (suite *SuiteGetProjects) SetupSuite() {
 }
 
 // TearDownSuite runs after all tests in this suite have run
-func (suite *SuiteGetProjects) TearDownSuite() {}
+func (suite *SuiteGetProjectsList) TearDownSuite() {}
 
 // SetupTest runs before each test in the suite
-func (suite *SuiteGetProjects) SetupTest() {
+func (suite *SuiteGetProjectsList) SetupTest() {
 	suite.listenAddress = "0.0.0.0:8080"
 	suite.router = echo.New()
 	suite.server = http.NewServer(suite.listenAddress, suite.router, logger.NewFakeLogger())
 }
 
 // TearDownTest runs after each test in the suite
-func (suite *SuiteGetProjects) TearDownTest() {
+func (suite *SuiteGetProjectsList) TearDownTest() {
 	suite.server.Stop()
 }
 
 // TestGetProjects is a functional test for the GetProjects endpoint
-func (suite *SuiteGetProjects) TestGetProjects() {
+func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 
 	if suite.server == nil {
 		suite.T().Errorf("%s. HTTP server is not initialized", suite.T().Name())
@@ -108,13 +108,13 @@ func (suite *SuiteGetProjects) TestGetProjects() {
 		method             string
 		url                string
 		expectedStatusCode int
-		arrangeTest        func(*SuiteGetProjects)
+		arrangeTest        func(*SuiteGetProjectsList)
 	}{
 		{
 			desc:   "Testing get projects list functinoal behavior when the request is successful",
 			method: nethttp.MethodGet,
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath,
-			arrangeTest: func(suite *SuiteGetProjects) {
+			arrangeTest: func(suite *SuiteGetProjectsList) {
 				log := logger.NewFakeLogger()
 				afs := afero.NewOsFs()
 
@@ -141,7 +141,7 @@ func (suite *SuiteGetProjects) TestGetProjects() {
 			desc:   "Testing get projects list functional behaviour when service returns an error getting the projects list",
 			method: nethttp.MethodGet,
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath,
-			arrangeTest: func(suite *SuiteGetProjects) {
+			arrangeTest: func(suite *SuiteGetProjectsList) {
 				log := logger.NewFakeLogger()
 				afs := afero.NewOsFs()
 
@@ -220,6 +220,6 @@ func (suite *SuiteGetProjects) TestGetProjects() {
 }
 
 // TestFunctionalGetProjects runs the test suite
-func TestFunctionalGetProjects(t *testing.T) {
-	suite.Run(t, new(SuiteGetProjects))
+func TestFunctionalGetProjectsList(t *testing.T) {
+	suite.Run(t, new(SuiteGetProjectsList))
 }

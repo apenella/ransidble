@@ -2,8 +2,14 @@ package functional
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"net"
+	"net/http"
+	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // waitHTTPServer waits for the HTTP server to be ready
@@ -21,4 +27,55 @@ func waitHTTPServer(listenAddress string, sleepTime time.Duration, retries int) 
 	}
 
 	return errors.New("HTTP server is not ready")
+}
+
+// act performs the functional test and the OpenAPI validation
+func act(t *testing.T, validator *OpenAPIValidator, input *InputFunctionalTest) error {
+
+	var err error
+	var httpReq *http.Request
+	var httpResp *http.Response
+	var body []byte
+
+	httpReq, err = http.NewRequest(input.method, input.url, input.parameters)
+	if err != nil {
+		return fmt.Errorf("%s. error creating HTTP request: %s", t.Name(), err)
+	}
+
+	for key, value := range input.headers {
+		httpReq.Header.Set(key, value)
+	}
+
+	passed := t.Run(fmt.Sprintf("Functional %s", input.desc), func(t *testing.T) {
+
+		client := &http.Client{}
+		httpResp, err = client.Do(httpReq)
+		if err != nil {
+			t.Errorf("%s. error performing HTTP request: %s", t.Name(), err)
+			return
+		}
+		defer httpResp.Body.Close()
+
+		body, err = io.ReadAll(httpResp.Body)
+		if err != nil {
+			t.Errorf("%s. Error reading response body: %s", t.Name(), err)
+			return
+		}
+
+		fmt.Println(">>>>", string(body))
+
+		assert.NoError(t, err)
+		assert.Equal(t, input.expectedStatusCode, httpResp.StatusCode)
+	})
+
+	t.Run(fmt.Sprintf("OpenAPI %s", input.desc), func(t *testing.T) {
+		err = validator.ValidateResponse(body, httpReq, httpResp.StatusCode, httpResp.Header)
+		assert.NoError(t, err)
+	})
+
+	if !passed {
+		return fmt.Errorf("test failed")
+	}
+
+	return nil
 }
