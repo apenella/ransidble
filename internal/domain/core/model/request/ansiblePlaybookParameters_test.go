@@ -23,6 +23,7 @@ func TestRequsetAnsiblePlaybookParametersValidate(t *testing.T) {
 		Version       bool
 		Timeout       int
 		Become        bool
+		Requirements  *AnsiblePlaybookRequirements
 	}
 	test := []struct {
 		desc    string
@@ -90,6 +91,58 @@ func TestRequsetAnsiblePlaybookParametersValidate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			desc: "Testing validate a AnsiblePlaybookParameters with forks less than 1",
+			fields: fields{
+				Playbooks: []string{"playbook.yml"},
+				Inventory: "inventory",
+				Forks:     -1,
+				Timeout:   30,
+			},
+			wantErr: true,
+		},
+		{
+			desc: "Testing validate a AnsiblePlaybookParameters with timeout less than 1",
+			fields: fields{
+				Playbooks: []string{"playbook.yml"},
+				Inventory: "inventory",
+				Forks:     5,
+				Timeout:   -1,
+			},
+			wantErr: true,
+		},
+		{
+			desc: "Testing validate a AnsiblePlaybookParameters with roles requirement timeout less than 1",
+			fields: fields{
+				Playbooks: []string{"playbook.yml"},
+				Inventory: "inventory",
+				Forks:     5,
+				Timeout:   30,
+				Requirements: &AnsiblePlaybookRequirements{
+					Roles: &AnsiblePlaybookRoleRequirements{
+						Roles:   []string{"roles"},
+						Timeout: -1,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			desc: "Testing validate a AnsiblePlaybookParameters with collections requirement timeout less than 1",
+			fields: fields{
+				Playbooks: []string{"playbook.yml"},
+				Inventory: "inventory",
+				Forks:     5,
+				Timeout:   30,
+				Requirements: &AnsiblePlaybookRequirements{
+					Collections: &AnsiblePlaybookCollectionRequirements{
+						Collections: []string{"collections"},
+						Timeout:     -1,
+					},
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, test := range test {
@@ -112,6 +165,7 @@ func TestRequsetAnsiblePlaybookParametersValidate(t *testing.T) {
 				Version:       test.fields.Version,
 				Timeout:       test.fields.Timeout,
 				Become:        test.fields.Become,
+				Requirements:  test.fields.Requirements,
 			}
 
 			err := params.Validate()

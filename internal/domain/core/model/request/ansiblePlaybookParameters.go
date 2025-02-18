@@ -32,7 +32,7 @@ type AnsiblePlaybookParameters struct {
 	ForceHandlers bool `json:"force_handlers,omitempty" validate:"boolean"`
 
 	// Forks specify number of parallel processes to use (default=50)
-	Forks int `json:"forks,omitempty" validate:"number"`
+	Forks int `json:"forks,omitempty" validate:"gte=0"`
 
 	// Inventory specify inventory host path
 	Inventory string `json:"inventory,omitempty" validate:"required"`
@@ -106,7 +106,7 @@ type AnsiblePlaybookParameters struct {
 	SSHExtraArgs string `json:"ssh_extra_args,omitempty"`
 
 	// Timeout is the connection timeout on ansible-playbook. Take care because Timeout is defined ad string
-	Timeout int `json:"timeout,omitempty" validate:"numeric"`
+	Timeout int `json:"timeout,omitempty" validate:"gte=0"`
 
 	// User is the user to use to connect to a host
 	User string `json:"user,omitempty"`
@@ -183,7 +183,7 @@ type AnsiblePlaybookRoleRequirements struct {
 	Server string `json:"server,omitempty"`
 
 	// Timeout represent the time to wait for operations against the galaxy server, defaults to 60s
-	Timeout string `json:"timeout,omitempty" validate:"numeric"`
+	Timeout int `json:"timeout,omitempty" validate:"gte=0"`
 
 	// Token represent the token to use to authenticate against the galaxy server. Same as --api-key
 	Token string `json:"token,omitempty"`
@@ -250,7 +250,7 @@ type AnsiblePlaybookCollectionRequirements struct {
 	// Signature string
 
 	// Timeout is the time to wait for operations against the galaxy server, defaults to 60s.
-	Timeout string `json:"timeout,omitempty"`
+	Timeout int `json:"timeout,omitempty" validate:"gte=0"`
 
 	// Token is the Ansible Galaxy API key.
 	Token string `json:"token,omitempty"`

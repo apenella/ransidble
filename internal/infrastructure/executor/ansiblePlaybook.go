@@ -172,8 +172,8 @@ func ansibleGalaxyRolesInstallOptionsMapper(parameters *entity.AnsiblePlaybookRo
 		options.Server = parameters.Server
 	}
 
-	if len(parameters.Timeout) > 0 {
-		options.Timeout = parameters.Timeout
+	if parameters.Timeout > 0 {
+		options.Timeout = fmt.Sprintf("%d", parameters.Timeout)
 	}
 
 	if len(parameters.Token) > 0 {
@@ -411,8 +411,8 @@ func ansibleGalaxyCollectionInstallOptionsMapper(parameters *entity.AnsiblePlayb
 	options.ForceWithDeps = parameters.ForceWithDeps
 	options.Pre = parameters.Pre
 
-	if len(parameters.Timeout) > 0 {
-		options.Timeout = parameters.Timeout
+	if parameters.Timeout > 0 {
+		options.Timeout = fmt.Sprintf("%d", parameters.Timeout)
 	}
 
 	if len(parameters.Token) > 0 {

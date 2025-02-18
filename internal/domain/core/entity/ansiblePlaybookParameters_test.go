@@ -31,7 +31,7 @@ func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			desc: "Validating a AnsiblePlaybookParameters entity",
+			desc: "Testing validate a AnsiblePlaybookParameters entity",
 			fields: fields{
 				Become:        false,
 				Check:         false,
@@ -52,7 +52,7 @@ func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 						NoDeps:       true,
 						RoleFile:     "rolefile",
 						Server:       "server",
-						Timeout:      "30",
+						Timeout:      30,
 						Token:        "token",
 						Verbose:      true,
 					},
@@ -61,7 +61,7 @@ func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 						APIKey:           "apikey",
 						ForceWithDeps:    true,
 						Pre:              true,
-						Timeout:          "30",
+						Timeout:          30,
 						Token:            "token",
 						IgnoreErrors:     true,
 						RequirementsFile: "requirementsfile",
@@ -77,7 +77,7 @@ func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			desc: "Validating a AnsiblePlaybookParameters entity with empty playbooks",
+			desc: "Testing validate a AnsiblePlaybookParameters entity with empty playbooks",
 			fields: fields{
 				Check:         false,
 				Diff:          false,
@@ -97,7 +97,7 @@ func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			desc: "Validating a AnsiblePlaybookParameters entity with empty inventory",
+			desc: "Testing validate a AnsiblePlaybookParameters entity with empty inventory",
 			fields: fields{
 				Playbooks:     []string{"playbook.yml"},
 				Check:         false,
@@ -113,6 +113,58 @@ func TestEntityAnsiblePlaybookParametersValidate(t *testing.T) {
 				Version:       false,
 				Timeout:       30,
 				Become:        false,
+			},
+			wantErr: true,
+		},
+		{
+			desc: "Testing validate a AnsiblePlaybookParameters with forks less than 1",
+			fields: fields{
+				Playbooks: []string{"playbook.yml"},
+				Inventory: "inventory",
+				Forks:     -1,
+				Timeout:   30,
+			},
+			wantErr: true,
+		},
+		{
+			desc: "Testing validate a AnsiblePlaybookParameters with timeout less than 1",
+			fields: fields{
+				Playbooks: []string{"playbook.yml"},
+				Inventory: "inventory",
+				Forks:     5,
+				Timeout:   -1,
+			},
+			wantErr: true,
+		},
+		{
+			desc: "Testing validate a AnsiblePlaybookParameters with roles requirement timeout less than 1",
+			fields: fields{
+				Playbooks: []string{"playbook.yml"},
+				Inventory: "inventory",
+				Forks:     5,
+				Timeout:   30,
+				Requirements: &AnsiblePlaybookRequirements{
+					Roles: &AnsiblePlaybookRoleRequirements{
+						Roles:   []string{"roles"},
+						Timeout: -1,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			desc: "Testing validate a AnsiblePlaybookParameters with collections requirement timeout less than 1",
+			fields: fields{
+				Playbooks: []string{"playbook.yml"},
+				Inventory: "inventory",
+				Forks:     5,
+				Timeout:   30,
+				Requirements: &AnsiblePlaybookRequirements{
+					Collections: &AnsiblePlaybookCollectionRequirements{
+						Collections: []string{"collections"},
+						Timeout:     -1,
+					},
+				},
 			},
 			wantErr: true,
 		},
