@@ -93,17 +93,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TaskErrorResponse'
-        405:
-          description: Method not allowed, such as using an unsupported HTTP method
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                example:
-                  message: Method not allowed
         500:
           description: Internal server error, such as failing to bind request parameters, generate a task ID or failing to run the Ansible playbook
           content:
@@ -127,6 +116,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TaskResponse'
+        400:
+          description: Bad request, such as missing task ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskErrorResponse'
         404:
           description: Task not found
           content:
