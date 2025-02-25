@@ -61,6 +61,7 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 
 	id := c.Param("id")
 	if id == "" {
+
 		errorResponse = &response.TaskErrorResponse{
 			Error: ErrTaskIDNotProvided,
 		}
@@ -70,6 +71,7 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 				"component": "GetTaskHandler.Handle",
 				"package":   "github.com/apenella/ransidble/internal/handler/http/task",
 			})
+
 		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 

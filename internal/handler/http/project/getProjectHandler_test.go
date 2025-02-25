@@ -13,11 +13,19 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
+	"github.com/apenella/ransidble/test/openapi"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestHandle_GetProjectHandler(t *testing.T) {
+
+	openAPIValidator, err := openapi.PrepareOpenAPIValidator("../../../../api/openapi.yaml")
+	if err != nil {
+		t.Errorf("Error initializing OpenAPI validator: %s", err)
+		t.FailNow()
+		return
+	}
 
 	tests := []struct {
 		desc               string
@@ -195,13 +203,14 @@ func TestHandle_GetProjectHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		var req *http.Request
+		rec := httptest.NewRecorder()
+
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
-			t.Parallel()
 
-			rec := httptest.NewRecorder()
 			// request parameters do not matter for this test. Handler gathers the project id from the context, for this reason, we can use a hardcoded request for all tests
-			req := httptest.NewRequest(http.MethodGet, "/projects", nil)
+			req = httptest.NewRequest(http.MethodGet, "/projects/project-1", nil)
 			context := test.arrangeContextFunc(req, rec)
 
 			if test.arrangeTestFunc != nil {
@@ -212,6 +221,11 @@ func TestHandle_GetProjectHandler(t *testing.T) {
 			assert.NoError(t, err)
 
 			test.assertTestFunc(t, rec)
+		})
+
+		t.Run(fmt.Sprintf("OpenAPI %s", test.desc), func(t *testing.T) {
+			err := openAPIValidator.ValidateResponse(rec.Body.Bytes(), req, rec.Code, rec.Header())
+			assert.NoError(t, err)
 		})
 	}
 }

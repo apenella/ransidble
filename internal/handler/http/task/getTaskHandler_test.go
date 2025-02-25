@@ -13,15 +13,25 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
+	"github.com/apenella/ransidble/test/openapi"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestHandle_GetTaskHandler(t *testing.T) {
 
+	openAPIValidator, err := openapi.PrepareOpenAPIValidator("../../../../api/openapi.yaml")
+	if err != nil {
+		t.Errorf("Error initializing OpenAPI validator: %s", err)
+		t.FailNow()
+		return
+	}
+
 	tests := []struct {
 		desc               string
 		handler            *GetTaskHandler
+		method             string
+		path               string
 		arrangeContextFunc func(r *http.Request, w http.ResponseWriter) echo.Context
 		arrangeTestFunc    func(h *GetTaskHandler)
 		assertTestFunc     func(t *testing.T, rec *httptest.ResponseRecorder)
@@ -32,6 +42,8 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 				nil,
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodGet,
+			path:   "/tasks/task-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				return echo.New().NewContext(r, w)
 			},
@@ -52,6 +64,8 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 				service.NewMockGetTaskService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodGet,
+			path:   "/tasks/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				return echo.New().NewContext(r, w)
 			},
@@ -61,6 +75,7 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 				expectedBody := &response.TaskErrorResponse{
 					Error: ErrTaskIDNotProvided,
 				}
+
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
 				assert.Equal(t, expectedBody, body)
@@ -73,6 +88,8 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 				service.NewMockGetTaskService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodGet,
+			path:   "/tasks/task-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				c := echo.New().NewContext(r, w)
 				c.SetParamNames("id")
@@ -102,6 +119,8 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 				service.NewMockGetTaskService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodGet,
+			path:   "/tasks/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				c := echo.New().NewContext(r, w)
 				c.SetParamNames("id")
@@ -131,6 +150,8 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 				service.NewMockGetTaskService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodGet,
+			path:   "/tasks/task-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				c := echo.New().NewContext(r, w)
 				c.SetParamNames("id")
@@ -160,6 +181,8 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 				service.NewMockGetTaskService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodGet,
+			path:   "/tasks/task-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				c := echo.New().NewContext(r, w)
 				c.SetParamNames("id")
@@ -176,6 +199,10 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 							Playbooks: []string{"playbook.yml"},
 							Inventory: "inventory.yml",
 						},
+						CompletedAt: "0000-01-01T01:01:01",
+						CreatedAt:   "0000-01-01T01:01:01",
+						ExecutedAt:  "0000-01-01T01:01:01",
+						Status:      entity.ACCEPTED,
 					},
 					nil,
 				)
@@ -190,6 +217,10 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 						"playbooks": []interface{}{"playbook.yml"},
 						"inventory": "inventory.yml",
 					},
+					CompletedAt: "0000-01-01T01:01:01",
+					CreatedAt:   "0000-01-01T01:01:01",
+					ExecutedAt:  "0000-01-01T01:01:01",
+					Status:      entity.ACCEPTED,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -200,14 +231,13 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		req := httptest.NewRequest(test.method, test.path, nil)
+		rec := httptest.NewRecorder()
+
+		context := test.arrangeContextFunc(req, rec)
+
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
-			t.Parallel()
-
-			rec := httptest.NewRecorder()
-			// request parameters do not matter for this test. Handler gathers the task id from the context, for this reason, we can use a hardcoded request for all tests
-			req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
-			context := test.arrangeContextFunc(req, rec)
 
 			if test.arrangeTestFunc != nil {
 				test.arrangeTestFunc(test.handler)
@@ -215,8 +245,12 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 
 			err := test.handler.Handle(context)
 			assert.NoError(t, err)
-
 			test.assertTestFunc(t, rec)
+		})
+
+		t.Run(fmt.Sprintf("OpenAPI %s", test.desc), func(t *testing.T) {
+			err := openAPIValidator.ValidateResponse(rec.Body.Bytes(), req, rec.Code, rec.Header())
+			assert.NoError(t, err)
 		})
 	}
 }

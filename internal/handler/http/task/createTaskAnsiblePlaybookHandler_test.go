@@ -14,6 +14,7 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
+	"github.com/apenella/ransidble/test/openapi"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,9 +22,18 @@ import (
 
 func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 
+	openAPIValidator, err := openapi.PrepareOpenAPIValidator("../../../../api/openapi.yaml")
+	if err != nil {
+		t.Errorf("Error initializing OpenAPI validator: %s", err)
+		t.FailNow()
+		return
+	}
+
 	tests := []struct {
 		desc               string
 		handler            *CreateTaskAnsiblePlaybookHandler
+		method             string
+		path               string
 		arrangeContextFunc func(r *http.Request, w http.ResponseWriter) echo.Context
 		arrangeTestFunc    func(h *CreateTaskAnsiblePlaybookHandler)
 		assertTestFunc     func(t *testing.T, rec *httptest.ResponseRecorder)
@@ -34,6 +44,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodPost,
+			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				return echo.New().NewContext(r, w)
 			},
@@ -54,6 +66,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodPost,
+			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 
 				requestParameters := &request.AnsiblePlaybookParameters{
@@ -88,6 +102,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodPost,
+			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				c := echo.New().NewContext(r, w)
 				c.SetParamNames("project_id")
@@ -112,6 +128,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodPost,
+			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				requestParameters := &request.AnsiblePlaybookParameters{
 					Playbooks: []string{"playbook.yml"},
@@ -148,6 +166,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodPost,
+			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 
 				requestParameters := &request.AnsiblePlaybookParameters{
@@ -193,6 +213,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodPost,
+			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 
 				requestParameters := &request.AnsiblePlaybookParameters{
@@ -227,13 +249,14 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 				assert.Equal(t, http.StatusBadRequest, rec.Code)
 			},
 		},
-
 		{
 			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle request success and is returning an StatusAccepted",
 			handler: NewCreateTaskAnsiblePlaybookHandler(
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
 			),
+			method: http.MethodPost,
+			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 
 				requestParameters := &request.AnsiblePlaybookParameters{
@@ -269,14 +292,14 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
+
+		rec := httptest.NewRecorder()
+		// This is a default request. Depending on the test case the request will be overrided with more specific values
+		req := httptest.NewRequest(test.method, test.path, nil)
+		context := test.arrangeContextFunc(req, rec)
+
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
-			//t.Parallel()
-
-			rec := httptest.NewRecorder()
-			// This is a default request. Depending on the test case the request will be overrided with more specific values
-			req := httptest.NewRequest(http.MethodPost, "/", nil)
-			context := test.arrangeContextFunc(req, rec)
 
 			if test.arrangeTestFunc != nil {
 				test.arrangeTestFunc(test.handler)
@@ -285,6 +308,11 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			err := test.handler.Handle(context)
 			assert.NoError(t, err)
 			test.assertTestFunc(t, rec)
+		})
+
+		t.Run(fmt.Sprintf("OpenAPI %s", test.desc), func(t *testing.T) {
+			err := openAPIValidator.ValidateResponse(rec.Body.Bytes(), req, rec.Code, rec.Header())
+			assert.NoError(t, err)
 		})
 	}
 }

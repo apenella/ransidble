@@ -2,6 +2,7 @@ package project
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,11 +11,19 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
+	"github.com/apenella/ransidble/test/openapi"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestHandle_GetProjectListHandler(t *testing.T) {
+
+	openAPIValidator, err := openapi.PrepareOpenAPIValidator("../../../../api/openapi.yaml")
+	if err != nil {
+		t.Errorf("Error initializing OpenAPI validator: %s", err)
+		t.FailNow()
+		return
+	}
 
 	tests := []struct {
 		desc               string
@@ -93,13 +102,13 @@ func TestHandle_GetProjectListHandler(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		var req *http.Request
+		rec := httptest.NewRecorder()
+
 		t.Run(test.desc, func(t *testing.T) {
 			t.Log(test.desc)
-			t.Parallel()
 
-			rec := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodGet, "/projects", nil)
-
+			req = httptest.NewRequest(http.MethodGet, "/projects", nil)
 			context := test.arrangeContextFunc(req, rec)
 
 			if test.arrangeTestFunc != nil {
@@ -112,6 +121,9 @@ func TestHandle_GetProjectListHandler(t *testing.T) {
 			test.assertTestFunc(t, rec)
 		})
 
+		t.Run(fmt.Sprintf("OpenAPI %s", test.desc), func(t *testing.T) {
+			err := openAPIValidator.ValidateResponse(rec.Body.Bytes(), req, rec.Code, rec.Header())
+			assert.NoError(t, err)
+		})
 	}
-
 }
