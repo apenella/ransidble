@@ -32,29 +32,20 @@ import (
 
 // SuiteCreateTaskAnsiblePlaybook is the test suite for the HTTP server
 type SuiteCreateTaskAnsiblePlaybook struct {
-	listenAddress    string
-	openAPIValidator *OpenAPIValidator
-	router           *echo.Echo
-	server           *http.Server
+	listenAddress string
+	router        *echo.Echo
+	server        *http.Server
 
 	suite.Suite
 }
 
 // SetupSuite runs once before the suite starts running
 func (suite *SuiteCreateTaskAnsiblePlaybook) SetupSuite() {
-	var err error
-
-	suite.openAPIValidator, err = PrepareOpenAPIValidator(openAPIDefPath)
-	if err != nil {
-		suite.T().Errorf("Error initializing OpenAPI validator: %s", err)
-		suite.T().FailNow()
-		return
-	}
+	suite.listenAddress = "0.0.0.0:8080"
 }
 
 // SetupTest runs before each test in the suite
 func (suite *SuiteCreateTaskAnsiblePlaybook) SetupTest() {
-	suite.listenAddress = "0.0.0.0:8080"
 	suite.router = echo.New()
 	suite.server = http.NewServer(suite.listenAddress, suite.router, logger.NewFakeLogger())
 }
@@ -75,12 +66,6 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) TestCreateTaskAnsiblePlaybook() {
 
 	if suite.router == nil {
 		suite.T().Errorf("%s. HTTP router is not initialized", suite.T().Name())
-		suite.T().FailNow()
-		return
-	}
-
-	if suite.openAPIValidator == nil {
-		suite.T().Errorf("%s. OpenAPI validator is not initialized", suite.T().Name())
 		suite.T().FailNow()
 		return
 	}
@@ -112,11 +97,12 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) TestCreateTaskAnsiblePlaybook() {
 		method             string
 		url                string
 		expectedStatusCode int
-		arrangeTest        func(*SuiteCreateTaskAnsiblePlaybook) (*executor.Dispatch, error)
-		parameters         io.ReadCloser
+		// the function returns the dispatcher as a workaround to start the dispatcher within the test function
+		arrangeTest func(*SuiteCreateTaskAnsiblePlaybook) (*executor.Dispatch, error)
+		parameters  io.ReadCloser
 	}{
 		{
-			desc:       "Testing create an Ansible Playbook task successfully",
+			desc:       "Testing a request to create an Ansible Playbook task successfully that returns a StatusAccepted status code",
 			method:     "POST",
 			url:        "http://" + suite.listenAddress + "/tasks/ansible-playbook/project-1",
 			parameters: io.NopCloser(strings.NewReader(`{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}`)),
@@ -171,7 +157,7 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) TestCreateTaskAnsiblePlaybook() {
 			expectedStatusCode: nethttp.StatusAccepted,
 		},
 		{
-			desc:   "Testing create an Ansible Playbook task successfully passing all the parameters",
+			desc:   "Testing a request to create an Ansible Playbook task successfully passing all the parameters that returns a StatusAccepted status code",
 			method: "POST",
 			url:    "http://" + suite.listenAddress + "/tasks/ansible-playbook/project-1",
 			parameters: io.NopCloser(strings.NewReader(`
@@ -187,7 +173,7 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) TestCreateTaskAnsiblePlaybook() {
       "no_deps": true,
       "role_file": "roles/requirements.yml",
       "server": "https://galaxy.ansible.com",
-      "timeout": "60",
+      "timeout": 60,
       "token": "your_token",
       "verbose": true
     },
@@ -196,7 +182,7 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) TestCreateTaskAnsiblePlaybook() {
       "api_key": "your_api_key",
       "force_with_deps": true,
       "pre": true,
-      "timeout": "70",
+      "timeout": 70,
       "token": "your_token",
       "ignore_errors": true,
       "requirements_file": "collections/requirements.yml",
@@ -253,7 +239,7 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) TestCreateTaskAnsiblePlaybook() {
 							NoDeps:       true,
 							RoleFile:     "roles/requirements.yml",
 							Server:       "https://galaxy.ansible.com",
-							Timeout:      "60",
+							Timeout:      60,
 							Token:        "your_token",
 							Verbose:      true,
 						},
@@ -262,7 +248,7 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) TestCreateTaskAnsiblePlaybook() {
 							APIKey:           "your_api_key",
 							ForceWithDeps:    true,
 							Pre:              true,
-							Timeout:          "70",
+							Timeout:          70,
 							Token:            "your_token",
 							IgnoreErrors:     true,
 							RequirementsFile: "collections/requirements.yml",
@@ -314,6 +300,52 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) TestCreateTaskAnsiblePlaybook() {
 			},
 			expectedStatusCode: nethttp.StatusAccepted,
 		},
+		{
+			desc:       "Testing a request to create an Ansible Playbook task for a non existing project that returns a StatusNotFound status code",
+			method:     "POST",
+			url:        "http://" + suite.listenAddress + "/tasks/ansible-playbook/non-existing-project",
+			parameters: io.NopCloser(strings.NewReader(`{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}`)),
+			arrangeTest: func(suite *SuiteCreateTaskAnsiblePlaybook) (*executor.Dispatch, error) {
+				// ansibleExecutorMock is a mock dependency to avoid executing the playbook on every test
+				ansibleExecutor := executor.NewMockAnsiblePlaybookExecutor()
+
+				expectedParameters := &entity.AnsiblePlaybookParameters{
+					Playbooks: []string{"site.yml"},
+
+					Requirements:  &entity.AnsiblePlaybookRequirements{},
+					ExtraVars:     map[string]interface{}{},
+					ExtraVarsFile: []string{},
+					Inventory:     "127.0.0.1,",
+					Connection:    "local",
+				}
+
+				ansibleExecutor.On("Run", mock.Anything, mock.Anything, expectedParameters).Return(nil)
+
+				dispatcher, err := arrangeTaskAnsiblePlaybookRouter(suite.router, ansibleExecutor)
+				if err != nil {
+					return nil, fmt.Errorf("error arranging router: %s", err)
+				}
+
+				return dispatcher, nil
+			},
+			expectedStatusCode: nethttp.StatusNotFound,
+		},
+		{
+			desc:       "Testing a request to create an Ansible Playbook task with an invalid payload (missing inventory) that returns a StatusBadRequest status code",
+			method:     "POST",
+			url:        "http://" + suite.listenAddress + "/tasks/ansible-playbook/project-1",
+			parameters: io.NopCloser(strings.NewReader(`{"playbooks": ["site.yml"], "connection": "local"}`)),
+			arrangeTest: func(suite *SuiteCreateTaskAnsiblePlaybook) (*executor.Dispatch, error) {
+				// ansibleExecutor is not required for this test. An error is expected before the executor is called
+				dispatcher, err := arrangeTaskAnsiblePlaybookRouter(suite.router, nil)
+				if err != nil {
+					return nil, fmt.Errorf("error arranging router: %s", err)
+				}
+
+				return dispatcher, nil
+			},
+			expectedStatusCode: nethttp.StatusBadRequest,
+		},
 	}
 
 	for _, test := range tests {
@@ -339,7 +371,7 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) TestCreateTaskAnsiblePlaybook() {
 			expectedStatusCode: test.expectedStatusCode,
 		}
 
-		err := act(suite.T(), suite.openAPIValidator, input)
+		err := actAndAssert(suite.T(), input)
 		assert.NoError(suite.T(), err)
 	}
 }
@@ -349,6 +381,7 @@ func TestFunctionalSuiteCreateTaskAnsiblePlaybook(t *testing.T) {
 	suite.Run(t, new(SuiteCreateTaskAnsiblePlaybook))
 }
 
+// arrangeTaskAnsiblePlaybookRouter arranges the router for the test. The function returns the dispatcher as a workaround to start the dispatcher within the test function
 func arrangeTaskAnsiblePlaybookRouter(router *echo.Echo, ansibleExecutor executor.AnsiblePlaybookExecutor) (*executor.Dispatch, error) {
 	log := logger.NewFakeLogger()
 

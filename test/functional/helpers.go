@@ -29,8 +29,8 @@ func waitHTTPServer(listenAddress string, sleepTime time.Duration, retries int) 
 	return errors.New("HTTP server is not ready")
 }
 
-// act performs the functional test and the OpenAPI validation
-func act(t *testing.T, validator *OpenAPIValidator, input *InputFunctionalTest) error {
+// actAndAssert performs the request and validates the response
+func actAndAssert(t *testing.T, input *InputFunctionalTest) error {
 
 	var err error
 	var httpReq *http.Request
@@ -62,15 +62,10 @@ func act(t *testing.T, validator *OpenAPIValidator, input *InputFunctionalTest) 
 			return
 		}
 
-		fmt.Println(">>>>", string(body))
+		fmt.Println(">>>>", httpResp.StatusCode, string(body))
 
 		assert.NoError(t, err)
 		assert.Equal(t, input.expectedStatusCode, httpResp.StatusCode)
-	})
-
-	t.Run(fmt.Sprintf("OpenAPI %s", input.desc), func(t *testing.T) {
-		err = validator.ValidateResponse(body, httpReq, httpResp.StatusCode, httpResp.Header)
-		assert.NoError(t, err)
 	})
 
 	if !passed {

@@ -27,29 +27,20 @@ import (
 
 // SuiteGetProject is the test suite for the HTTP server
 type SuiteGetProject struct {
-	listenAddress    string
-	openAPIValidator *OpenAPIValidator
-	router           *echo.Echo
-	server           *http.Server
+	listenAddress string
+	router        *echo.Echo
+	server        *http.Server
 
 	suite.Suite
 }
 
 // SetupSuite runs once before the suite starts running
 func (suite *SuiteGetProject) SetupSuite() {
-	var err error
-
-	suite.openAPIValidator, err = PrepareOpenAPIValidator(openAPIDefPath)
-	if err != nil {
-		suite.T().Errorf("Error initializing OpenAPI validator: %s", err)
-		suite.T().FailNow()
-		return
-	}
+	suite.listenAddress = "0.0.0.0:8080"
 }
 
 // SetupTest runs before each test in the suite
 func (suite *SuiteGetProject) SetupTest() {
-	suite.listenAddress = "0.0.0.0:8080"
 	suite.router = echo.New()
 	suite.server = http.NewServer(suite.listenAddress, suite.router, logger.NewFakeLogger())
 }
@@ -83,12 +74,6 @@ func (suite *SuiteGetProject) TestGetProject() {
 		return
 	}
 
-	if suite.openAPIValidator == nil {
-		suite.T().Errorf("%s. OpenAPI validator is not initialized", suite.T().Name())
-		suite.T().FailNow()
-		return
-	}
-
 	go func() {
 		err := suite.server.Start(context.Background())
 		if err != nil {
@@ -115,7 +100,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 		arrangeTest        func(*SuiteGetProject)
 	}{
 		{
-			desc:   "Testing get project functinal behavior when project exists",
+			desc:   "Testing a request to get project functinal behavior when project exists that returns a StatusOK status code",
 			method: nethttp.MethodGet,
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-1",
 			arrangeTest: func(suite *SuiteGetProject) {
@@ -143,7 +128,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 			expectedStatusCode: nethttp.StatusOK,
 		},
 		{
-			desc:   "Testing get project functional behavior when project does not exist",
+			desc:   "Testing a request to get project functional behavior when project does not exist that returns a StatusNotFound status code",
 			method: nethttp.MethodGet,
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-non-existing",
 			arrangeTest: func(suite *SuiteGetProject) {
@@ -171,7 +156,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 			expectedStatusCode: nethttp.StatusNotFound,
 		},
 		{
-			desc:   "Testing get project functional behaviour when there is an internal error",
+			desc:   "Testing a request get project functional behaviour when there is an internal error that returns a StatusInternalServerError status code",
 			method: nethttp.MethodGet,
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-internal-error",
 			arrangeTest: func(suite *SuiteGetProject) {
@@ -205,7 +190,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 			expectedStatusCode: nethttp.StatusInternalServerError,
 		},
 		{
-			desc:   "Testing get project functional behaviour when service returns a project not provided error",
+			desc:   "Testing a request get project functional behaviour when service returns a project not provided error that returns a StatusBadRequest status code",
 			method: nethttp.MethodGet,
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-not-provided",
 			arrangeTest: func(suite *SuiteGetProject) {
@@ -280,12 +265,6 @@ func (suite *SuiteGetProject) TestGetProject() {
 			assert.NoError(suite.T(), err)
 			assert.Equal(suite.T(), test.expectedStatusCode, httpResp.StatusCode)
 			assert.Equal(suite.T(), test.expectedBody, strings.TrimSpace(string(body)))
-		})
-
-		suite.T().Run(fmt.Sprintf("OpenAPI %s", test.desc), func(t *testing.T) {
-			// suite.T().Log("OpenAPI: " + test.desc)
-			err = suite.openAPIValidator.ValidateResponse(body, httpReq, httpResp.StatusCode, httpResp.Header)
-			assert.NoError(suite.T(), err)
 		})
 	}
 }

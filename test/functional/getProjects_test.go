@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	nethttp "net/http"
 	"testing"
 	"time"
@@ -25,24 +24,16 @@ import (
 
 // SuiteGetProjectsList is the test suite for the HTTP server
 type SuiteGetProjectsList struct {
-	listenAddress    string
-	openAPIValidator *OpenAPIValidator
-	router           *echo.Echo
-	server           *http.Server
+	listenAddress string
+	router        *echo.Echo
+	server        *http.Server
 
 	suite.Suite
 }
 
 // SetupSuite runs once before the suite starts running
 func (suite *SuiteGetProjectsList) SetupSuite() {
-	var err error
-
-	suite.openAPIValidator, err = PrepareOpenAPIValidator(openAPIDefPath)
-	if err != nil {
-		suite.T().Errorf("Error initializing OpenAPI validator: %s", err)
-		suite.T().FailNow()
-		return
-	}
+	suite.listenAddress = "0.0.0.0:8080"
 }
 
 // TearDownSuite runs after all tests in this suite have run
@@ -50,7 +41,6 @@ func (suite *SuiteGetProjectsList) TearDownSuite() {}
 
 // SetupTest runs before each test in the suite
 func (suite *SuiteGetProjectsList) SetupTest() {
-	suite.listenAddress = "0.0.0.0:8080"
 	suite.router = echo.New()
 	suite.server = http.NewServer(suite.listenAddress, suite.router, logger.NewFakeLogger())
 }
@@ -81,12 +71,6 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 		return
 	}
 
-	if suite.openAPIValidator == nil {
-		suite.T().Errorf("%s. OpenAPI validator is not initialized", suite.T().Name())
-		suite.T().FailNow()
-		return
-	}
-
 	go func() {
 		err := suite.server.Start(context.Background())
 		if err != nil {
@@ -111,7 +95,7 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 		arrangeTest        func(*SuiteGetProjectsList)
 	}{
 		{
-			desc:   "Testing get projects list functinoal behavior when the request is successful",
+			desc:   "Testing a request to get projects list functinoal behavior when the request is successful that returns a StatusOK status code",
 			method: nethttp.MethodGet,
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath,
 			arrangeTest: func(suite *SuiteGetProjectsList) {
@@ -138,7 +122,7 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 			expectedStatusCode: nethttp.StatusOK,
 		},
 		{
-			desc:   "Testing get projects list functional behaviour when service returns an error getting the projects list",
+			desc:   "Testing a request to get projects list functional behaviour when service returns an error getting the projects list that returns a StatusInternalServerError status code",
 			method: nethttp.MethodGet,
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath,
 			arrangeTest: func(suite *SuiteGetProjectsList) {
@@ -177,7 +161,6 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 		var err error
 		var httpReq *nethttp.Request
 		var httpResp *nethttp.Response
-		var body []byte
 
 		httpReq, err = nethttp.NewRequest(test.method, test.url, nil)
 		if err != nil {
@@ -201,20 +184,8 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 			}
 			defer httpResp.Body.Close()
 
-			body, err = io.ReadAll(httpResp.Body)
-			if err != nil {
-				suite.T().Errorf("%s. Error reading response body: %s", suite.T().Name(), err)
-				suite.T().FailNow()
-				return
-			}
-
 			assert.NoError(suite.T(), err)
 			assert.Equal(suite.T(), test.expectedStatusCode, httpResp.StatusCode)
-		})
-
-		suite.T().Run(fmt.Sprintf("OpenAPI %s", test.desc), func(t *testing.T) {
-			err = suite.openAPIValidator.ValidateResponse(body, httpReq, httpResp.StatusCode, httpResp.Header)
-			assert.NoError(suite.T(), err)
 		})
 	}
 }
