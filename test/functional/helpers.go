@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -35,7 +36,6 @@ func actAndAssert(t *testing.T, input *InputFunctionalTest) error {
 	var err error
 	var httpReq *http.Request
 	var httpResp *http.Response
-	var body []byte
 
 	httpReq, err = http.NewRequest(input.method, input.url, input.parameters)
 	if err != nil {
@@ -56,16 +56,20 @@ func actAndAssert(t *testing.T, input *InputFunctionalTest) error {
 		}
 		defer httpResp.Body.Close()
 
-		body, err = io.ReadAll(httpResp.Body)
-		if err != nil {
-			t.Errorf("%s. Error reading response body: %s", t.Name(), err)
-			return
-		}
-
-		fmt.Println(">>>>", httpResp.StatusCode, string(body))
-
 		assert.NoError(t, err)
 		assert.Equal(t, input.expectedStatusCode, httpResp.StatusCode)
+
+		if input.expectedBody != "" {
+			defer httpResp.Body.Close()
+
+			body, err := io.ReadAll(httpResp.Body)
+			if err != nil {
+				t.Errorf("%s. Error reading response body: %s", t.Name(), err)
+				return
+			}
+
+			assert.Equal(t, input.expectedBody, strings.TrimSpace(string(body)))
+		}
 	})
 
 	if !passed {

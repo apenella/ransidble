@@ -3,10 +3,7 @@ package functional
 import (
 	"context"
 	"errors"
-	"fmt"
-	"io"
 	nethttp "net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -227,45 +224,20 @@ func (suite *SuiteGetProject) TestGetProject() {
 
 	for _, test := range tests {
 
-		var err error
-		var httpReq *nethttp.Request
-		var httpResp *nethttp.Response
-		var body []byte
-
-		httpReq, err = nethttp.NewRequest(test.method, test.url, nil)
-		if err != nil {
-			suite.T().Errorf("%s. Error creating HTTP request: %s", suite.T().Name(), err)
-			suite.T().FailNow()
-			return
+		if test.arrangeTest != nil {
+			test.arrangeTest(suite)
 		}
 
-		suite.T().Run(fmt.Sprintf("Functional %s", test.desc), func(t *testing.T) {
-			// suite.T().Log("Functional: " + test.desc)
+		input := &InputFunctionalTest{
+			desc:               test.desc,
+			method:             test.method,
+			url:                test.url,
+			expectedStatusCode: test.expectedStatusCode,
+			expectedBody:       test.expectedBody,
+		}
 
-			if test.arrangeTest != nil {
-				test.arrangeTest(suite)
-			}
-
-			client := &nethttp.Client{}
-			httpResp, err = client.Do(httpReq)
-			if err != nil {
-				suite.T().Errorf("%s. Error performing HTTP request: %s", suite.T().Name(), err)
-				suite.T().FailNow()
-				return
-			}
-			defer httpResp.Body.Close()
-
-			body, err = io.ReadAll(httpResp.Body)
-			if err != nil {
-				suite.T().Errorf("%s. Error reading response body: %s", suite.T().Name(), err)
-				suite.T().FailNow()
-				return
-			}
-
-			assert.NoError(suite.T(), err)
-			assert.Equal(suite.T(), test.expectedStatusCode, httpResp.StatusCode)
-			assert.Equal(suite.T(), test.expectedBody, strings.TrimSpace(string(body)))
-		})
+		err := actAndAssert(suite.T(), input)
+		assert.NoError(suite.T(), err)
 	}
 }
 

@@ -50,8 +50,8 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) SetupTest() {
 	suite.server = http.NewServer(suite.listenAddress, suite.router, logger.NewFakeLogger())
 }
 
-// TearDownSuite runs after all tests in this suite have run
-func (suite *SuiteCreateTaskAnsiblePlaybook) TearDownSuite() {
+// TearDownTest runs after all tests in this suite have run
+func (suite *SuiteCreateTaskAnsiblePlaybook) TearDownTest() {
 	suite.server.Stop()
 }
 
