@@ -1,7 +1,6 @@
 package serve
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -14,7 +13,6 @@ import (
 	projectService "github.com/apenella/ransidble/internal/domain/core/service/project"
 	taskService "github.com/apenella/ransidble/internal/domain/core/service/task"
 	"github.com/apenella/ransidble/internal/domain/core/service/workspace"
-	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	server "github.com/apenella/ransidble/internal/handler/http"
 	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
 	taskHandler "github.com/apenella/ransidble/internal/handler/http/task"
@@ -33,6 +31,7 @@ import (
 )
 
 const (
+	CreateProjectPath             = "/projects"
 	CreateTaskAnsiblePlaybookPath = "/tasks/ansible-playbook/:project_id"
 	GetHealthPath                 = "/health"
 	GetProjectPath                = "/projects/:id"
@@ -136,20 +135,79 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
 			getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
 
-			err = Serve(
-				cmd.Context(),
-				log,
-				config,
-				dispatcher,
-				createTaskAnsiblePlaybookHandler,
-				getTaskHandler,
-				getProjectHandler,
-				getProjectListHandler,
-			)
-			if err != nil {
-				cmd.Println("Ransidble server stopped due to an error:", err)
-				return
+			createProjectHandler := projectHandler.NewCreateProjectHandler(log)
+
+			go func() {
+				errStartDispatcher := dispatcher.Start(cmd.Context())
+				if errStartDispatcher != nil {
+					errMsg := fmt.Sprintf("%s: %s", ErrStartDispatcher, errStartDispatcher)
+					log.Error(
+						errMsg,
+						map[string]interface{}{
+							"component": "Serve",
+							"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+						})
+
+					err = fmt.Errorf("%s", errMsg)
+					return
+				}
+			}()
+
+			router := echo.New()
+			router.Use(middleware.Logger())
+			router.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+				Level: 5,
+			}))
+
+			router.POST(CreateProjectPath, createProjectHandler.Handle)
+			router.POST(CreateTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
+			router.GET(GetTaskPath, getTaskHandler.Handle)
+			router.GET(GetProjectPath, getProjectHandler.Handle)
+			router.GET(GetProjectsPath, getProjectListHandler.Handle)
+
+			// Wait for interrupt signal to gracefully shutdown the server
+			quitCh := make(chan os.Signal, 1)
+			signal.Notify(quitCh, syscall.SIGINT, syscall.SIGTERM)
+			errListenAndServeCh := make(chan error)
+
+			srv := server.NewServer(config.Server.HTTPListenAddress, router, log)
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+
+			go func() {
+				errListenAndServe := srv.Start(cmd.Context())
+				if errListenAndServe != nil {
+					errListenAndServeCh <- errListenAndServe
+				}
+				wg.Done()
+			}()
+
+			select {
+			case errListenAndServe := <-errListenAndServeCh:
+				if errListenAndServe != nil {
+					errMsg := fmt.Sprintf("%s: %s", server.ErrServerStarting, errListenAndServe)
+					log.Error(
+						errMsg,
+						map[string]interface{}{
+							"component": "Serve",
+							"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+						})
+					err = fmt.Errorf("%s", errMsg)
+				}
+			case <-quitCh:
+				log.Info(
+					"Received signal to stop the Ransidble server",
+					map[string]interface{}{
+						"component": "Serve",
+						"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+					})
+
+				srv.Stop()
+				dispatcher.Stop()
 			}
+
+			wg.Wait()
 
 			cmd.Println("Ransidble server stopped")
 
@@ -158,90 +216,4 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 	}
 
 	return cmd
-}
-
-// Serve is a function to start a Ransidble server
-func Serve(
-	ctx context.Context,
-	log repository.Logger,
-	config *configuration.Configuration,
-	dispatcher *executor.Dispatch,
-	createTaskAnsiblePlaybookHandler *taskHandler.CreateTaskAnsiblePlaybookHandler,
-	getTaskHandler *taskHandler.GetTaskHandler,
-	getProjectHandler *projectHandler.GetProjectHandler,
-	getProjectListHandler *projectHandler.GetProjectListHandler,
-) (err error) {
-
-	go func() {
-		errStartDispatcher := dispatcher.Start(ctx)
-		if errStartDispatcher != nil {
-			errMsg := fmt.Sprintf("%s: %s", ErrStartDispatcher, errStartDispatcher)
-			log.Error(
-				errMsg,
-				map[string]interface{}{
-					"component": "Serve",
-					"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
-				})
-
-			err = fmt.Errorf("%s", errMsg)
-			return
-		}
-	}()
-
-	router := echo.New()
-	router.Use(middleware.Logger())
-	router.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Level: 5,
-	}))
-
-	router.POST(CreateTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
-	router.GET(GetTaskPath, getTaskHandler.Handle)
-	router.GET(GetProjectPath, getProjectHandler.Handle)
-	router.GET(GetProjectsPath, getProjectListHandler.Handle)
-
-	// Wait for interrupt signal to gracefully shutdown the server
-	quitCh := make(chan os.Signal, 1)
-	signal.Notify(quitCh, syscall.SIGINT, syscall.SIGTERM)
-	errListenAndServeCh := make(chan error)
-
-	srv := server.NewServer(config.Server.HTTPListenAddress, router, log)
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	go func() {
-		errListenAndServe := srv.Start(ctx)
-		if errListenAndServe != nil {
-			errListenAndServeCh <- errListenAndServe
-		}
-		wg.Done()
-	}()
-
-	select {
-	case errListenAndServe := <-errListenAndServeCh:
-		if errListenAndServe != nil {
-			errMsg := fmt.Sprintf("%s: %s", server.ErrServerStarting, errListenAndServe)
-			log.Error(
-				errMsg,
-				map[string]interface{}{
-					"component": "Serve",
-					"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
-				})
-			err = fmt.Errorf("%s", errMsg)
-		}
-	case <-quitCh:
-		log.Info(
-			"Received signal to stop the Ransidble server",
-			map[string]interface{}{
-				"component": "Serve",
-				"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
-			})
-
-		srv.Stop()
-		dispatcher.Stop()
-	}
-
-	wg.Wait()
-
-	return
 }
