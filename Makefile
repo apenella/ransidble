@@ -44,13 +44,20 @@ golint: ci-go-tools-docker-image ## Executes Go linter (golint)
 	@echo
 	@docker run --rm -v "${PWD}":/app -w /app ci-go-tools-docker-image golint ./internal/... && echo "$(COLOR_GREEN) golint: all files linted$(COLOR_END)" || echo "$(COLOR_RED)golint: some files not linted$(COLOR_END)"
 
-tests: unit-tests ## Executes tests
+tests: unit-tests functional-test ## Executes tests
 
 unit-tests: ## Executes unit test
 	@echo
 	@echo "$(COLOR_BLUE) Executing unit test$(COLOR_END)"
 	@echo
 	@docker run --rm -v "${PWD}":/app -w /app golang:${GOLANG_VERSION}-alpine go test -count=1 -cover ./internal/... && echo "$(COLOR_GREEN) Unit test: OK$(COLOR_END)" || echo "$(COLOR_RED)Unit test: some test failed$(COLOR_END)"
+
+functional-test: ## Execute functional test
+	@echo
+	@echo "$(COLOR_BLUE) Executing functional test$(COLOR_END)"
+	@echo
+	@docker run --rm -v "${PWD}":/app -w /app golang:${GOLANG_VERSION}-alpine go test -count=1 -cover ./test/functional/... && echo "$(COLOR_GREEN) Functional test: OK$(COLOR_END)" || echo "$(COLOR_RED)Functional test: some test failed$(COLOR_END)"
+
 #
 # Environment targets
 
