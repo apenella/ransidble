@@ -1,6 +1,9 @@
 package entity
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/go-playground/validator/v10"
 )
 
@@ -26,6 +29,8 @@ type Project struct {
 	Reference string `json:"reference" validate:"required"`
 	// Storage represents the project type. This field is required and must be one of the following values: local
 	Storage string `json:"storage" validate:"required,oneof=local"`
+	// Hash represents the project hash
+	//Hash string `json:"hash" validate:"sha256"`
 }
 
 // NewProject creates a new project instance
@@ -42,4 +47,36 @@ func NewProject(name, referene, format, storage string) *Project {
 func (p *Project) Validate() error {
 	validate := validator.New()
 	return validate.Struct(p)
+}
+
+// ValidateProjectFormat validates the project format
+func ValidateProjectFormat(format string) error {
+	validate := validator.New()
+	err := validate.Var(format, "required,oneof=plain targz")
+	if err != nil {
+		return fmt.Errorf("Invalid format: %s. %w", format, err)
+	}
+
+	return nil
+}
+
+// ValidateProjectStorage validates the project storage
+func ValidateProjectStorage(storage string) error {
+	validate := validator.New()
+	err := validate.Var(storage, "required,oneof=local")
+
+	if err != nil {
+		return fmt.Errorf("Invalid storage type: %s. %w", storage, err)
+	}
+
+	return nil
+}
+
+// ValidateProjectFileExtension validates the project file extension
+func ValidateProjectFileExtension(file string) error {
+	has := strings.HasSuffix(file, ExtensionTarGz)
+	if !has {
+		return fmt.Errorf("file %s extension not supported", file)
+	}
+	return nil
 }

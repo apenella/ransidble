@@ -65,7 +65,7 @@ serve: ## Start the server
 	@echo
 	@echo " Starting the server"
 	@echo
-	@RANSIDBLE_SERVER_LOG_LEVEL=debug RANSIDBLE_SERVER_WORKER_POOL_SIZE=1 RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH=test/projects go run cmd/main.go serve
+	@RANSIDBLE_SERVER_LOG_LEVEL=debug RANSIDBLE_SERVER_WORKER_POOL_SIZE=1 RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH=test/storage go run cmd/main.go serve
 
 run-task-1: ## Make a request to create an ansible-playbook task
 	@echo

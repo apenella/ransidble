@@ -43,3 +43,9 @@ func (m *MockProjectRepository) FindAll() ([]*entity.Project, error) {
 
 	return projects, args.Error(1)
 }
+
+// SafeStore mock method to store a project
+func (m *MockProjectRepository) SafeStore(id string, project *entity.Project) error {
+	args := m.Called(id, project)
+	return args.Error(0)
+}

@@ -21,6 +21,7 @@ import (
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch"
 	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
+	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/store"
 	taskpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/task"
 	"github.com/apenella/ransidble/internal/infrastructure/tar"
 	"github.com/apenella/ransidble/internal/infrastructure/unpack"
@@ -135,7 +136,32 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
 			getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
 
-			createProjectHandler := projectHandler.NewCreateProjectHandler(log)
+			storeFactory := store.NewFactory()
+			localStorageStore := store.NewLocalStorage(
+				afs,
+				config.Server.Project.LocalStoragePath,
+				log,
+			)
+			storeFactory.Register(entity.ProjectTypeLocal, localStorageStore)
+			createProjectService := projectService.NewCreateProjectService(
+				projectsRepository,
+				storeFactory,
+				log,
+			)
+
+			createProjectHandler := projectHandler.NewCreateProjectHandler(createProjectService, log)
+
+			router := echo.New()
+			router.Use(middleware.Logger())
+			router.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+				Level: 5,
+			}))
+
+			router.POST(CreateProjectPath, createProjectHandler.Handle)
+			router.POST(CreateTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
+			router.GET(GetTaskPath, getTaskHandler.Handle)
+			router.GET(GetProjectPath, getProjectHandler.Handle)
+			router.GET(GetProjectsPath, getProjectListHandler.Handle)
 
 			go func() {
 				errStartDispatcher := dispatcher.Start(cmd.Context())
@@ -152,18 +178,6 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 					return
 				}
 			}()
-
-			router := echo.New()
-			router.Use(middleware.Logger())
-			router.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-				Level: 5,
-			}))
-
-			router.POST(CreateProjectPath, createProjectHandler.Handle)
-			router.POST(CreateTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
-			router.GET(GetTaskPath, getTaskHandler.Handle)
-			router.GET(GetProjectPath, getProjectHandler.Handle)
-			router.GET(GetProjectsPath, getProjectListHandler.Handle)
 
 			// Wait for interrupt signal to gracefully shutdown the server
 			quitCh := make(chan os.Signal, 1)

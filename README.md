@@ -21,8 +21,9 @@ Ransidble is a utility that enables you to execute [Ansible](https://www.ansible
         - [Plain](#plain)
         - [Tar Gz](#tar-gz)
     - [Examples of Requests](#examples-of-requests)
+      - [Performing a Request to Create a Project](#performing-a-request-to-create-a-project)
       - [Performing a Request to Execute an Ansible playbook](#performing-a-request-to-execute-an-ansible-playbook)
-      - [Perform a Request Accepting Gzip Encoding](#perform-a-request-accepting-gzip-encoding)
+      - [Performing a Request Accepting Gzip Encoding](#performing-a-request-accepting-gzip-encoding)
       - [Getting the Status of an Execution](#getting-the-status-of-an-execution)
       - [Getting the project details](#getting-the-project-details)
       - [Getting the list of projects](#getting-the-list-of-projects)
@@ -141,12 +142,37 @@ tar -czvf my-project.tar.gz -C my-project .
 
 ### Examples of Requests
 
+#### Performing a Request to Create a Project
+
+The following example demonstrates how to create a project using the Ransidble server. Please refer to the [REST API Reference](#rest-api-reference) section for more information.
+
+To create a project, you must have a tarball compressed with gzip that contains the Ansible playbook files. To create the tarball, use the following command:
+
+```bash
+tar -czvf my-project.tar.gz -C my-project .
+```
+
+Once you have the tarball, you can create the project using the following command:
+
+```bash
+$ curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@my-project.tar.gz'
+
+HTTP/1.1 201 Created
+Content-Type: application/json
+Vary: Accept-Encoding
+Date: Sat, 08 Mar 2025 15:05:12 GMT
+Content-Length: 37
+
+{"format":"targz","storage":"local"}
+```
+
 #### Performing a Request to Execute an Ansible playbook
 
 The following example demonstrates how to execute an Ansible playbook using the Ransidble server. Please refer to the [REST API Reference](#rest-api-reference) section for more information.
 
 ```bash
-curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/tasks/ansible-playbook/project-1 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}'
+$ curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/tasks/ansible-playbook/project-1 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}'
+
 HTTP/1.1 202 Accepted
 Content-Type: application/json
 Vary: Accept-Encoding
@@ -156,17 +182,17 @@ Content-Length: 46
 {"id":"ecfc92dc-6323-40d6-9bf8-71c4d4d98640"}
 ```
 
-#### Perform a Request Accepting Gzip Encoding
+#### Performing a Request Accepting Gzip Encoding
 
 ```bash
-❯ curl -H 'Accept-Encoding: gzip' --output /dev/stdout -s -XPOST 0.0.0.0:8080/command/ansible-playbook
+$ curl -H 'Accept-Encoding: gzip' --output /dev/stdout -s -XPOST 0.0.0.0:8080/command/ansible-playbook
 r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
 ```
 
 #### Getting the Status of an Execution
 
 ```bash
-❯ curl -s -GET 0.0.0.0:8080/tasks/ecfc92dc-6323-40d6-9bf8-71c4d4d98640 | jq
+$ curl -s -GET 0.0.0.0:8080/tasks/ecfc92dc-6323-40d6-9bf8-71c4d4d98640 | jq
 {
   "command": "ansible-playbook",
   "completed_at": "2024-07-21T20:01:25+02:00",
@@ -192,7 +218,7 @@ r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
 #### Getting the project details
 
 ```bash
-❯ curl -s 0.0.0.0:8080/projects/project-1 | jq
+$ curl -s 0.0.0.0:8080/projects/project-1 | jq
 {
   "format": "plain",
   "name": "project-1",
@@ -204,7 +230,7 @@ r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
 #### Getting the list of projects
 
 ```bash
-❯ curl -s 0.0.0.0:8080/projects | jq
+$ curl -s 0.0.0.0:8080/projects | jq
 [
   {
     "format": "plain",

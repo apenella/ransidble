@@ -24,6 +24,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectErrorResponse'
+    post:
+      summary: Create a new project
+      description: Create a new project and store the source code to the specified storage
+      requestBody:
+        description: Project details
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - metadata
+                - file
+              properties:
+                metadata:
+                  type: object
+                  properties:
+                    storage:
+                      type: string
+                      description: The project storage type
+                      enum:
+                        - local
+                    format:
+                      type: string
+                      description: The project format
+                      enum:
+                        - plain
+                        - targz
+                file:
+                  type: string
+                  format: binary
+                  description: A `.tar.gz` file containing project data.
+      responses:
+        201:
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        400:
+          description: Bad request, such as missing project metadata or file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectErrorResponse'
+        409:
+          description: Project already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectErrorResponse'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectErrorResponse'
   /projects/{id}:
     get:
       summary: Get a project by ID
