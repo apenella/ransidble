@@ -10,31 +10,6 @@ import (
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 )
 
-const (
-	// ErrProjectFormatNotProvided error message when format is not provided
-	ErrProjectFormatNotProvided = "format not provided"
-	// ErrProjectStorageNotProvided error message when storage is not provided
-	ErrProjectStorageNotProvided = "storage not provided"
-	// ErrNotFoundStorageHandler error message when storage handler is not found
-	ErrNotFoundStorageHandler = "storage handler not found"
-	// ErrProjectFileNotProvided error message when file is not provided
-	ErrProjectFileNotProvided = "file not provided"
-	// ErrProjectStorageNotSupported error message when storage is not supported
-	ErrProjectStorageNotSupported = "storage not supported"
-	// ErrProjectFormatNotSupported error message when format is not supported
-	ErrProjectFormatNotSupported = "format not supported"
-	// ErrStoringProject error message when storing project fails
-	ErrStoringProject = "storing project fails"
-	// ErrProjectFileExtensionNotSupported error message when file extension is not supported
-	ErrProjectFileExtensionNotSupported = "file extension not supported"
-	// ErrStorageHandlerNotInitialized error message when storage handler is not initialized
-	ErrStorageHandlerNotInitialized = "storage handler not initialized"
-	// ErrProjectRepositoryNotInitialized error message when project repository is not initialized
-	ErrProjectRepositoryNotInitialized = "project repository not initialized"
-	// ErrOpeningProjectFile error message when opening project file fails
-	ErrOpeningProjectFile = "opening project file fails"
-)
-
 // CreateProjectService represents the service to create a project
 type CreateProjectService struct {
 	repository repository.ProjectRepository
@@ -129,12 +104,12 @@ func (s *CreateProjectService) Create(format string, storage string, file *multi
 
 	storer := s.storage.Get(storage)
 	if storer == nil {
-		s.logger.Error(ErrNotFoundStorageHandler, map[string]interface{}{
+		s.logger.Error(ErrStorageHandlerNotFound, map[string]interface{}{
 			"component": "CreateProjectService.Create",
 			"package":   "github.com/apenella/ransidble/internal/domain/core/service/project",
 			"storage":   storage,
 		})
-		return fmt.Errorf(ErrNotFoundStorageHandler)
+		return fmt.Errorf(ErrStorageHandlerNotFound)
 	}
 
 	name := extractProjectName(reference)

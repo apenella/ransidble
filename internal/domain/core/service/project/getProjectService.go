@@ -8,15 +8,6 @@ import (
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 )
 
-var (
-	// ErrFindingProject represents an error when a proejct is not found
-	ErrFindingProject = fmt.Errorf("error finding project")
-	// ErrRepositoryNotInitialized represents an error when the store is not initialized
-	ErrRepositoryNotInitialized = fmt.Errorf("project repository not initialized")
-	// ErrProjectIDNotProvided represents an error when the task id is not provided
-	ErrProjectIDNotProvided = fmt.Errorf("project id not provided")
-)
-
 // GetProjectService is a service to get a project
 type GetProjectService struct {
 	repository repository.ProjectRepository
@@ -35,31 +26,33 @@ func NewGetProjectService(repository repository.ProjectRepository, logger reposi
 func (p *GetProjectService) GetProject(id string) (*entity.Project, error) {
 
 	if p.repository == nil {
-		p.logger.Error(ErrRepositoryNotInitialized.Error(), map[string]interface{}{
+		p.logger.Error(ErrProjectRepositoryNotInitialized, map[string]interface{}{
 			"component":  "GetProjectService.GetProject",
 			"package":    "github.com/apenella/ransidble/internal/domain/core/service/project",
 			"project_id": id,
 		})
-		return nil, ErrRepositoryNotInitialized
+		return nil, fmt.Errorf(ErrProjectRepositoryNotInitialized)
 	}
 
 	if id == "" {
-		p.logger.Error(ErrProjectIDNotProvided.Error(), map[string]interface{}{
+		p.logger.Error(ErrProjectIDNotProvided, map[string]interface{}{
 			"component": "GetProjectService.GetProject",
 			"package":   "github.com/apenella/ransidble/internal/domain/core/service/project",
 		})
-		return nil, domainerror.NewProjectNotProvidedError(ErrProjectIDNotProvided)
+		return nil, domainerror.NewProjectNotProvidedError(
+			fmt.Errorf(ErrProjectIDNotProvided),
+		)
 	}
 
 	project, err := p.repository.Find(id)
 	if err != nil {
-		p.logger.Error("%s: %s", ErrFindingProject.Error(), err.Error(), map[string]interface{}{
+		p.logger.Error("%s: %s", ErrFindingProject, err.Error(), map[string]interface{}{
 			"component":  "GetProjectService.GetProject",
 			"package":    "github.com/apenella/ransidble/internal/domain/core/service/project",
 			"project_id": id,
 		})
 		return nil, domainerror.NewProjectNotFoundError(
-			fmt.Errorf("%s: %s", ErrFindingProject.Error(), err.Error()),
+			fmt.Errorf("%s: %w", ErrFindingProject, err),
 		)
 	}
 
@@ -70,21 +63,21 @@ func (p *GetProjectService) GetProject(id string) (*entity.Project, error) {
 func (p *GetProjectService) GetProjectsList() ([]*entity.Project, error) {
 
 	if p.repository == nil {
-		p.logger.Error(ErrRepositoryNotInitialized.Error(), map[string]interface{}{
+		p.logger.Error(ErrProjectRepositoryNotInitialized, map[string]interface{}{
 			"component": "GetProjectService.GetProject",
 			"package":   "github.com/apenella/ransidble/internal/domain/core/service/project",
 		})
-		return nil, ErrRepositoryNotInitialized
+		return nil, fmt.Errorf(ErrProjectRepositoryNotInitialized)
 	}
 
 	projects, err := p.repository.FindAll()
 	if err != nil {
-		p.logger.Error("%s: %s", ErrFindingProject.Error(), err.Error(), map[string]interface{}{
+		p.logger.Error("%s: %s", ErrFindingProject, err.Error(), map[string]interface{}{
 			"component": "GetProjectService.GetProject",
 			"package":   "github.com/apenella/ransidble/internal/domain/core/service/project",
 		})
 		return nil, domainerror.NewProjectNotFoundError(
-			fmt.Errorf("%s: %s", ErrFindingProject.Error(), err.Error()),
+			fmt.Errorf("%s: %s", ErrFindingProject, err.Error()),
 		)
 	}
 

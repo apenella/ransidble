@@ -48,7 +48,7 @@ func TestGetProject(t *testing.T) {
 		{
 			desc:     "Testing error getting a project on the GetProjectService having a nil project repository",
 			id:       "project-id",
-			err:      ErrRepositoryNotInitialized,
+			err:      fmt.Errorf(ErrProjectRepositoryNotInitialized),
 			expected: nil,
 			service: NewGetProjectService(
 				nil,
@@ -57,9 +57,11 @@ func TestGetProject(t *testing.T) {
 			arrangeFunc: nil,
 		},
 		{
-			desc:     "Testing error getting a project on the GetProjectService having an empty project id",
-			id:       "",
-			err:      domainerror.NewProjectNotProvidedError(ErrProjectIDNotProvided),
+			desc: "Testing error getting a project on the GetProjectService having an empty project id",
+			id:   "",
+			err: domainerror.NewProjectNotProvidedError(
+				fmt.Errorf(ErrProjectIDNotProvided),
+			),
 			expected: nil,
 			service: &GetProjectService{
 				repository: repository.NewMockProjectRepository(),
@@ -71,7 +73,7 @@ func TestGetProject(t *testing.T) {
 			desc: "Testing error getting a project on the GetProjectService having an error on find project into the repository",
 			id:   "project-id",
 			err: domainerror.NewProjectNotFoundError(
-				fmt.Errorf("%s: %s", ErrFindingProject.Error(), errors.New("error finding project")),
+				fmt.Errorf("%s: %w", ErrFindingProject, errors.New("error finding project")),
 			),
 			expected: nil,
 			service: &GetProjectService{
@@ -139,7 +141,7 @@ func TestGetProjectsList(t *testing.T) {
 		},
 		{
 			desc:     "Testing error getting a project list on the GetProjectService having a nil project repository",
-			err:      ErrRepositoryNotInitialized,
+			err:      fmt.Errorf(ErrProjectRepositoryNotInitialized),
 			expected: nil,
 			service: NewGetProjectService(
 				nil,
@@ -150,7 +152,7 @@ func TestGetProjectsList(t *testing.T) {
 		{
 			desc: "Testing error getting a project list on the GetProjectService having an error on find project into the repository",
 			err: domainerror.NewProjectNotFoundError(
-				fmt.Errorf("%s: %s", ErrFindingProject.Error(), errors.New("error finding project")),
+				fmt.Errorf("%s: %s", ErrFindingProject, errors.New("error finding project")),
 			),
 			expected: nil,
 			service: &GetProjectService{
