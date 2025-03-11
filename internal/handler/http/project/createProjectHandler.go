@@ -2,10 +2,12 @@ package project
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"mime/multipart"
 	"net/http"
 
+	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
 	"github.com/apenella/ransidble/internal/domain/core/model/request"
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
@@ -18,15 +20,6 @@ const (
 	RequestFormProjectMetadataFieldName = "metadata"
 	// RequestFormProjectFileFieldeName represents the form field name for the project file
 	RequestFormProjectFileFieldeName = "file"
-
-	// ErrReadingFormProjectMetadataField represents an error when the form field for the project metadata can not be read
-	ErrReadingFormProjectMetadataField = "error reading project metadata field"
-	// ErrReadingFormProjectFileField represents an error when the form field for the project file can not be read
-	ErrReadingFormProjectFileField = "error reading project file field"
-	// ErrInvalidRequestMetadata represents an error when the request metadata is invalid
-	ErrInvalidRequestMetadata = "invalid request metadata"
-	// ErrCreatingProject represents an error when the project can not be created
-	ErrCreatingProject = "error creating project"
 )
 
 // CreateProjectHandler handles the request to create a new project
@@ -50,6 +43,8 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	var requestParameters request.ProjectParameters
 	var errorResponse *response.ProjectErrorResponse
 	var projectFieldHeader *multipart.FileHeader
+
+	var projectAlreadyExists *domainerror.ProjectAlreadyExistsError
 
 	metadata := c.FormValue(RequestFormProjectMetadataFieldName)
 	err = json.Unmarshal([]byte(metadata), &requestParameters)
@@ -99,6 +94,13 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 
 	err = h.service.Create(requestParameters.Format, requestParameters.Storage, projectFieldHeader)
 	if err != nil {
+
+		httpStatus := http.StatusInternalServerError
+
+		if errors.As(err, &projectAlreadyExists) {
+			httpStatus = http.StatusConflict
+		}
+
 		errorMsg = fmt.Sprintf("%s: %s", ErrCreatingProject, err.Error())
 		errorResponse = &response.ProjectErrorResponse{
 			Error: errorMsg,
@@ -109,7 +111,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 				"component": "CreateProjectHandler.Handle",
 				"package":   "github.com/apenella/ransidble/internal/handler/http/project",
 			})
-		return c.JSON(http.StatusInternalServerError, errorResponse)
+		return c.JSON(httpStatus, errorResponse)
 	}
 
 	// projectSourceFile, err = projectFieldHeader.Open()
