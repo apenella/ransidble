@@ -32,6 +32,8 @@ const (
 	ErrStoragePathNotDirectory = "storage path not a directory"
 	// ErrCheckingStoragePathIsDirectory represents the error when the storage path is not a directory
 	ErrCheckingStoragePathIsDirectory = "error checking storage path is a directory"
+	// ErrInitializingLocalStorage represents the error when the local storage cannot be initialized
+	ErrInitializingLocalStorage = "error initializing local storage"
 )
 
 // LocalStorage represents a repository on local storage
@@ -51,6 +53,55 @@ func NewLocalStorage(fs afero.Fs, path string, logger repository.Logger) *LocalS
 		path:   path,
 		logger: logger,
 	}
+}
+
+// Initialize method initializes the local storage
+func (s *LocalStorage) Initialize() error {
+
+	if s.fs == nil {
+		s.logger.Error(
+			ErrStorageHandlerNotInitialized,
+			map[string]interface{}{
+				"component": "LocalStorage.Initialize",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/store",
+			})
+		return fmt.Errorf(ErrStorageHandlerNotInitialized)
+	}
+
+	if s.path == "" {
+		s.logger.Error(
+			ErrStoragePathNotProvided,
+			map[string]interface{}{
+				"component": "LocalStorage.Initialize",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/store",
+			})
+		return fmt.Errorf(ErrStoragePathNotProvided)
+	}
+
+	_, err := s.fs.Stat(s.path)
+	if err != nil {
+		s.logger.Info(
+			"Creating storage path",
+			map[string]interface{}{
+				"component": "LocalStorage.Initialize",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/store",
+				"path":      s.path,
+			})
+
+		err = s.fs.MkdirAll(s.path, 0755)
+		if err != nil {
+			s.logger.Error(
+				fmt.Sprintf("%s: %s", ErrInitializingLocalStorage, err.Error()),
+				map[string]interface{}{
+					"component": "LocalStorage.Initialize",
+					"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/store",
+					"path":      s.path,
+				})
+			return fmt.Errorf("%s: %w", ErrInitializingLocalStorage, err)
+		}
+	}
+
+	return nil
 }
 
 // Store method copies the project from working directory to local storage

@@ -12,7 +12,95 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStore(t *testing.T) {
+func TestLocalStorage_Initialize(t *testing.T) {
+
+	sourceBase := filepath.Join("fixtures", "persistence-project-store")
+	fs := afero.NewCopyOnWriteFs(
+		afero.NewReadOnlyFs(
+			afero.NewBasePathFs(afero.NewOsFs(), "../../../../../test"),
+		),
+		afero.NewMemMapFs(),
+	)
+
+	tests := []struct {
+		desc        string
+		storage     *LocalStorage
+		arrangeFunc func(*testing.T, *LocalStorage)
+		assertFunc  func(*testing.T, *LocalStorage)
+		err         error
+	}{
+		{
+			desc: "Testing initialize local storage when path already exists",
+			storage: NewLocalStorage(
+				fs,
+				sourceBase,
+				logger.NewFakeLogger(),
+			),
+			assertFunc: func(t *testing.T, storage *LocalStorage) {
+				_, err := storage.fs.Stat(sourceBase)
+				assert.Nil(t, err, fmt.Sprintf("error checking file %s", sourceBase))
+			},
+			err: nil,
+		},
+		{
+			desc: "Testing initialize local storage when path does not exists",
+			storage: NewLocalStorage(
+				fs,
+				filepath.Join(sourceBase, "storage"),
+				logger.NewFakeLogger(),
+			),
+			assertFunc: func(t *testing.T, storage *LocalStorage) {
+				_, err := storage.fs.Stat(filepath.Join(sourceBase, "storage"))
+				assert.Nil(t, err)
+			},
+			err: nil,
+		},
+		{
+			desc: "Testing error initializing local storage when filesystem is not initialized",
+			storage: NewLocalStorage(
+				nil,
+				sourceBase,
+				logger.NewFakeLogger(),
+			),
+			assertFunc: func(t *testing.T, storage *LocalStorage) {},
+			err:        fmt.Errorf(ErrStorageHandlerNotInitialized),
+		},
+		{
+			desc: "Testing error initializing local storage when path is not provided",
+			storage: NewLocalStorage(
+				fs,
+				"",
+				logger.NewFakeLogger(),
+			),
+			assertFunc: func(t *testing.T, storage *LocalStorage) {},
+			err:        fmt.Errorf(ErrStoragePathNotProvided),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			if test.arrangeFunc != nil {
+				test.arrangeFunc(t, test.storage)
+			}
+
+			err := test.storage.Initialize()
+			if err != nil && test.err != nil {
+				assert.Equal(t, test.err.Error(), err.Error())
+			} else {
+				assert.Nil(t, err)
+				assert.Nil(t, test.err)
+
+				if test.assertFunc != nil {
+					test.assertFunc(t, test.storage)
+				}
+			}
+		})
+	}
+}
+
+func TestLocalStorage_Store(t *testing.T) {
 
 	sourceBase := filepath.Join("fixtures", "persistence-project-store")
 	sourceProjectFile := "project-1.tar.gz"
@@ -169,7 +257,6 @@ func TestStore(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			t.Log(test.desc)
 
 			if test.arrangeFunc != nil {
 				test.arrangeFunc(t, test.storage)

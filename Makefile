@@ -65,7 +65,18 @@ serve: ## Start the server
 	@echo
 	@echo " Starting the server"
 	@echo
-	@RANSIDBLE_SERVER_LOG_LEVEL=debug RANSIDBLE_SERVER_WORKER_POOL_SIZE=1 RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH=test/storage go run cmd/main.go serve
+	@docker run --rm --volume "${PWD}":/app \
+		--name ransidble-server \
+		--tty \
+		--interactive \
+		--env RANSIDBLE_SERVER_LOG_LEVEL=debug \
+		--env RANSIDBLE_SERVER_WORKER_POOL_SIZE=1 \
+		--env RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH=/storage \
+		--publish 8080:8080 \
+		--workdir /app \
+		golang:${GOLANG_VERSION}-alpine \
+		go run cmd/main.go serve
+# @RANSIDBLE_SERVER_LOG_LEVEL=debug RANSIDBLE_SERVER_WORKER_POOL_SIZE=1 RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH=test/storage go run cmd/main.go serve
 
 run-task-1: ## Make a request to create an ansible-playbook task
 	@echo

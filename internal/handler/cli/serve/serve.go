@@ -66,21 +66,33 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 				config.Server.Project.LocalStoragePath,
 				log,
 			)
-
-			errLoadProjects := projectsRepository.LoadProjects()
-			if errLoadProjects != nil {
-				errMsg := fmt.Sprintf("%s: %s", ErrLoadProjects, errLoadProjects)
-
+			err = projectsRepository.Initialize()
+			if err != nil {
 				log.Error(
-					errMsg,
+					err.Error(),
 					map[string]interface{}{
 						"component": "Serve",
 						"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
 					})
-
-				err = fmt.Errorf("%s", errMsg)
 				return
 			}
+
+			// Commented because it must be handled from an specific use case
+			//
+			// errLoadProjects := projectsRepository.LoadProjects()
+			// if errLoadProjects != nil {
+			// 	errMsg := fmt.Sprintf("%s: %s", ErrLoadProjects, errLoadProjects)
+
+			// 	log.Error(
+			// 		errMsg,
+			// 		map[string]interface{}{
+			// 			"component": "Serve",
+			// 			"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+			// 		})
+
+			// 	err = fmt.Errorf("%s", errMsg)
+			// 	return
+			// }
 
 			fetchFactory := fetch.NewFactory()
 			fetchFactory.Register(
@@ -142,6 +154,16 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 				config.Server.Project.LocalStoragePath,
 				log,
 			)
+			err = localStorageStore.Initialize()
+			if err != nil {
+				log.Error(
+					err.Error(),
+					map[string]interface{}{
+						"component": "Serve",
+						"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+					})
+				return err
+			}
 			storeFactory.Register(entity.ProjectTypeLocal, localStorageStore)
 			createProjectService := projectService.NewCreateProjectService(
 				projectsRepository,
