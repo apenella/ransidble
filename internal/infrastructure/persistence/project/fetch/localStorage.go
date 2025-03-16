@@ -2,6 +2,7 @@ package fetch
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
@@ -14,12 +15,15 @@ type LocalStorage struct {
 	fs afero.Fs
 	// logger is the logger
 	logger repository.Logger
+	// path where projects are stored
+	path string
 }
 
 // NewLocalStorage creates a new local project repository
-func NewLocalStorage(fs afero.Fs, logger repository.Logger) *LocalStorage {
+func NewLocalStorage(fs afero.Fs, path string, logger repository.Logger) *LocalStorage {
 	return &LocalStorage{
 		fs:     fs,
+		path:   path,
 		logger: logger,
 	}
 }
@@ -88,16 +92,17 @@ func (s *LocalStorage) Fetch(project *entity.Project, workingDir string) (err er
 		return ErrProjectReferenceNotProvided
 	}
 
-	infoProjectReference, err := s.fs.Stat(project.Reference)
+	souceCodeStorageLocation := filepath.Join(s.path, project.Reference)
+	infoProjectReference, err := s.fs.Stat(souceCodeStorageLocation)
 	if err != nil {
 		s.logger.Error(
-			fmt.Sprintf("%s: %s", ErrInvalidProjectReference, err),
+			fmt.Sprintf("%s: %s", ErrSourceCodeNotExists, err),
 			err.Error(),
 			map[string]interface{}{
 				"component": "LocalStorage.Fetch",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch",
 			})
-		return fmt.Errorf("%s: %w", ErrInvalidProjectReference, err)
+		return fmt.Errorf("%s: %w", ErrSourceCodeNotExists, err)
 	}
 
 	if infoProjectReference.IsDir() {
@@ -113,7 +118,7 @@ func (s *LocalStorage) Fetch(project *entity.Project, workingDir string) (err er
 		"working_dir": workingDir,
 	})
 
-	err = sourceCodeFetcher.Fetch(project.Reference, workingDir)
+	err = sourceCodeFetcher.Fetch(souceCodeStorageLocation, workingDir)
 	if err != nil {
 		s.logger.Error(
 			fmt.Sprintf("%s: %s", ErrFetchingProjectFromLocalStorage, err),

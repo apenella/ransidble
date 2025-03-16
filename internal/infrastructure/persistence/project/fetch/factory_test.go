@@ -13,7 +13,7 @@ func TestFetchFactory(t *testing.T) {
 
 	factory = NewFactory()
 
-	fetcher = NewLocalStorage(nil, nil)
+	fetcher = NewLocalStorage(nil, "", nil)
 	factory.Register("fetcher", fetcher)
 
 	t.Run("Get fetcher", func(t *testing.T) {

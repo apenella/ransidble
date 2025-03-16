@@ -4,7 +4,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
@@ -34,7 +33,7 @@ func (a *TarGzipFormat) Unpack(project *entity.Project, workingDir string) error
 	var gzipReader *gzip.Reader
 	var sourceCodeFileReader io.Reader
 	var sourceCodeFile string
-	var sourceFileInfo os.FileInfo
+	// var sourceFileInfo os.FileInfo
 
 	if project == nil {
 		a.logger.Error(ErrProjectNotProvided.Error(),
@@ -81,19 +80,7 @@ func (a *TarGzipFormat) Unpack(project *entity.Project, workingDir string) error
 		return ErrProjectReferenceNotProvided
 	}
 
-	// It should be received instead of being figured out here
-	sourceFileInfo, err = a.fs.Stat(project.Reference)
-	if err != nil {
-		a.logger.Error(
-			fmt.Sprintf("%s: %s", ErrDescribingProjectReferenece, err),
-			map[string]interface{}{
-				"component": "TarGzipFormat.Unpack",
-				"package":   "github.com/apenella/ransidble/internal/infrastructure/archive",
-			})
-		return fmt.Errorf("%s: %w", ErrDescribingProjectReferenece, err)
-	}
-
-	sourceCodeFile = filepath.Join(workingDir, sourceFileInfo.Name())
+	sourceCodeFile = filepath.Join(workingDir, project.Reference)
 	_, err = a.fs.Stat(sourceCodeFile)
 	if err != nil {
 		// error if the file does not exists

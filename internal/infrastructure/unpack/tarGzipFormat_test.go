@@ -18,7 +18,7 @@ func TestTarGzipFormatUnpack(t *testing.T) {
 
 	sourceBase := filepath.Join("fixtures", "unpack", "project-targz")
 	workingDir := sourceBase
-	sourceProjectTargz := filepath.Join(sourceBase, "project.tar.gz")
+	sourceProjectTargz := "project.tar.gz"
 	sourceFile := filepath.Join("site.yml")
 
 	fs := afero.NewCopyOnWriteFs(
@@ -104,20 +104,6 @@ func TestTarGzipFormatUnpack(t *testing.T) {
 			},
 			workingDir:  workingDir,
 			err:         ErrProjectReferenceNotProvided,
-			arrangeFunc: func(t *testing.T, unpack *TarGzipFormat) {},
-			assertFunc:  func(t *testing.T, unpack *TarGzipFormat) {},
-		},
-		{
-			desc:   "Testing error unpacking project in tar.gz format when project reference does not exists",
-			unpack: NewTarGzipFormat(fs, NewMockTarExtractor(), logger.NewFakeLogger()),
-			project: &entity.Project{
-				Name:      "project-targz",
-				Format:    "targz",
-				Reference: "not-exists",
-				Storage:   "local",
-			},
-			workingDir:  workingDir,
-			err:         fmt.Errorf("%s: %w", ErrDescribingProjectReferenece, errors.New("stat ../../../test/not-exists: no such file or directory")),
 			arrangeFunc: func(t *testing.T, unpack *TarGzipFormat) {},
 			assertFunc:  func(t *testing.T, unpack *TarGzipFormat) {},
 		},

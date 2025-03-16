@@ -99,6 +99,7 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 				entity.ProjectTypeLocal,
 				fetch.NewLocalStorage(
 					afs,
+					config.Server.Project.LocalStoragePath,
 					log,
 				),
 			)

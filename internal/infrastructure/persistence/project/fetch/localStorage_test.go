@@ -16,8 +16,9 @@ import (
 
 func TestFetch(t *testing.T) {
 
-	sourceBase := filepath.Join("fixtures", "persistence-project-fetch")
+	// sourceBase := filepath.Join("fixtures", "persistence-project-fetch")
 	workingDir := filepath.Join("working-dir")
+	souceCodeStorageLocation := filepath.Join("fixtures", "persistence-project-fetch")
 
 	project1Name := "project-1"
 	project2Name := "project-2"
@@ -27,6 +28,10 @@ func TestFetch(t *testing.T) {
 	project2ExpectedFile := filepath.Join(workingDir, project2File)
 	sourceProject1 := filepath.Join(project1Name)
 	sourceProject2 := filepath.Join(project2File)
+
+	_ = project2File
+	_ = sourceProject2
+	_ = project2ExpectedFile
 
 	fs := afero.NewCopyOnWriteFs(
 		afero.NewReadOnlyFs(
@@ -46,10 +51,10 @@ func TestFetch(t *testing.T) {
 	}{
 		{
 			desc:    "Testing fetch a project in plain format from local storage",
-			storage: NewLocalStorage(fs, logger.NewFakeLogger()),
+			storage: NewLocalStorage(fs, souceCodeStorageLocation, logger.NewFakeLogger()),
 			project: &entity.Project{
 				Name:      project1Name,
-				Reference: filepath.Join(sourceBase, sourceProject1),
+				Reference: sourceProject1,
 				Format:    "plain",
 				Storage:   "local",
 			},
@@ -65,10 +70,10 @@ func TestFetch(t *testing.T) {
 		},
 		{
 			desc:    "Testing fetch a project in tar.gz format from local storage",
-			storage: NewLocalStorage(fs, logger.NewFakeLogger()),
+			storage: NewLocalStorage(fs, souceCodeStorageLocation, logger.NewFakeLogger()),
 			project: &entity.Project{
 				Name:      project2Name,
-				Reference: filepath.Join(sourceBase, sourceProject2),
+				Reference: sourceProject2,
 				Format:    "targz",
 				Storage:   "local",
 			},
@@ -84,17 +89,17 @@ func TestFetch(t *testing.T) {
 		},
 		{
 			desc:       "Testing error fetching a project from local storage when project is not provided",
-			storage:    NewLocalStorage(fs, logger.NewFakeLogger()),
+			storage:    NewLocalStorage(fs, souceCodeStorageLocation, logger.NewFakeLogger()),
 			project:    nil,
 			workingDir: workingDir,
 			err:        ErrProjectNotProvided,
 		},
 		{
 			desc:    "Testing error fetching a project from local storage when working directory is not provided",
-			storage: NewLocalStorage(fs, logger.NewFakeLogger()),
+			storage: NewLocalStorage(fs, souceCodeStorageLocation, logger.NewFakeLogger()),
 			project: &entity.Project{
 				Name:      project1Name,
-				Reference: filepath.Join(sourceBase, sourceProject1),
+				Reference: sourceProject1,
 				Format:    "plain",
 				Storage:   "local",
 			},
@@ -109,7 +114,7 @@ func TestFetch(t *testing.T) {
 			},
 			project: &entity.Project{
 				Name:      project1Name,
-				Reference: filepath.Join(sourceBase, sourceProject1),
+				Reference: sourceProject1,
 				Format:    "plain",
 				Storage:   "local",
 			},
@@ -118,10 +123,10 @@ func TestFetch(t *testing.T) {
 		},
 		{
 			desc:    "Testing error fetching a project from local storage when working directory does not exists",
-			storage: NewLocalStorage(fs, logger.NewFakeLogger()),
+			storage: NewLocalStorage(fs, souceCodeStorageLocation, logger.NewFakeLogger()),
 			project: &entity.Project{
 				Name:      project1Name,
-				Reference: filepath.Join(sourceBase, sourceProject1),
+				Reference: sourceProject1,
 				Format:    "plain",
 				Storage:   "local",
 			},
@@ -130,7 +135,7 @@ func TestFetch(t *testing.T) {
 		},
 		{
 			desc:    "Testing error fetching a project from local storage when project reference is not provided",
-			storage: NewLocalStorage(fs, logger.NewFakeLogger()),
+			storage: NewLocalStorage(fs, souceCodeStorageLocation, logger.NewFakeLogger()),
 			project: &entity.Project{
 				Name:      project1Name,
 				Reference: "",
@@ -141,8 +146,8 @@ func TestFetch(t *testing.T) {
 			err:        ErrProjectReferenceNotProvided,
 		},
 		{
-			desc:    "Testing error fetching a project from local storage when project reference is invalid",
-			storage: NewLocalStorage(fs, logger.NewFakeLogger()),
+			desc:    "Testing error fetching a project from local storage when project source code does not exists",
+			storage: NewLocalStorage(fs, souceCodeStorageLocation, logger.NewFakeLogger()),
 			project: &entity.Project{
 				Name:      project1Name,
 				Reference: "not-exists",
@@ -150,13 +155,13 @@ func TestFetch(t *testing.T) {
 				Storage:   "local",
 			},
 			workingDir: workingDir,
-			err:        fmt.Errorf("%s: %w", ErrInvalidProjectReference, errors.New("stat ../../../../../test/not-exists: no such file or directory")),
+			err:        fmt.Errorf("%s: %w", ErrSourceCodeNotExists, errors.New("stat ../../../../../test/fixtures/persistence-project-fetch/not-exists: no such file or directory")),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+			//t.Parallel()
 			t.Log(test.desc)
 
 			if test.arrangeFunc != nil {
@@ -164,10 +169,11 @@ func TestFetch(t *testing.T) {
 			}
 
 			err := test.storage.Fetch(test.project, test.workingDir)
-			if err != nil {
+			if err != nil && test.err != nil {
 				assert.Equal(t, test.err.Error(), err.Error())
 			} else {
-				assert.Nil(t, test.err)
+				assert.Nil(t, err, "Error was not expected")
+				assert.Nil(t, test.err, "You defined an error but it was not raised")
 
 				if test.assertFunc != nil {
 					test.assertFunc(t, test.storage)

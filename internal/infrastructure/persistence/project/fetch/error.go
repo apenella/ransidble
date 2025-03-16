@@ -18,7 +18,7 @@ var (
 	// ErrGettingSourceCodeRelativePathFromLocalDir represents an error getting the relative path of the source code
 	ErrGettingSourceCodeRelativePathFromLocalDir = errors.New("An error occurred getting the relative path of the source code")
 	// ErrInvalidProjectReference represents an error when the project reference is invalid
-	ErrInvalidProjectReference = errors.New("invalid project reference")
+	//ErrInvalidProjectReference = errors.New("invalid project reference")
 	// ErrOpeningASourceCodeFileFromLocalDir represents an error opening a source code file
 	ErrOpeningASourceCodeFileFromLocalDir = errors.New("An error occurred opening a source code file")
 	// ErrProjectNotProvided represents an error when the project is not provided

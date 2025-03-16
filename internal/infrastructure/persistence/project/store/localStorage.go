@@ -212,14 +212,14 @@ func (s *LocalStorage) Store(project *entity.Project, srcFile io.Reader) (err er
 		err = dstFile.Close()
 	}()
 
-	err = afero.WriteReader(s.fs, project.Reference, srcFile)
+	err = afero.WriteReader(s.fs, destFilePath, srcFile)
 	if err != nil {
 		s.logger.Error(
 			ErrStoringProjectInLocalStorage,
 			map[string]interface{}{
-				"component": "LocalStorage.Store",
-				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/store",
-				"reference": project.Reference,
+				"component":   "LocalStorage.Store",
+				"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/store",
+				"destination": destFilePath,
 			})
 		return fmt.Errorf(ErrStoringProjectInLocalStorage)
 	}
