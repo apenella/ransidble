@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	nethttp "net/http"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -106,7 +107,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 
 				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
 					afs,
-					"../projects",
+					filepath.Join("..", "fixtures", "functional-get-project"),
 					log,
 				)
 
@@ -121,7 +122,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
 				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
 			},
-			expectedBody:       "{\"format\":\"plain\",\"name\":\"project-1\",\"reference\":\"../projects/project-1\",\"storage\":\"local\"}",
+			expectedBody:       "{\"format\":\"plain\",\"name\":\"project-1\",\"reference\":\"../fixtures/functional-get-project/project-1\",\"storage\":\"local\"}",
 			expectedStatusCode: nethttp.StatusOK,
 		},
 		{
@@ -134,7 +135,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 
 				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
 					afs,
-					"../projects",
+					filepath.Join("..", "fixtures", "functional-get-project"),
 					log,
 				)
 
@@ -162,7 +163,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 
 				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
 					afs,
-					"../projects",
+					filepath.Join("..", "fixtures", "functional-get-project"),
 					log,
 				)
 
@@ -196,7 +197,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 
 				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
 					afs,
-					"../projects",
+					filepath.Join("..", "fixtures", "functional-get-project"),
 					log,
 				)
 

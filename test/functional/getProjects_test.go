@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	nethttp "net/http"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -103,7 +104,7 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 
 				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
 					afs,
-					"../projects",
+					filepath.Join("..", "fixtures", "functional-get-projects"),
 					log,
 				)
 
@@ -130,7 +131,7 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 
 				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
 					afs,
-					"../projects",
+					filepath.Join("..", "fixtures", "functional-get-projects"),
 					log,
 				)
 

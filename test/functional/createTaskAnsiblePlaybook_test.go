@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	nethttp "net/http"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -161,68 +162,68 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) TestCreateTaskAnsiblePlaybook() {
 			method: "POST",
 			url:    "http://" + suite.listenAddress + "/tasks/ansible-playbook/project-1",
 			parameters: io.NopCloser(strings.NewReader(`
-{
-  "playbooks": ["playbook1.yml", "playbook2.yml"],
-  "check": true,
-  "diff": true,
-  "requirements": {
-    "roles": {
-      "roles": ["role1", "role2"],
-      "api_key": "your_api_key",
-      "ignore_errors": true,
-      "no_deps": true,
-      "role_file": "roles/requirements.yml",
-      "server": "https://galaxy.ansible.com",
-      "timeout": 60,
-      "token": "your_token",
-      "verbose": true
-    },
-    "collections": {
-      "collections": ["collection1", "collection2"],
-      "api_key": "your_api_key",
-      "force_with_deps": true,
-      "pre": true,
-      "timeout": 70,
-      "token": "your_token",
-      "ignore_errors": true,
-      "requirements_file": "collections/requirements.yml",
-      "server": "https://galaxy.ansible.com",
-      "verbose": true
-    }
-  },
-  "extra_vars": {
-    "var1": "value1",
-    "var2": "value2"
-  },
-  "extra_vars_file": ["extra_vars1.yml", "extra_vars2.yml"],
-  "flush_cache": true,
-  "force_handlers": true,
-  "forks": 10,
-  "inventory": "inventory/hosts",
-  "limit": "all",
-  "list_hosts": true,
-  "list_tags": true,
-  "list_tasks": true,
-  "skip_tags": "tag1,tag2",
-  "start_at_task": "task1",
-  "syntax_check": true,
-  "tags": "tag1,tag2",
-  "vault_id": "vault_id",
-  "vault_password_file": "vault_password_file",
-  "verbose": true,
-  "version": true,
-  "connection": "ssh",
-  "scp_extra_args": "scp_extra_args",
-  "sftp_extra_args": "sftp_extra_args",
-  "ssh_common_args": "ssh_common_args",
-  "ssh_extra_args": "ssh_extra_args",
-  "timeout": 30,
-  "user": "ansible",
-  "become": true,
-  "become_method": "sudo",
-  "become_user": "root"
-}
-`)),
+		{
+		  "playbooks": ["playbook1.yml", "playbook2.yml"],
+		  "check": true,
+		  "diff": true,
+		  "requirements": {
+		    "roles": {
+		      "roles": ["role1", "role2"],
+		      "api_key": "your_api_key",
+		      "ignore_errors": true,
+		      "no_deps": true,
+		      "role_file": "roles/requirements.yml",
+		      "server": "https://galaxy.ansible.com",
+		      "timeout": 60,
+		      "token": "your_token",
+		      "verbose": true
+		    },
+		    "collections": {
+		      "collections": ["collection1", "collection2"],
+		      "api_key": "your_api_key",
+		      "force_with_deps": true,
+		      "pre": true,
+		      "timeout": 70,
+		      "token": "your_token",
+		      "ignore_errors": true,
+		      "requirements_file": "collections/requirements.yml",
+		      "server": "https://galaxy.ansible.com",
+		      "verbose": true
+		    }
+		  },
+		  "extra_vars": {
+		    "var1": "value1",
+		    "var2": "value2"
+		  },
+		  "extra_vars_file": ["extra_vars1.yml", "extra_vars2.yml"],
+		  "flush_cache": true,
+		  "force_handlers": true,
+		  "forks": 10,
+		  "inventory": "inventory/hosts",
+		  "limit": "all",
+		  "list_hosts": true,
+		  "list_tags": true,
+		  "list_tasks": true,
+		  "skip_tags": "tag1,tag2",
+		  "start_at_task": "task1",
+		  "syntax_check": true,
+		  "tags": "tag1,tag2",
+		  "vault_id": "vault_id",
+		  "vault_password_file": "vault_password_file",
+		  "verbose": true,
+		  "version": true,
+		  "connection": "ssh",
+		  "scp_extra_args": "scp_extra_args",
+		  "sftp_extra_args": "sftp_extra_args",
+		  "ssh_common_args": "ssh_common_args",
+		  "ssh_extra_args": "ssh_extra_args",
+		  "timeout": 30,
+		  "user": "ansible",
+		  "become": true,
+		  "become_method": "sudo",
+		  "become_user": "root"
+		}
+		`)),
 			arrangeTest: func(suite *SuiteCreateTaskAnsiblePlaybook) (*executor.Dispatch, error) {
 				// ansibleExecutorMock is a mock dependency to avoid executing the playbook on every test
 				ansibleExecutor := executor.NewMockAnsiblePlaybookExecutor()
@@ -355,7 +356,14 @@ func (suite *SuiteCreateTaskAnsiblePlaybook) TestCreateTaskAnsiblePlaybook() {
 			assert.NoError(suite.T(), err)
 
 			go func() {
+
+				defer func() {
+					if r := recover(); r != nil {
+						suite.T().Errorf("Recovered from panic: %v", r)
+					}
+				}()
 				err := dispatcher.Start(context.TODO())
+
 				assert.NoError(suite.T(), err)
 			}()
 		}
@@ -391,7 +399,7 @@ func arrangeTaskAnsiblePlaybookRouter(router *echo.Echo, ansibleExecutor executo
 
 	projectsRepository := localprojectpersistence.NewLocalProjectRepository(
 		rwFs,
-		"../projects",
+		filepath.Join("..", "fixtures", "functional-create-task ansible-playbook"),
 		log,
 	)
 
@@ -405,6 +413,7 @@ func arrangeTaskAnsiblePlaybookRouter(router *echo.Echo, ansibleExecutor executo
 		entity.ProjectTypeLocal,
 		fetch.NewLocalStorage(
 			rwFs,
+			filepath.Join("..", "fixtures", "functional-create-task ansible-playbook"),
 			log,
 		),
 	)
