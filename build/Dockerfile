@@ -13,7 +13,7 @@ COPY . .
 
 RUN go build -ldflags "-s -w" -v -o /app/main ./cmd/main.go
 
-FROM debian:bullseye-slim
+FROM gcr.io/distroless/static-debian12
 
 COPY --from=build /app/main /main
 

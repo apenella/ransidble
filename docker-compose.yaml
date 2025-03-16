@@ -29,3 +29,14 @@ services:
       - tail
       - -f
       - /dev/null
+
+  ransidble-server:
+    build:
+      context: .
+      dockerfile: build/Dockerfile.ansible
+    volumes:
+      - .:/usr/src/app
+    command:
+      - tail
+      - -f
+      - /dev/null
