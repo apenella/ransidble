@@ -1,7 +1,7 @@
 package service
 
 import (
-	"mime/multipart"
+	"io"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -17,7 +17,8 @@ func NewMockCreateProjectService() *MockCreateProjectService {
 }
 
 // Create method to create a project
-func (m *MockCreateProjectService) Create(format string, storage string, file *multipart.FileHeader) error {
+// func (m *MockCreateProjectService) Create(format string, storage string, file *multipart.FileHeader) error {
+func (m *MockCreateProjectService) Create(format string, storage string, filename string, file io.Reader) error {
 	args := m.Called(format, storage, file)
 	return args.Error(0)
 }

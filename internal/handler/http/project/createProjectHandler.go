@@ -42,7 +42,8 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	var errorMsg string
 	var requestParameters request.ProjectParameters
 	var errorResponse *response.ProjectErrorResponse
-	var projectFieldHeader *multipart.FileHeader
+	var projectFileHeader *multipart.FileHeader
+	var projectReceivedFile multipart.File
 
 	var projectAlreadyExists *domainerror.ProjectAlreadyExistsError
 
@@ -77,7 +78,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
-	projectFieldHeader, err = c.FormFile(RequestFormProjectFileFieldeName)
+	projectFileHeader, err = c.FormFile(RequestFormProjectFileFieldeName)
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrReadingFormProjectFileField, err.Error())
 		errorResponse = &response.ProjectErrorResponse{
@@ -92,7 +93,12 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
-	err = h.service.Create(requestParameters.Format, requestParameters.Storage, projectFieldHeader)
+	projectReceivedFile, err = projectFileHeader.Open()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("error opening file: %s", err.Error()))
+	}
+
+	err = h.service.Create(requestParameters.Format, requestParameters.Storage, projectFileHeader.Filename, projectReceivedFile)
 	if err != nil {
 
 		httpStatus := http.StatusInternalServerError
@@ -114,7 +120,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 		return c.JSON(httpStatus, errorResponse)
 	}
 
-	// projectSourceFile, err = projectFieldHeader.Open()
+	// projectSourceFile, err = projectFileHeader.Open()
 	// if err != nil {
 	// 	errorMsg = fmt.Sprintf("%s: %s", "error opening source file", err.Error())
 	// 	errorResponse = &response.ProjectErrorResponse{
@@ -125,7 +131,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	// 		map[string]interface{}{
 	// 			"component": "CreateProjectHandler.Handle",
 	// 			"package":   "github.com/apenella/ransidble/internal/handler/http/project",
-	// 			"file":      projectFieldHeader.Filename,
+	// 			"file":      projectFileHeader.Filename,
 	// 		})
 	// 	return c.JSON(http.StatusInternalServerError, errorResponse)
 	// }
@@ -142,7 +148,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	// 		map[string]interface{}{
 	// 			"component":   "CreateProjectHandler.Handle",
 	// 			"package":     "github.com/apenella/ransidble/internal/handler/http/project",
-	// 			"file":        projectFieldHeader.Filename,
+	// 			"file":        projectFileHeader.Filename,
 	// 			"destination": projectDestinationFile.Name(),
 	// 		})
 	// 	return c.JSON(http.StatusInternalServerError, errorResponse)
@@ -160,7 +166,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	// 		map[string]interface{}{
 	// 			"component":   "CreateProjectHandler.Handle",
 	// 			"package":     "github.com/apenella/ransidble/internal/handler/http/project",
-	// 			"file":        projectFieldHeader.Filename,
+	// 			"file":        projectFileHeader.Filename,
 	// 			"destination": projectDestinationFile.Name(),
 	// 		})
 	// 	return c.JSON(http.StatusInternalServerError, errorResponse)

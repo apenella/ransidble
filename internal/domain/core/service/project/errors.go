@@ -9,8 +9,6 @@ const (
 	ErrProjectAlreadyExists = "project already exists"
 	// ErrProjectFileExtensionNotSupported error message when file extension is not supported
 	ErrProjectFileExtensionNotSupported = "file extension not supported"
-	// ErrProjectFileNotProvided error message when file is not provided
-	ErrProjectFileNotProvided = "file not provided"
 	// ErrProjectFormatNotProvided error message when format is not provided
 	ErrProjectFormatNotProvided = "format not provided"
 	// ErrProjectFormatNotSupported error message when format is not supported
@@ -29,4 +27,8 @@ const (
 	ErrStorageHandlerNotInitialized = "storage handler not initialized"
 	// ErrStoringProject error message when storing project fails
 	ErrStoringProject = "storing project fails"
+	// ErrFileNameNotProvided error message when file name is not provided
+	ErrFileNameNotProvided = "file name not provided"
+	// ErrProjectContentReaderNotProvided error message when project content reader is not provided
+	ErrProjectContentReaderNotProvided = "project content reader not provided"
 )

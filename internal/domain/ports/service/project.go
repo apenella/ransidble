@@ -1,7 +1,7 @@
 package service
 
 import (
-	"mime/multipart"
+	"io"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 )
@@ -14,5 +14,6 @@ type GetProjectServicer interface {
 
 // CreateProjectServicer represents the service to create a project
 type CreateProjectServicer interface {
-	Create(format string, storage string, file *multipart.FileHeader) error
+	Create(format string, storage string, filename string, file io.Reader) error
+	// Create(format string, storage string, file *multipart.FileHeader) error
 }
