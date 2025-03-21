@@ -1,12 +1,16 @@
 package project
 
 const (
+	// ErrFileNameNotProvided error message when file name is not provided
+	ErrFileNameNotProvided = "file name not provided"
 	// ErrFindingProject error message when a project is not found
 	ErrFindingProject = "error finding project"
 	// ErrOpeningProjectFile error message when opening project file fails
 	ErrOpeningProjectFile = "opening project file fails"
 	// ErrProjectAlreadyExists error message when project already exists
 	ErrProjectAlreadyExists = "project already exists"
+	// ErrProjectContentReaderNotProvided error message when project content reader is not provided
+	ErrProjectContentReaderNotProvided = "project content reader not provided"
 	// ErrProjectFileExtensionNotSupported error message when file extension is not supported
 	ErrProjectFileExtensionNotSupported = "file extension not supported"
 	// ErrProjectFormatNotProvided error message when format is not provided
@@ -27,8 +31,4 @@ const (
 	ErrStorageHandlerNotInitialized = "storage handler not initialized"
 	// ErrStoringProject error message when storing project fails
 	ErrStoringProject = "storing project fails"
-	// ErrFileNameNotProvided error message when file name is not provided
-	ErrFileNameNotProvided = "file name not provided"
-	// ErrProjectContentReaderNotProvided error message when project content reader is not provided
-	ErrProjectContentReaderNotProvided = "project content reader not provided"
 )

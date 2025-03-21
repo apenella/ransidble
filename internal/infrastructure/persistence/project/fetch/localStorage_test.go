@@ -29,10 +29,6 @@ func TestFetch(t *testing.T) {
 	sourceProject1 := filepath.Join(project1Name)
 	sourceProject2 := filepath.Join(project2File)
 
-	_ = project2File
-	_ = sourceProject2
-	_ = project2ExpectedFile
-
 	fs := afero.NewCopyOnWriteFs(
 		afero.NewReadOnlyFs(
 			afero.NewBasePathFs(afero.NewOsFs(), "../../../../../test"),
@@ -161,7 +157,7 @@ func TestFetch(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			//t.Parallel()
+			// t.Parallel()
 			t.Log(test.desc)
 
 			if test.arrangeFunc != nil {
