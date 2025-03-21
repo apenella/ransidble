@@ -39,7 +39,7 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 		assertTestFunc     func(t *testing.T, rec *httptest.ResponseRecorder)
 	}{
 		{
-			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when project id not provided and is returning an StatusBadRequest",
+			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when project id not provided and is returning a StatusBadRequest",
 			handler: NewCreateTaskAnsiblePlaybookHandler(
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
@@ -61,7 +61,7 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			},
 		},
 		{
-			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when parameters binding fails and is returning an StatusInternalServerError",
+			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when parameters binding fails and is returning a StatusInternalServerError",
 			handler: NewCreateTaskAnsiblePlaybookHandler(
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
@@ -97,7 +97,7 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			},
 		},
 		{
-			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when request payload validation fails and is returning an StatusBadRequest",
+			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when request payload validation fails and is returning a StatusBadRequest",
 			handler: NewCreateTaskAnsiblePlaybookHandler(
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
@@ -123,7 +123,7 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			},
 		},
 		{
-			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when receiving and error from the GenerateID method and is returning an StatusInternalServerError",
+			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when receiving and error from the GenerateID method and is returning a StatusInternalServerError",
 			handler: NewCreateTaskAnsiblePlaybookHandler(
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
@@ -161,7 +161,7 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			},
 		},
 		{
-			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when receiving a ProjectNotFoundError error from the Run method and is returning an StatusNotFound",
+			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when receiving a ProjectNotFoundError error from the Run method and is returning a StatusNotFound",
 			handler: NewCreateTaskAnsiblePlaybookHandler(
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
@@ -206,9 +206,9 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 				assert.Equal(t, http.StatusNotFound, rec.Code)
 			},
 		},
-		// Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when receiving a ProjectNotProvidedError error from the Run method and is returning an StatusBadRequest
+		// Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when receiving a ProjectNotProvidedError error from the Run method and is returning a StatusBadRequest
 		{
-			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when receiving a ProjectNotProvidedError error from the Run method and is returning an StatusBadRequest",
+			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle responding with an error when receiving a ProjectNotProvidedError error from the Run method and is returning a StatusBadRequest",
 			handler: NewCreateTaskAnsiblePlaybookHandler(
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
@@ -250,7 +250,7 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			},
 		},
 		{
-			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle request success and is returning an StatusAccepted",
+			desc: "Testing CreateTaskAnsiblePlaybookHandler.Handle succeeded request and is returning a StatusAccepted",
 			handler: NewCreateTaskAnsiblePlaybookHandler(
 				service.NewMockAnsiblePlaybookService(),
 				logger.NewFakeLogger(),
