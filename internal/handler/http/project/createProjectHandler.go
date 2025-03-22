@@ -40,12 +40,24 @@ func NewCreateProjectHandler(service service.CreateProjectServicer, logger repos
 func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	var err error
 	var errorMsg string
-	var requestParameters request.ProjectParameters
 	var errorResponse *response.ProjectErrorResponse
+	var projectAlreadyExists *domainerror.ProjectAlreadyExistsError
 	var projectFileHeader *multipart.FileHeader
 	var projectReceivedFile multipart.File
+	var requestParameters request.ProjectParameters
 
-	var projectAlreadyExists *domainerror.ProjectAlreadyExistsError
+	if h.service == nil {
+		errorResponse = &response.ProjectErrorResponse{
+			Error: ErrCreateProjectServiceNotInitialized,
+		}
+		h.logger.Error(
+			errorMsg,
+			map[string]interface{}{
+				"component": "CreateProjectHandler.Handle",
+				"package":   "github.com/apenella/ransidble/internal/handler/http/project",
+			})
+		return c.JSON(http.StatusInternalServerError, errorResponse)
+	}
 
 	metadata := c.FormValue(RequestFormProjectMetadataFieldName)
 	err = json.Unmarshal([]byte(metadata), &requestParameters)
@@ -90,7 +102,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 				"component": "CreateProjectHandler.Handle",
 				"package":   "github.com/apenella/ransidble/internal/handler/http/project",
 			})
-		return c.JSON(http.StatusInternalServerError, errorResponse)
+		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
 	projectReceivedFile, err = projectFileHeader.Open()
@@ -120,59 +132,9 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 		return c.JSON(httpStatus, errorResponse)
 	}
 
-	// projectSourceFile, err = projectFileHeader.Open()
-	// if err != nil {
-	// 	errorMsg = fmt.Sprintf("%s: %s", "error opening source file", err.Error())
-	// 	errorResponse = &response.ProjectErrorResponse{
-	// 		Error: errorMsg,
-	// 	}
-	// 	h.logger.Error(
-	// 		errorMsg,
-	// 		map[string]interface{}{
-	// 			"component": "CreateProjectHandler.Handle",
-	// 			"package":   "github.com/apenella/ransidble/internal/handler/http/project",
-	// 			"file":      projectFileHeader.Filename,
-	// 		})
-	// 	return c.JSON(http.StatusInternalServerError, errorResponse)
-	// }
-	// defer projectSourceFile.Close()
+	// Pending to add the location header with the project location
 
-	// projectDestinationFile, err = os.OpenFile("tmpFile.tar.gz", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-	// if err != nil {
-	// 	errorMsg = fmt.Sprintf("%s: %s", "error opening destination file", err.Error())
-	// 	errorResponse = &response.ProjectErrorResponse{
-	// 		Error: errorMsg,
-	// 	}
-	// 	h.logger.Error(
-	// 		errorMsg,
-	// 		map[string]interface{}{
-	// 			"component":   "CreateProjectHandler.Handle",
-	// 			"package":     "github.com/apenella/ransidble/internal/handler/http/project",
-	// 			"file":        projectFileHeader.Filename,
-	// 			"destination": projectDestinationFile.Name(),
-	// 		})
-	// 	return c.JSON(http.StatusInternalServerError, errorResponse)
-	// }
-	// defer projectDestinationFile.Close()
-
-	// _, err = io.Copy(projectDestinationFile, projectSourceFile)
-	// if err != nil {
-	// 	errorMsg = fmt.Sprintf("%s: %s", "error copying source file to destination file", err.Error())
-	// 	errorResponse = &response.ProjectErrorResponse{
-	// 		Error: errorMsg,
-	// 	}
-	// 	h.logger.Error(
-	// 		errorMsg,
-	// 		map[string]interface{}{
-	// 			"component":   "CreateProjectHandler.Handle",
-	// 			"package":     "github.com/apenella/ransidble/internal/handler/http/project",
-	// 			"file":        projectFileHeader.Filename,
-	// 			"destination": projectDestinationFile.Name(),
-	// 		})
-	// 	return c.JSON(http.StatusInternalServerError, errorResponse)
-	// }
-
-	c.JSON(http.StatusOK, requestParameters)
+	c.JSON(http.StatusCreated, requestParameters)
 
 	return nil
 }

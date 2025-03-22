@@ -17,4 +17,6 @@ const (
 	ErrReadingFormProjectFileField = "error reading project file field"
 	// ErrReadingFormProjectMetadataField represents an error when the form field for the project metadata can not be read
 	ErrReadingFormProjectMetadataField = "error reading project metadata field"
+	// ErrCreateProjectServiceNotInitialized represents an error when the CreateProjectService is not initialized
+	ErrCreateProjectServiceNotInitialized = "create project service not initialized"
 )
