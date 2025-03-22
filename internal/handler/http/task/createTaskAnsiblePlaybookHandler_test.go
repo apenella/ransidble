@@ -69,6 +69,7 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
+				// The error for this test case is that the request payload is not provided with the proper MIME type so the binding will fail
 
 				requestParameters := &request.AnsiblePlaybookParameters{
 					Playbooks: []string{"playbook.yml"},
@@ -105,6 +106,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
+				// The error for this test case is forced when the request payload is not provided with the proper values
+
 				c := echo.New().NewContext(r, w)
 				c.SetParamNames("project_id")
 				c.SetParamValues("1")
@@ -131,6 +134,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
+				// The error for this test case is forced when the GenerateID method returns an error
+
 				requestParameters := &request.AnsiblePlaybookParameters{
 					Playbooks: []string{"playbook.yml"},
 					Inventory: "inventory.yml",
@@ -169,6 +174,7 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
+				// The error for this test case is forced when the Run method returns a ProjectNotFoundError error
 
 				requestParameters := &request.AnsiblePlaybookParameters{
 					Playbooks: []string{"playbook.yml"},
@@ -216,6 +222,7 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/tasks/ansible-playbook/1",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
+				// The error for this test case is forced when the Run method returns a ProjectNotProvidedError error
 
 				requestParameters := &request.AnsiblePlaybookParameters{
 					Playbooks: []string{"playbook.yml"},
