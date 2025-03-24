@@ -52,7 +52,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.TaskErrorResponse
 				expectedBody := &response.TaskErrorResponse{
-					Error: ErrProjectIDNotProvided,
+					Error:  ErrProjectIDNotProvided,
+					Status: http.StatusBadRequest,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -89,7 +90,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.TaskErrorResponse
 				expectedBody := &response.TaskErrorResponse{
-					Error: fmt.Sprintf("%s: %s", ErrBindingRequestPayload, "code=415, message=Unsupported Media Type"),
+					Error:  fmt.Sprintf("%s: %s", ErrBindingRequestPayload, "code=415, message=Unsupported Media Type"),
+					Status: http.StatusInternalServerError,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -117,7 +119,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 				var body *response.TaskErrorResponse
 				expectedBody := &response.TaskErrorResponse{
 					// This is a weak test because it depend on the error message returned by the validation
-					Error: fmt.Sprintf("%s: %s", ErrInvalidRequestPayload, "Key: 'AnsiblePlaybookParameters.Playbooks' Error:Field validation for 'Playbooks' failed on the 'required' tag\nKey: 'AnsiblePlaybookParameters.Inventory' Error:Field validation for 'Inventory' failed on the 'required' tag"),
+					Error:  fmt.Sprintf("%s: %s", ErrInvalidRequestPayload, "Key: 'AnsiblePlaybookParameters.Playbooks' Error:Field validation for 'Playbooks' failed on the 'required' tag\nKey: 'AnsiblePlaybookParameters.Inventory' Error:Field validation for 'Inventory' failed on the 'required' tag"),
+					Status: http.StatusBadRequest,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -157,7 +160,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.TaskErrorResponse
 				expectedBody := &response.TaskErrorResponse{
-					Error: ErrInvalidTaskID,
+					Error:  ErrInvalidTaskID,
+					Status: http.StatusInternalServerError,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -204,7 +208,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.TaskErrorResponse
 				expectedBody := &response.TaskErrorResponse{
-					Error: fmt.Sprintf("%s: %s", ErrRunningAnsiblePlaybook, "testing project not found"),
+					Error:  fmt.Sprintf("%s: %s", ErrRunningAnsiblePlaybook, "testing project not found"),
+					Status: http.StatusNotFound,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -248,7 +253,8 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.TaskErrorResponse
 				expectedBody := &response.TaskErrorResponse{
-					Error: fmt.Sprintf("%s: %s", ErrRunningAnsiblePlaybook, "testing project not provided"),
+					Error:  fmt.Sprintf("%s: %s", ErrRunningAnsiblePlaybook, "testing project not provided"),
+					Status: http.StatusBadRequest,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)

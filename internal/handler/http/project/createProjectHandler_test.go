@@ -56,7 +56,8 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: ErrCreateProjectServiceNotInitialized,
+					Error:  ErrCreateProjectServiceNotInitialized,
+					Status: http.StatusInternalServerError,
 				}
 
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
@@ -84,7 +85,8 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: fmt.Sprintf("%s: %s", ErrReadingFormProjectMetadataField, "unexpected end of JSON input"),
+					Error:  fmt.Sprintf("%s: %s", ErrReadingFormProjectMetadataField, "unexpected end of JSON input"),
+					Status: http.StatusInternalServerError,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -128,7 +130,8 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: fmt.Sprintf("%s: %s", ErrInvalidRequestMetadata, "Key: 'ProjectParameters.Format' Error:Field validation for 'Format' failed on the 'oneof' tag"),
+					Error:  fmt.Sprintf("%s: %s", ErrInvalidRequestMetadata, "Key: 'ProjectParameters.Format' Error:Field validation for 'Format' failed on the 'oneof' tag"),
+					Status: http.StatusBadRequest,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -172,7 +175,8 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: fmt.Sprintf("%s: %s", ErrInvalidRequestMetadata, "Key: 'ProjectParameters.Storage' Error:Field validation for 'Storage' failed on the 'oneof' tag"),
+					Error:  fmt.Sprintf("%s: %s", ErrInvalidRequestMetadata, "Key: 'ProjectParameters.Storage' Error:Field validation for 'Storage' failed on the 'oneof' tag"),
+					Status: http.StatusBadRequest,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -214,7 +218,8 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: fmt.Sprintf("%s: %s", ErrReadingFormProjectFileField, "http: no such file"),
+					Error:  fmt.Sprintf("%s: %s", ErrReadingFormProjectFileField, "http: no such file"),
+					Status: http.StatusBadRequest,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -273,7 +278,8 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: fmt.Sprintf("%s: %s", ErrCreatingProject, "error opening project file"),
+					Error:  fmt.Sprintf("%s: %s", ErrCreatingProject, "error opening project file"),
+					Status: http.StatusInternalServerError,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -334,7 +340,8 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: fmt.Sprintf("%s: %s", ErrCreatingProject, "project already exists"),
+					Error:  fmt.Sprintf("%s: %s", ErrCreatingProject, "project already exists"),
+					Status: http.StatusConflict,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -392,6 +399,14 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 				).Return(nil)
 			},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
+				var body *response.ProjectResponse
+				expectedBody := &response.ProjectResponse{
+					Format:  entity.ProjectFormatTarGz,
+					Storage: entity.ProjectTypeLocal,
+				}
+				err := json.Unmarshal(rec.Body.Bytes(), &body)
+				assert.NoError(t, err)
+				assert.Equal(t, expectedBody, body)
 				assert.Equal(t, http.StatusCreated, rec.Code)
 			},
 		},
@@ -411,10 +426,6 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			}
 
 			err := test.handler.Handle(context)
-			if err != nil {
-				t.Fatalf(">>>>> Error handling request: %s", err)
-			}
-
 			assert.NoError(t, err)
 			test.assertTestFunc(t, rec)
 		})

@@ -34,12 +34,11 @@ func (h *GetProjectListHandler) Handle(c echo.Context) error {
 
 	var errorMsg string
 	var errorResponse *response.ProjectErrorResponse
-	var httpStatus int
-	// var projectNotFoundErr *domainerror.ProjectNotFoundError
 
 	if h.service == nil {
 		errorResponse = &response.ProjectErrorResponse{
-			Error: ErrGetProjectServiceNotInitialized,
+			Error:  ErrGetProjectServiceNotInitialized,
+			Status: http.StatusInternalServerError,
 		}
 
 		h.logger.Error(ErrGetProjectServiceNotInitialized, map[string]interface{}{
@@ -57,8 +56,6 @@ func (h *GetProjectListHandler) Handle(c echo.Context) error {
 
 	projects, err := h.service.GetProjectsList()
 	if err != nil {
-		httpStatus = http.StatusInternalServerError
-
 		errorMsg = fmt.Sprintf("%s: %s", ErrGettingProjectList, err.Error())
 
 		h.logger.Error(errorMsg, map[string]interface{}{
@@ -67,10 +64,11 @@ func (h *GetProjectListHandler) Handle(c echo.Context) error {
 		})
 
 		errorResponse = &response.ProjectErrorResponse{
-			Error: errorMsg,
+			Error:  errorMsg,
+			Status: http.StatusInternalServerError,
 		}
 
-		return c.JSON(httpStatus, errorResponse)
+		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
 	projectListResponse := make([]*response.ProjectResponse, 0)

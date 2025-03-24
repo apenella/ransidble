@@ -50,7 +50,8 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.TaskErrorResponse
 				expectedBody := &response.TaskErrorResponse{
-					Error: ErrGetTaskServiceNotInitialized,
+					Error:  ErrGetTaskServiceNotInitialized,
+					Status: http.StatusInternalServerError,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -73,7 +74,8 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.TaskErrorResponse
 				expectedBody := &response.TaskErrorResponse{
-					Error: ErrTaskIDNotProvided,
+					Error:  ErrTaskIDNotProvided,
+					Status: http.StatusBadRequest,
 				}
 
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
@@ -105,7 +107,8 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.TaskErrorResponse
 				expectedBody := &response.TaskErrorResponse{
-					Error: fmt.Errorf("%s: %s", ErrGettingTask, "testing task not found error").Error(),
+					Error:  fmt.Errorf("%s: %s", ErrGettingTask, "testing task not found error").Error(),
+					Status: http.StatusNotFound,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -136,7 +139,8 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.TaskErrorResponse
 				expectedBody := &response.TaskErrorResponse{
-					Error: fmt.Errorf("%s: %s", ErrGettingTask, "testing task not provided error").Error(),
+					Error:  fmt.Errorf("%s: %s", ErrGettingTask, "testing task not provided error").Error(),
+					Status: http.StatusBadRequest,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -167,7 +171,8 @@ func TestHandle_GetTaskHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.TaskErrorResponse
 				expectedBody := &response.TaskErrorResponse{
-					Error: fmt.Errorf("%s: %s", ErrGettingTask, "testing task unknown error").Error(),
+					Error:  fmt.Errorf("%s: %s", ErrGettingTask, "testing task unknown error").Error(),
+					Status: http.StatusInternalServerError,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)

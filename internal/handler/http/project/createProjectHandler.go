@@ -45,10 +45,12 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	var projectFileHeader *multipart.FileHeader
 	var projectReceivedFile multipart.File
 	var requestParameters request.ProjectParameters
+	var projectErrorResponseStatus int
 
 	if h.service == nil {
 		errorResponse = &response.ProjectErrorResponse{
-			Error: ErrCreateProjectServiceNotInitialized,
+			Error:  ErrCreateProjectServiceNotInitialized,
+			Status: http.StatusInternalServerError,
 		}
 		h.logger.Error(
 			errorMsg,
@@ -64,7 +66,8 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrReadingFormProjectMetadataField, err.Error())
 		errorResponse = &response.ProjectErrorResponse{
-			Error: errorMsg,
+			Error:  errorMsg,
+			Status: http.StatusInternalServerError,
 		}
 		h.logger.Error(
 			errorMsg,
@@ -79,7 +82,8 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrInvalidRequestMetadata, err.Error())
 		errorResponse = &response.ProjectErrorResponse{
-			Error: errorMsg,
+			Error:  errorMsg,
+			Status: http.StatusBadRequest,
 		}
 		h.logger.Error(
 			errorMsg,
@@ -94,7 +98,8 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrReadingFormProjectFileField, err.Error())
 		errorResponse = &response.ProjectErrorResponse{
-			Error: errorMsg,
+			Error:  errorMsg,
+			Status: http.StatusBadRequest,
 		}
 		h.logger.Error(
 			errorMsg,
@@ -107,21 +112,37 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 
 	projectReceivedFile, err = projectFileHeader.Open()
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("error opening file: %s", err.Error()))
+		errorMsg = fmt.Sprintf("error opening file: %s", err.Error())
+		errorResponse = &response.ProjectErrorResponse{
+			Error:  errorMsg,
+			Status: http.StatusInternalServerError,
+		}
+
+		h.logger.Error(
+			errorMsg,
+			map[string]interface{}{
+				"component": "CreateProjectHandler.Handle",
+				"package":   "github.com/apenella/ransidble/internal/handler/http/project",
+			})
+
+		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
 	err = h.service.Create(requestParameters.Format, requestParameters.Storage, projectFileHeader.Filename, projectReceivedFile)
 	if err != nil {
 
 		httpStatus := http.StatusInternalServerError
+		projectErrorResponseStatus = http.StatusInternalServerError
 
 		if errors.As(err, &projectAlreadyExists) {
 			httpStatus = http.StatusConflict
+			projectErrorResponseStatus = http.StatusConflict
 		}
 
 		errorMsg = fmt.Sprintf("%s: %s", ErrCreatingProject, err.Error())
 		errorResponse = &response.ProjectErrorResponse{
-			Error: errorMsg,
+			Error:  errorMsg,
+			Status: projectErrorResponseStatus,
 		}
 		h.logger.Error(
 			errorMsg,

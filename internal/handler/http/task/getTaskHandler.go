@@ -44,10 +44,12 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 	var httpStatus int
 	var taskNotFoundErr *domainerror.TaskNotFoundError
 	var taskNotProvidedErr *domainerror.TaskNotProvidedError
+	var taskErrorResponseStatus int
 
 	if h.service == nil {
 		errorResponse = &response.TaskErrorResponse{
-			Error: ErrGetTaskServiceNotInitialized,
+			Error:  ErrGetTaskServiceNotInitialized,
+			Status: http.StatusInternalServerError,
 		}
 
 		h.logger.Error(
@@ -63,7 +65,8 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 	if id == "" {
 
 		errorResponse = &response.TaskErrorResponse{
-			Error: ErrTaskIDNotProvided,
+			Error:  ErrTaskIDNotProvided,
+			Status: http.StatusBadRequest,
 		}
 		h.logger.Error(
 			ErrTaskIDNotProvided,
@@ -86,19 +89,23 @@ func (h *GetTaskHandler) Handle(c echo.Context) error {
 	if err != nil {
 
 		httpStatus = http.StatusInternalServerError
+		taskErrorResponseStatus = http.StatusInternalServerError
 
 		if errors.As(err, &taskNotFoundErr) {
 			httpStatus = http.StatusNotFound
+			taskErrorResponseStatus = http.StatusNotFound
 		}
 
 		if errors.As(err, &taskNotProvidedErr) {
 			httpStatus = http.StatusBadRequest
+			taskErrorResponseStatus = http.StatusBadRequest
 		}
 
 		errorMsg = fmt.Sprintf("%s: %s", ErrGettingTask, err.Error())
 
 		errorResponse = &response.TaskErrorResponse{
-			Error: errorMsg,
+			Error:  errorMsg,
+			Status: taskErrorResponseStatus,
 		}
 
 		h.logger.Error(

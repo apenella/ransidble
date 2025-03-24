@@ -120,7 +120,7 @@ func (suite *SuiteGetTask) TestGetTask() {
 			method:             "GET",
 			url:                "http://" + suite.listenAddress + "/tasks/project-1",
 			expectedStatusCode: nethttp.StatusNotFound,
-			expectedBody:       "{\"id\":\"\",\"error\":\"error getting task: error finding task project-1: task not found\"}",
+			expectedBody:       "{\"id\":\"\",\"error\":\"error getting task: error finding task project-1: task not found\",\"status\":404}",
 			arrangeTest: func() {
 				// the task repository is mocked and returns a task not found error
 				repository := repository.NewMockTaskRepository()

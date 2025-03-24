@@ -44,7 +44,8 @@ func TestHandle_GetProjectListHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: ErrGetProjectServiceNotInitialized,
+					Error:  ErrGetProjectServiceNotInitialized,
+					Status: http.StatusInternalServerError,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)

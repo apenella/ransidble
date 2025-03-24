@@ -150,7 +150,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
 				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
 			},
-			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: error finding project: project not found\"}",
+			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: error finding project: project not found\",\"status\":404}",
 			expectedStatusCode: nethttp.StatusNotFound,
 		},
 		{
@@ -184,7 +184,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
 				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
 			},
-			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: testing get project internal error\"}",
+			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: testing get project internal error\",\"status\":500}",
 			expectedStatusCode: nethttp.StatusInternalServerError,
 		},
 		{
@@ -218,7 +218,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
 				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
 			},
-			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: testing get project not provided error\"}",
+			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: testing get project not provided error\",\"status\":400}",
 			expectedStatusCode: nethttp.StatusBadRequest,
 		},
 	}

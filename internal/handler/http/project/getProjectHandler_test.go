@@ -46,7 +46,8 @@ func TestHandle_GetProjectHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: ErrGetProjectServiceNotInitialized,
+					Error:  ErrGetProjectServiceNotInitialized,
+					Status: http.StatusInternalServerError,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -67,7 +68,8 @@ func TestHandle_GetProjectHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: ErrProjectIDNotProvided,
+					Error:  ErrProjectIDNotProvided,
+					Status: http.StatusBadRequest,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -96,7 +98,8 @@ func TestHandle_GetProjectHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: fmt.Errorf("%s: %s", ErrGettingProject, "testing project not found error").Error(),
+					Error:  fmt.Errorf("%s: %s", ErrGettingProject, "testing project not found error").Error(),
+					Status: http.StatusNotFound,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -125,7 +128,8 @@ func TestHandle_GetProjectHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: fmt.Errorf("%s: %s", ErrGettingProject, "testing project not provided error").Error(),
+					Error:  fmt.Errorf("%s: %s", ErrGettingProject, "testing project not provided error").Error(),
+					Status: http.StatusBadRequest,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)
@@ -133,7 +137,6 @@ func TestHandle_GetProjectHandler(t *testing.T) {
 				assert.Equal(t, http.StatusBadRequest, rec.Code)
 			},
 		},
-
 		{
 			desc: "Testing GetProjectHandler.Handle responding with an error when gets a project unknown error and is returning an StatusInternalServerError",
 			handler: NewGetProjectHandler(
@@ -155,7 +158,8 @@ func TestHandle_GetProjectHandler(t *testing.T) {
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
 				expectedBody := &response.ProjectErrorResponse{
-					Error: fmt.Errorf("%s: %s", ErrGettingProject, "testing project unknown error").Error(),
+					Error:  fmt.Errorf("%s: %s", ErrGettingProject, "testing project unknown error").Error(),
+					Status: http.StatusInternalServerError,
 				}
 				err := json.Unmarshal(rec.Body.Bytes(), &body)
 				assert.NoError(t, err)

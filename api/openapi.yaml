@@ -375,8 +375,17 @@ components:
         id:
           description: Task ID
           type: string
-        Error:
+        error:
           type: string
+        status:
+          type: integer
+          enum:
+            - 400
+            - 404
+            - 500
+      required:
+        - error
+        - status
     ProjectResponse:
       type: object
       properties:
@@ -400,5 +409,15 @@ components:
         id:
           description: Task ID
           type: string
-        Error:
+        error:
           type: string
+        status:
+          type: integer
+          enum:
+            - 400
+            - 404
+            - 409
+            - 500
+      required:
+        - error
+        - status

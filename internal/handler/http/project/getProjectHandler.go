@@ -35,10 +35,12 @@ func (h *GetProjectHandler) Handle(c echo.Context) error {
 	var httpStatus int
 	var projectNotFoundErr *domainerror.ProjectNotFoundError
 	var projectNotProvidedErr *domainerror.ProjectNotProvidedError
+	var projectErrorResponseStatus int
 
 	if h.service == nil {
 		errorResponse = &response.ProjectErrorResponse{
-			Error: ErrGetProjectServiceNotInitialized,
+			Error:  ErrGetProjectServiceNotInitialized,
+			Status: http.StatusInternalServerError,
 		}
 
 		h.logger.Error(ErrGetProjectServiceNotInitialized, map[string]interface{}{
@@ -51,7 +53,8 @@ func (h *GetProjectHandler) Handle(c echo.Context) error {
 	id := c.Param("id")
 	if id == "" {
 		errorResponse = &response.ProjectErrorResponse{
-			Error: ErrProjectIDNotProvided,
+			Error:  ErrProjectIDNotProvided,
+			Status: http.StatusBadRequest,
 		}
 		h.logger.Error(ErrProjectIDNotProvided, map[string]interface{}{
 			"component": "GetProjectHandler.Handle",
@@ -71,19 +74,23 @@ func (h *GetProjectHandler) Handle(c echo.Context) error {
 	project, err := h.service.GetProject(id)
 	if err != nil {
 		httpStatus = http.StatusInternalServerError
+		projectErrorResponseStatus = http.StatusInternalServerError
 
 		if errors.As(err, &projectNotFoundErr) {
 			httpStatus = http.StatusNotFound
+			projectErrorResponseStatus = http.StatusNotFound
 		}
 
 		if errors.As(err, &projectNotProvidedErr) {
 			httpStatus = http.StatusBadRequest
+			projectErrorResponseStatus = http.StatusBadRequest
 		}
 
 		errorMsg = fmt.Sprintf("%s: %s", ErrGettingProject, err.Error())
 
 		errorResponse = &response.ProjectErrorResponse{
-			Error: errorMsg,
+			Error:  errorMsg,
+			Status: projectErrorResponseStatus,
 		}
 
 		h.logger.Error(errorMsg, map[string]interface{}{

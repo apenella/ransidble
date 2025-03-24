@@ -46,18 +46,20 @@ func NewCreateTaskAnsiblePlaybookHandler(service service.AnsiblePlaybookServicer
 func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 	var err error
 	var errorMsg string
+	var errorResponse *response.TaskErrorResponse
 	var httpStatus int
-	var requestParameters request.AnsiblePlaybookParameters
 	var projectNotFoundErr *domainerror.ProjectNotFoundError
 	var projectNotProvidedErr *domainerror.ProjectNotProvidedError
-	var errorResponse *response.TaskErrorResponse
+	var requestParameters request.AnsiblePlaybookParameters
+	var taskErrorResponseStatus int
 
 	ctx := c.Request().Context()
 
 	projectID := c.Param("project_id")
 	if projectID == "" {
 		errorResponse = &response.TaskErrorResponse{
-			Error: ErrProjectIDNotProvided,
+			Error:  ErrProjectIDNotProvided,
+			Status: http.StatusBadRequest,
 		}
 		h.logger.Error(
 			ErrProjectIDNotProvided,
@@ -72,7 +74,8 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrBindingRequestPayload, err.Error())
 		errorResponse = &response.TaskErrorResponse{
-			Error: errorMsg,
+			Error:  errorMsg,
+			Status: http.StatusInternalServerError,
 		}
 		h.logger.Error(
 			errorMsg,
@@ -88,7 +91,8 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrInvalidRequestPayload, err.Error())
 		errorResponse = &response.TaskErrorResponse{
-			Error: errorMsg,
+			Error:  errorMsg,
+			Status: http.StatusBadRequest,
 		}
 		h.logger.Error(
 			errorMsg,
@@ -106,7 +110,8 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 	taskID := h.service.GenerateID()
 	if taskID == "" {
 		errorResponse = &response.TaskErrorResponse{
-			Error: ErrInvalidTaskID,
+			Error:  ErrInvalidTaskID,
+			Status: http.StatusInternalServerError,
 		}
 		h.logger.Error(
 			ErrInvalidTaskID,
@@ -133,18 +138,22 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 	err = h.service.Run(ctx, task)
 	if err != nil {
 		httpStatus = http.StatusInternalServerError
+		taskErrorResponseStatus = http.StatusInternalServerError
 
 		if errors.As(err, &projectNotFoundErr) {
 			httpStatus = http.StatusNotFound
+			taskErrorResponseStatus = http.StatusNotFound
 		}
 
 		if errors.As(err, &projectNotProvidedErr) {
 			httpStatus = http.StatusBadRequest
+			taskErrorResponseStatus = http.StatusBadRequest
 		}
 
 		errorMsg = fmt.Sprintf("%s: %s", ErrRunningAnsiblePlaybook, err.Error())
 		errorResponse = &response.TaskErrorResponse{
-			Error: errorMsg,
+			Error:  errorMsg,
+			Status: taskErrorResponseStatus,
 		}
 
 		h.logger.Error(
