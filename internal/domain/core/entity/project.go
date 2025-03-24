@@ -19,6 +19,14 @@ const (
 	ExtensionTarGz = ".tar.gz"
 )
 
+var (
+	// projectFomatToExtension represents the project format to extension mapping
+	projectFomatToExtension = map[string]string{
+		ProjectFormatPlain: "",
+		ProjectFormatTarGz: ExtensionTarGz,
+	}
+)
+
 // Project entity represents a project
 type Project struct {
 	// Format represents the project format. This field is required and must be one of the following values: plain, targz
@@ -43,6 +51,17 @@ func NewProject(name, referene, format, storage string) *Project {
 	}
 }
 
+// ProjectSourceCodeExtension returns the project source code extension
+func (p *Project) ProjectSourceCodeExtension() (string, error) {
+
+	ext, ok := projectFomatToExtension[p.Format]
+	if !ok {
+		return "", fmt.Errorf("format %s not supported", p.Format)
+	}
+
+	return ext, nil
+}
+
 // Validate validates the project entity
 func (p *Project) Validate() error {
 	validate := validator.New()
@@ -54,7 +73,7 @@ func ValidateProjectFormat(format string) error {
 	validate := validator.New()
 	err := validate.Var(format, "required,oneof=plain targz")
 	if err != nil {
-		return fmt.Errorf("Invalid format: %s. %w", format, err)
+		return fmt.Errorf("invalid format: %s", format)
 	}
 
 	return nil
@@ -66,7 +85,7 @@ func ValidateProjectStorage(storage string) error {
 	err := validate.Var(storage, "required,oneof=local")
 
 	if err != nil {
-		return fmt.Errorf("Invalid storage type: %s. %w", storage, err)
+		return fmt.Errorf("invalid storage type: %s", storage)
 	}
 
 	return nil
