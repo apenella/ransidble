@@ -15,7 +15,6 @@ func TestBuildWorkspace(t *testing.T) {
 	t.Parallel()
 	t.Log("Testing the BuildWorkspace function")
 
-	// fs := afero.NewMemMapFs()
 	fs := repository.NewMockFilesystemer()
 	fetchFactory := fetch.NewFactory()
 	unpackFactory := unpack.NewFactory()
