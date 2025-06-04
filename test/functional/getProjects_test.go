@@ -15,6 +15,7 @@ import (
 	"github.com/apenella/ransidble/internal/handler/http"
 	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
+	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/database/local"
 	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/afero"
@@ -102,18 +103,16 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 				log := logger.NewFakeLogger()
 				afs := afero.NewOsFs()
 
-				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
+				projectRepositoryBackendDriver := local.NewDatabaseDriver(
 					afs,
 					filepath.Join("..", "fixtures", "functional-get-projects"),
 					log,
 				)
 
-				errLoadProjects := projectsRepository.LoadProjects()
-				if errLoadProjects != nil {
-					suite.T().Errorf("Error loading projects: %s", errLoadProjects)
-					suite.T().FailNow()
-					return
-				}
+				projectsRepository := localprojectpersistence.NewProjectRepository(
+					projectRepositoryBackendDriver,
+					log,
+				)
 
 				getProjectService := projectService.NewGetProjectService(projectsRepository, log)
 				getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
@@ -127,20 +126,6 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath,
 			arrangeTest: func(suite *SuiteGetProjectsList) {
 				log := logger.NewFakeLogger()
-				afs := afero.NewOsFs()
-
-				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
-					afs,
-					filepath.Join("..", "fixtures", "functional-get-projects"),
-					log,
-				)
-
-				errLoadProjects := projectsRepository.LoadProjects()
-				if errLoadProjects != nil {
-					suite.T().Errorf("Error loading projects: %s", errLoadProjects)
-					suite.T().FailNow()
-					return
-				}
 
 				// This is the mock service that simulates a project not provided error returned by the service
 				getProjectService := service.NewMockGetProjectService()

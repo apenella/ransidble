@@ -19,6 +19,7 @@ import (
 	taskHandler "github.com/apenella/ransidble/internal/handler/http/task"
 	"github.com/apenella/ransidble/internal/infrastructure/filesystem"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
+	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/database/local"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch"
 	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
 	taskpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/task"
@@ -397,16 +398,16 @@ func arrangeTaskAnsiblePlaybookRouter(router *echo.Echo, ansibleExecutor executo
 	rwFs := afero.NewCopyOnWriteFs(roFsBase, afero.NewMemMapFs())
 	fs := filesystem.NewFilesystem(rwFs)
 
-	projectsRepository := localprojectpersistence.NewLocalProjectRepository(
+	projectRepositoryBackendDriver := local.NewDatabaseDriver(
 		rwFs,
 		filepath.Join("..", "fixtures", "functional-create-task ansible-playbook"),
 		log,
 	)
 
-	errLoadProjects := projectsRepository.LoadProjects()
-	if errLoadProjects != nil {
-		return nil, fmt.Errorf("error loading projects: %s", errLoadProjects)
-	}
+	projectsRepository := localprojectpersistence.NewProjectRepository(
+		projectRepositoryBackendDriver,
+		log,
+	)
 
 	fetchFactory := fetch.NewFactory()
 	fetchFactory.Register(

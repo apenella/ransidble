@@ -16,6 +16,7 @@ import (
 	"github.com/apenella/ransidble/internal/handler/http"
 	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
+	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/database/local"
 	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/afero"
@@ -105,24 +106,22 @@ func (suite *SuiteGetProject) TestGetProject() {
 				log := logger.NewFakeLogger()
 				afs := afero.NewOsFs()
 
-				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
+				projectRepositoryBackendDriver := local.NewDatabaseDriver(
 					afs,
 					filepath.Join("..", "fixtures", "functional-get-project"),
 					log,
 				)
 
-				errLoadProjects := projectsRepository.LoadProjects()
-				if errLoadProjects != nil {
-					suite.T().Errorf("Error loading projects: %s", errLoadProjects)
-					suite.T().FailNow()
-					return
-				}
+				projectsRepository := localprojectpersistence.NewProjectRepository(
+					projectRepositoryBackendDriver,
+					log,
+				)
 
 				getProjectService := projectService.NewGetProjectService(projectsRepository, log)
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
 				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
 			},
-			expectedBody:       "{\"format\":\"plain\",\"name\":\"project-1\",\"reference\":\"../fixtures/functional-get-project/project-1\",\"storage\":\"local\"}",
+			expectedBody:       "{\"format\":\"targz\",\"name\":\"project-1\",\"reference\":\"project-1.tar.gz\",\"storage\":\"local\"}",
 			expectedStatusCode: nethttp.StatusOK,
 		},
 		{
@@ -133,24 +132,22 @@ func (suite *SuiteGetProject) TestGetProject() {
 				log := logger.NewFakeLogger()
 				afs := afero.NewOsFs()
 
-				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
+				projectRepositoryBackendDriver := local.NewDatabaseDriver(
 					afs,
 					filepath.Join("..", "fixtures", "functional-get-project"),
 					log,
 				)
 
-				errLoadProjects := projectsRepository.LoadProjects()
-				if errLoadProjects != nil {
-					suite.T().Errorf("Error loading projects: %s", errLoadProjects)
-					suite.T().FailNow()
-					return
-				}
+				projectsRepository := localprojectpersistence.NewProjectRepository(
+					projectRepositoryBackendDriver,
+					log,
+				)
 
 				getProjectService := projectService.NewGetProjectService(projectsRepository, log)
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
 				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
 			},
-			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: error finding project: project not found\",\"status\":404}",
+			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: error finding project: error reading record: record not found: stat ../fixtures/functional-get-project/project-non-existing: no such file or directory\",\"status\":404}",
 			expectedStatusCode: nethttp.StatusNotFound,
 		},
 		{
@@ -159,20 +156,6 @@ func (suite *SuiteGetProject) TestGetProject() {
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-internal-error",
 			arrangeTest: func(suite *SuiteGetProject) {
 				log := logger.NewFakeLogger()
-				afs := afero.NewOsFs()
-
-				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
-					afs,
-					filepath.Join("..", "fixtures", "functional-get-project"),
-					log,
-				)
-
-				errLoadProjects := projectsRepository.LoadProjects()
-				if errLoadProjects != nil {
-					suite.T().Errorf("Error loading projects: %s", errLoadProjects)
-					suite.T().FailNow()
-					return
-				}
 
 				// This is the mock service that simulates an internal error returned by the service
 				getProjectService := service.NewMockGetProjectService()
@@ -193,20 +176,6 @@ func (suite *SuiteGetProject) TestGetProject() {
 			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-not-provided",
 			arrangeTest: func(suite *SuiteGetProject) {
 				log := logger.NewFakeLogger()
-				afs := afero.NewOsFs()
-
-				projectsRepository := localprojectpersistence.NewLocalProjectRepository(
-					afs,
-					filepath.Join("..", "fixtures", "functional-get-project"),
-					log,
-				)
-
-				errLoadProjects := projectsRepository.LoadProjects()
-				if errLoadProjects != nil {
-					suite.T().Errorf("Error loading projects: %s", errLoadProjects)
-					suite.T().FailNow()
-					return
-				}
 
 				// This is the mock service that simulates a project not provided error returned by the service
 				getProjectService := service.NewMockGetProjectService()
@@ -224,6 +193,8 @@ func (suite *SuiteGetProject) TestGetProject() {
 	}
 
 	for _, test := range tests {
+
+		suite.T().Log(test.desc)
 
 		if test.arrangeTest != nil {
 			test.arrangeTest(suite)

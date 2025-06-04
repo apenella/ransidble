@@ -19,6 +19,7 @@ import (
 	ansibleexecutor "github.com/apenella/ransidble/internal/infrastructure/executor"
 	"github.com/apenella/ransidble/internal/infrastructure/filesystem"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
+	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/database/local"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch"
 	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/store"
@@ -60,22 +61,26 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			afs := afero.NewOsFs()
 			fs := filesystem.NewFilesystem(afs)
 
+			projectRepositoryBackendDriver := local.NewDatabaseDriver(afs, config.Server.Project.LocalStoragePath, log)
+
 			// At this moment, the project repository loads the projects from the local storage. In the future, the plan is to have a database where you need to create a project before running it.
-			projectsRepository := localprojectpersistence.NewLocalProjectRepository(
-				afs,
-				config.Server.Project.LocalStoragePath,
+			projectsRepository := localprojectpersistence.NewProjectRepository(
+				// afs,
+				// config.Server.Project.LocalStoragePath,
+				projectRepositoryBackendDriver,
 				log,
 			)
-			err = projectsRepository.Initialize()
-			if err != nil {
-				log.Error(
-					err.Error(),
-					map[string]interface{}{
-						"component": "Serve",
-						"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
-					})
-				return
-			}
+
+			// err = projectsRepository.Initialize()
+			// if err != nil {
+			// 	log.Error(
+			// 		err.Error(),
+			// 		map[string]interface{}{
+			// 			"component": "Serve",
+			// 			"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+			// 		})
+			// 	return
+			// }
 
 			// Commented because it must be handled from an specific use case
 			//
