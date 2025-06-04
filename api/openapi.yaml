@@ -1,6 +1,6 @@
 ---
 
-openapi: "3.0.0"
+openapi: "3.1.0"
 info:
   title: Ransidble API
   version: 1.0.0
@@ -87,6 +87,7 @@ paths:
       parameters:
         - name: id
           in: path
+          description: The unique identifier of the project
           required: true
           schema:
             type: string
@@ -110,7 +111,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProjectErrorResponse'
         500:
-          description: Internal server error
+          description: An unexpected server error occurred while processing the request
           content:
             application/json:
               schema:
@@ -121,6 +122,7 @@ paths:
       parameters:
         - name: project_id
           in: path
+          description: The unique identifier of the project to run the Ansible playbook against
           required: true
           schema:
             type: string
@@ -151,7 +153,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TaskErrorResponse'
         500:
-          description: Internal server error, such as failing to bind request parameters, generate a task ID or failing to run the Ansible playbook
+          description: An unexpected server error occurred, such as failing to bind request parameters, generate a task ID or failing to run the Ansible playbook
           content:
             application/json:
               schema:
@@ -163,6 +165,7 @@ paths:
       parameters:
         - name: id
           in: path
+          description: The unique identifier of the task
           required: true
           schema:
             type: string
@@ -186,7 +189,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TaskErrorResponse'
         500:
-          description: Internal server error
+          description: An unexpected server error occurred while processing the request
           content:
             application/json:
               schema:
@@ -196,135 +199,203 @@ components:
   schemas:
     AnsiblePlaybookParameters:
       type: object
+      description: Parameters for executing an Ansible playbook
       properties:
         playbooks:
           type: array
           items:
             type: string
+          description: List of playbooks to execute
         check:
           type: boolean
+          description: Run playbooks in check mode
         diff:
           type: boolean
+          description: When changed, show differences in files and templates
         Requirements:
           type: object
+          description: Requirements for the playbook execution
           properties:
             roles:
               type: object
+              description: Roles to be used in the playbook
               properties:
                 roles:
                   type: array
                   items:
                     type: string
+                  description: List of roles to be used
                 api_key:
                   type: string
+                  description: The Ansible Galaxy API key
                 ignore_errors:
                   type: boolean
+                  description: Ignore errors when installing roles
                 no_deps:
                   type: boolean
+                  description: Do not download roles listed as dependencies
                 role_file:
                   type: string
+                  description: A file containing a list of roles to install
                 server:
                   type: string
+                  description: The Ansible Galaxy server URL
                 timeout:
                   type: string
+                  description: Time to wait for operations against the Ansible Galaxy server
                 token:
                   type: string
+                  description: The Ansible Galaxy token
                 verbose:
                   type: boolean
+                  description: Enable verbose output
             collections:
               type: object
+              description: Collections to be used in the playbook
               properties:
                 collections:
                   type: array
                   items:
                     type: string
+                  description: List of collections to be used
                 api_key:
                   type: string
+                  description: The Ansible Galaxy API key
                 force_with_deps:
                   type: boolean
-                pre:
-                  type: boolean
+                  description: Force installation of collections and its dependencies
                 timeout:
                   type: string
+                  description: Time to wait for operations against the Ansible Galaxy server
                 token:
                   type: string
+                  description: The Ansible Galaxy token
                 ignore_errors:
                   type: boolean
+                  description: Ignore errors when installing collections and continue with the next specified collection
                 requirements_file:
                   type: string
+                  description: A file containing a list of collections to install
                 server:
                   type: string
+                  description: The Ansible Galaxy server URL
                 verbose:
                   type: boolean
+                  description: Enable verbose output
         extra_vars:
           type: object
+          items:
+            type: string
+          description: Extra variables to pass to the playbook
         extra_vars_file:
           type: array
           items:
             type: string
+          description: List of files containing extra variables
         flush_cache:
           type: boolean
+          description: Clear the fact cache for every host in the inventory
         force_handlers:
           type: boolean
+          description: Run handlers even if tasks fails
         forks:
           type: integer
+          description: Number of parallel processes to use
         inventory:
           type: string
+          description: Specify inventory host path or comma-separated list of host list
         limit:
           type: string
+          description: Limit selected hosts to an additional pattern
         list_hosts:
           type: boolean
+          description: List all hosts in the inventory
         list_tags:
           type: boolean
+          description: List all tags in the playbook
         list_tasks:
           type: boolean
+          description: List all tasks in the playbook
         skip_tags:
           type: string
+          description: Only run tasks and plays whose tags do not match these values
         start_at_task:
           type: string
+          description: Start execution at the specified task
         syntax_check:
           type: boolean
+          description: Perform a syntax check on the playbook, but do not execute it
         tags:
           type: string
+          description: Only run tasks and plays whose tags match these values
         vault_id:
           type: string
+          description: The vault ID to use for encrypted variables
         vault_password_file:
           type: string
+          description: The file containing the vault password
         verbose:
           type: boolean
+          description: Enable verbose output
         version:
           type: boolean
+          description: Show the version of Ansible being used
         connection:
           type: string
+          description: The connection type to use for the playbook execution
         scp_extra_args:
           type: string
+          description: Extra arguments for SCP connections
         sftp_extra_args:
           type: string
+          description: Extra arguments for SFTP connections
         ssh_common_args:
           type: string
+          description: Common SSH arguments to use for the playbook execution
         ssh_extra_args:
           type: string
+          description: Extra SSH arguments to use for the playbook execution
         timeout:
           type: integer
+          description: The timeout in seconds for the playbook execution
         user:
           type: string
+          description: The user to run the playbook as
         become:
           type: boolean
+          description: Run operations with become
         become_method:
           type: string
+          description: The method to use for privilege escalation. Read about the available methods in the Ansible documentation (https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_privilege_escalation.html).
+          enum:
+            - doas # use doas for privilege escalation
+            - dzdo # use dzdo for privilege escalation
+            - enable # use enable for privilege escalation
+            - ksu # use ksu for privilege escalation
+            - machinectl # use machinectl for privilege escalation
+            - pbrun # use pbrun for privilege escalation
+            - pfexec # use pfexec for privilege escalation
+            - pmrun # use pmrun for privilege escalation
+            - runas # use runas for privilege escalation
+            - sesu # use sesu for privilege escalation
+            - su # use su for privilege escalation
+            - sudo # use sudo for privilege escalation
         become_user:
           type: string
+          description: The user to become when running the playbook
       required:
         - playbooks
         - inventory
     TaskCreatedResponse:
       type: object
+      description: Response when a task is created
       properties:
         id:
           description: Task ID
           type: string
     TaskResponse:
       type: object
+      description: Response when handling a task request
       properties:
         command:
           type: string
@@ -352,6 +423,7 @@ components:
         parameters:
           type: object
           description: The parameters for the task
+          $ref: '#/components/schemas/AnsiblePlaybookParameters'
         project_id:
           type: string
           description: The project associated with the task
@@ -369,16 +441,31 @@ components:
         - id
         - parameters
         - status
+      example:
+        id: "task-1"
+        command: "ansible-playbook"
+        status: "RUNNING"
+        project_id: "project-1"
+        parameters:
+          playbooks: ["site.yml"]
+          inventory: "inventory.ini"
+        created_at: "2025-06-03T12:00:00Z"
+        executed_at: "2025-06-03T12:05:00Z"
+        completed_at: null
+        error_message: null
     TaskErrorResponse:
       type: object
+      description: Response when there is an error handling a task request
       properties:
         id:
-          description: Task ID
           type: string
+          description: Task ID
         error:
           type: string
+          description: The error message
         status:
           type: integer
+          description: The HTTP status code for the error
           enum:
             - 400
             - 404
@@ -386,9 +473,15 @@ components:
       required:
         - error
         - status
+      example:
+        id: "12345"
+        error: "Task not found"
+        status: 404
     ProjectResponse:
       type: object
+      description: Response when handling a project request
       properties:
+      # missing project ID or name
         storage:
           type: string
           description: The project storage type
@@ -403,16 +496,23 @@ components:
       required:
         - format
         - storage
+      example:
+        id: "project-1"
+        storage: "local"
+        format: "targz"
     ProjectErrorResponse:
       type: object
+      description: Response when there is an error handling a project request
       properties:
         id:
           description: Task ID
           type: string
         error:
           type: string
+          description: The error message
         status:
           type: integer
+          description: The HTTP status code for the error
           enum:
             - 400
             - 404
@@ -421,3 +521,7 @@ components:
       required:
         - error
         - status
+      example:
+        id: "project-1"
+        error: "Project already exists"
+        status: 409
