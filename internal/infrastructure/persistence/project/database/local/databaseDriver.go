@@ -51,6 +51,10 @@ const (
 	ErrDatabasePathMustExist = "database path must exist"
 	// ErrRemovingRecord is the error message when removing the record fails.
 	ErrRemovingRecord = "error removing record"
+	// ErrProjectExists is the error message when the project already exists.
+	ErrProjectExists = "error project already exists"
+	// ErrStoringProject is the error message when storing the project fails.
+	ErrStoringProject = "error storing project"
 )
 
 // DatabaseDriver is a struct that represents a local database to persist the projects references.
@@ -72,8 +76,46 @@ func NewDatabaseDriver(fs afero.Fs, path string, logger repository.Logger) *Data
 	}
 }
 
+// Find a project from the local database.
+func (db *DatabaseDriver) Find(id string) (*entity.Project, error) {
+	return db.read(id)
+}
+
+// FindAll reads all projects from the local database.
+func (db *DatabaseDriver) FindAll() ([]*entity.Project, error) {
+	return db.readAll()
+}
+
+// Store stores a project in the local database.
+func (db *DatabaseDriver) Store(id string, data *entity.Project) error {
+	return db.write(id, data)
+}
+
+// SafeStore stores a project in the local database.
+func (db *DatabaseDriver) SafeStore(id string, data *entity.Project) error {
+
+	exists, err := db.exists(id)
+
+	if err != nil {
+		return fmt.Errorf("%s: %s", ErrStoringProject, err.Error())
+	}
+
+	if exists {
+		return fmt.Errorf("%s: %s %s", ErrStoringProject, id, ErrProjectExists)
+	}
+
+	return db.write(id, data)
+}
+
+// Delete deletes a project from the local database.
+func (db *DatabaseDriver) Delete(id string) error {
+	return db.remove(id)
+}
+
+// Private methods to manage the local database
+
 // Read a project from the local database.
-func (db *DatabaseDriver) Read(id string) (*entity.Project, error) {
+func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 
 	var err error
 	var recordContent []byte
@@ -260,7 +302,7 @@ func (db *DatabaseDriver) Read(id string) (*entity.Project, error) {
 }
 
 // ReadAll reads all projects from the local database.
-func (db *DatabaseDriver) ReadAll() ([]*entity.Project, error) {
+func (db *DatabaseDriver) readAll() ([]*entity.Project, error) {
 
 	var projectList []*entity.Project
 	var err error
@@ -316,7 +358,7 @@ func (db *DatabaseDriver) ReadAll() ([]*entity.Project, error) {
 			return nil
 		}
 
-		project, errIteration = db.Read(info.Name())
+		project, errIteration = db.read(info.Name())
 		if errIteration != nil {
 			db.logger.Error(
 				fmt.Sprintf("%s: %s", ErrReadingRecordsFromDatabase, errIteration.Error()),
@@ -351,7 +393,7 @@ func (db *DatabaseDriver) ReadAll() ([]*entity.Project, error) {
 }
 
 // Write a project to the local database.
-func (db *DatabaseDriver) Write(id string, data *entity.Project) error {
+func (db *DatabaseDriver) write(id string, data *entity.Project) error {
 
 	var err error
 	var record *Record
@@ -500,7 +542,7 @@ func (db *DatabaseDriver) Write(id string, data *entity.Project) error {
 }
 
 // Remove a project from the local database.
-func (db *DatabaseDriver) Remove(id string) error {
+func (db *DatabaseDriver) remove(id string) error {
 	var reference string
 	var err error
 	var exists bool
@@ -543,7 +585,7 @@ func (db *DatabaseDriver) Remove(id string) error {
 
 	}
 
-	exists, err = db.Exists(id)
+	exists, err = db.exists(id)
 	if !exists {
 		db.logger.Debug(
 			"Record could not be removed: not found",
@@ -596,7 +638,7 @@ func (db *DatabaseDriver) Remove(id string) error {
 }
 
 // Exists checks if a project exists in the local database.
-func (db *DatabaseDriver) Exists(id string) (bool, error) {
+func (db *DatabaseDriver) exists(id string) (bool, error) {
 	var reference string
 	var err error
 

@@ -27,6 +27,12 @@ func TestGenerateDataHash(t *testing.T) {
 			expected: "",
 			err:      fmt.Errorf("error generating hash for data: json: error calling MarshalJSON for type json.RawMessage: unexpected end of JSON input"),
 		},
+		{
+			desc:     "Generate hash",
+			data:     json.RawMessage(`{"format": "plain","name": "project-1","reference": "project-1","storage": "local"}`),
+			expected: "030e7aa569016af8236599d2cf5b31aa188b33c61a7163ef7cc313ac4854161f",
+			err:      nil,
+		},
 	}
 
 	for _, test := range tests {
