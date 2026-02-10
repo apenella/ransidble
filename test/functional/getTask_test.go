@@ -11,7 +11,6 @@ import (
 	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
 	taskService "github.com/apenella/ransidble/internal/domain/core/service/task"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
-	"github.com/apenella/ransidble/internal/handler/cli/serve"
 	"github.com/apenella/ransidble/internal/handler/http"
 	taskHandler "github.com/apenella/ransidble/internal/handler/http/task"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
@@ -112,7 +111,7 @@ func (suite *SuiteGetTask) TestGetTask() {
 					Status:      entity.ACCEPTED,
 				}, nil)
 
-				arrangeGetTaskRouter(suite.router, serve.GetTaskPath, repository)
+				arrangeGetTaskRouter(suite.router, http.GetTaskPath, repository)
 			},
 		},
 		{
@@ -126,7 +125,7 @@ func (suite *SuiteGetTask) TestGetTask() {
 				repository := repository.NewMockTaskRepository()
 				repository.On("Find", "project-1").Return(&entity.Task{}, domainerror.NewTaskNotFoundError(fmt.Errorf("task not found")))
 
-				arrangeGetTaskRouter(suite.router, serve.GetTaskPath, repository)
+				arrangeGetTaskRouter(suite.router, http.GetTaskPath, repository)
 			},
 		},
 	}

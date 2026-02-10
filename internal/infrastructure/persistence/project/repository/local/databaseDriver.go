@@ -129,7 +129,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 		db.logger.Error(
 			ErrIDIsNotProvided,
 			map[string]interface{}{
-				"component": "DatabaseDriver.Read",
+				"component": "DatabaseDriver.read",
 				"package":   packageName,
 			},
 		)
@@ -141,7 +141,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 		db.logger.Error(
 			ErrFilesystemNotInitialized,
 			map[string]interface{}{
-				"component": "DatabaseDriver.Read",
+				"component": "DatabaseDriver.read",
 				"package":   packageName,
 				"record_id": id,
 			},
@@ -154,7 +154,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 		db.logger.Error(
 			ErrDatabasePathNotInitialized,
 			map[string]interface{}{
-				"component": "DatabaseDriver.Read",
+				"component": "DatabaseDriver.read",
 				"package":   packageName,
 				"record_id": id,
 			},
@@ -172,7 +172,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 			db.logger.Error(
 				msgErr,
 				map[string]interface{}{
-					"component": "DatabaseDriver.Read",
+					"component": "DatabaseDriver.read",
 					"package":   packageName,
 					"record_id": id,
 				},
@@ -185,7 +185,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 		db.logger.Error(
 			msgErr,
 			map[string]interface{}{
-				"component": "DatabaseDriver.Read",
+				"component": "DatabaseDriver.read",
 				"package":   packageName,
 				"record_id": id,
 			},
@@ -199,7 +199,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 		db.logger.Error(
 			msgErr,
 			map[string]interface{}{
-				"component": "DatabaseDriver.Read",
+				"component": "DatabaseDriver.read",
 				"package":   packageName,
 				"record_id": id,
 			},
@@ -214,7 +214,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 		db.logger.Error(
 			msgErr,
 			map[string]interface{}{
-				"component": "DatabaseDriver.Read",
+				"component": "DatabaseDriver.read",
 				"package":   packageName,
 				"record_id": id,
 			},
@@ -230,7 +230,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 		db.logger.Error(
 			msgErr,
 			map[string]interface{}{
-				"component": "DatabaseDriver.Read",
+				"component": "DatabaseDriver.read",
 				"package":   packageName,
 				"record_id": id,
 			},
@@ -245,7 +245,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 		db.logger.Error(
 			msgErr,
 			map[string]interface{}{
-				"component": "DatabaseDriver.Read",
+				"component": "DatabaseDriver.read",
 				"package":   packageName,
 				"record_id": id,
 			},

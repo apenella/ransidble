@@ -12,12 +12,10 @@ import (
 	domainerror "github.com/apenella/ransidble/internal/domain/core/error"
 	projectService "github.com/apenella/ransidble/internal/domain/core/service/project"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
-	serve "github.com/apenella/ransidble/internal/handler/cli/serve"
 	"github.com/apenella/ransidble/internal/handler/http"
 	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
-	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/database/local"
-	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
+	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository/local"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +39,7 @@ func (suite *SuiteGetProject) SetupSuite() {
 // SetupTest runs before each test in the suite
 func (suite *SuiteGetProject) SetupTest() {
 	suite.router = echo.New()
-	suite.server = http.NewServer(suite.listenAddress, suite.router, logger.NewFakeLogger())
+	suite.server = http.NewServer(suite.listenAddress, suite.router, logger.NewLogger())
 }
 
 // TearDownSuite runs after all tests in this suite have run
@@ -99,53 +97,44 @@ func (suite *SuiteGetProject) TestGetProject() {
 		arrangeTest        func(*SuiteGetProject)
 	}{
 		{
-			desc:   "Testing a request to get project functinal behavior when project exists that returns a StatusOK status code",
+			desc:   "Testing a request to get project functional behavior when project exists that returns a StatusOK status code",
 			method: nethttp.MethodGet,
-			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-1",
+			url:    "http://" + suite.listenAddress + http.GetProjectsPath + "/project-1",
 			arrangeTest: func(suite *SuiteGetProject) {
-				log := logger.NewFakeLogger()
+				// log := logger.NewFakeLogger()
+				log := logger.NewLogger()
 				afs := afero.NewOsFs()
 
-				projectRepositoryBackendDriver := local.NewDatabaseDriver(
+				projectsRepository := local.NewDatabaseDriver(
 					afs,
 					filepath.Join("..", "fixtures", "functional-get-project"),
 					log,
 				)
 
-				projectsRepository := localprojectpersistence.NewProjectRepository(
-					projectRepositoryBackendDriver,
-					log,
-				)
-
 				getProjectService := projectService.NewGetProjectService(projectsRepository, log)
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
-				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
+				suite.router.GET(http.GetProjectPath, getProjectHandler.Handle)
 			},
-			expectedBody:       "{\"format\":\"targz\",\"name\":\"project-1\",\"reference\":\"project-1.tar.gz\",\"storage\":\"local\"}",
+			expectedBody:       "{\"format\":\"plain\",\"name\":\"project-1\",\"reference\":\"project-1\",\"storage\":\"local\"}",
 			expectedStatusCode: nethttp.StatusOK,
 		},
 		{
 			desc:   "Testing a request to get project functional behavior when project does not exist that returns a StatusNotFound status code",
 			method: nethttp.MethodGet,
-			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-non-existing",
+			url:    "http://" + suite.listenAddress + http.GetProjectsPath + "/project-non-existing",
 			arrangeTest: func(suite *SuiteGetProject) {
 				log := logger.NewFakeLogger()
 				afs := afero.NewOsFs()
 
-				projectRepositoryBackendDriver := local.NewDatabaseDriver(
+				projectsRepository := local.NewDatabaseDriver(
 					afs,
 					filepath.Join("..", "fixtures", "functional-get-project"),
 					log,
 				)
 
-				projectsRepository := localprojectpersistence.NewProjectRepository(
-					projectRepositoryBackendDriver,
-					log,
-				)
-
 				getProjectService := projectService.NewGetProjectService(projectsRepository, log)
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
-				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
+				suite.router.GET(http.GetProjectPath, getProjectHandler.Handle)
 			},
 			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: error finding project: error reading record: record not found: stat ../fixtures/functional-get-project/project-non-existing: no such file or directory\",\"status\":404}",
 			expectedStatusCode: nethttp.StatusNotFound,
@@ -153,7 +142,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 		{
 			desc:   "Testing a request get project functional behaviour when there is an internal error that returns a StatusInternalServerError status code",
 			method: nethttp.MethodGet,
-			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-internal-error",
+			url:    "http://" + suite.listenAddress + http.GetProjectsPath + "/project-internal-error",
 			arrangeTest: func(suite *SuiteGetProject) {
 				log := logger.NewFakeLogger()
 
@@ -165,7 +154,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 				)
 
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
-				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
+				suite.router.GET(http.GetProjectPath, getProjectHandler.Handle)
 			},
 			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: testing get project internal error\",\"status\":500}",
 			expectedStatusCode: nethttp.StatusInternalServerError,
@@ -173,7 +162,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 		{
 			desc:   "Testing a request get project functional behaviour when service returns a project not provided error that returns a StatusBadRequest status code",
 			method: nethttp.MethodGet,
-			url:    "http://" + suite.listenAddress + serve.GetProjectsPath + "/project-not-provided",
+			url:    "http://" + suite.listenAddress + http.GetProjectsPath + "/project-not-provided",
 			arrangeTest: func(suite *SuiteGetProject) {
 				log := logger.NewFakeLogger()
 
@@ -185,7 +174,7 @@ func (suite *SuiteGetProject) TestGetProject() {
 				)
 
 				getProjectHandler := projectHandler.NewGetProjectHandler(getProjectService, log)
-				suite.router.GET(serve.GetProjectPath, getProjectHandler.Handle)
+				suite.router.GET(http.GetProjectPath, getProjectHandler.Handle)
 			},
 			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project: testing get project not provided error\",\"status\":400}",
 			expectedStatusCode: nethttp.StatusBadRequest,

@@ -19,9 +19,8 @@ import (
 	ansibleexecutor "github.com/apenella/ransidble/internal/infrastructure/executor"
 	"github.com/apenella/ransidble/internal/infrastructure/filesystem"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
-	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/database/local"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch"
-	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
+	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository/local"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/store"
 	taskpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/task"
 	"github.com/apenella/ransidble/internal/infrastructure/tar"
@@ -30,16 +29,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
-)
-
-const (
-	CreateProjectPath             = "/projects"
-	CreateTaskAnsiblePlaybookPath = "/tasks/ansible-playbook/:project_id"
-	GetHealthPath                 = "/health"
-	GetProjectPath                = "/projects/:id"
-	GetProjectsPath               = "/projects"
-	GetTaskPath                   = "/tasks/:id"
-	GetTasksPath                  = "/tasks"
 )
 
 var (
@@ -61,15 +50,15 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			afs := afero.NewOsFs()
 			fs := filesystem.NewFilesystem(afs)
 
-			projectRepositoryBackendDriver := local.NewDatabaseDriver(afs, config.Server.Project.LocalStoragePath, log)
+			projectsRepository := local.NewDatabaseDriver(afs, config.Server.Project.LocalStoragePath, log)
 
 			// At this moment, the project repository loads the projects from the local storage. In the future, the plan is to have a database where you need to create a project before running it.
-			projectsRepository := localprojectpersistence.NewProjectRepository(
-				// afs,
-				// config.Server.Project.LocalStoragePath,
-				projectRepositoryBackendDriver,
-				log,
-			)
+			// projectsRepository := localprojectpersistence.NewProjectRepository(
+			// 	// afs,
+			// 	// config.Server.Project.LocalStoragePath,
+			// 	projectRepositoryBackendDriver,
+			// 	log,
+			// )
 
 			// err = projectsRepository.Initialize()
 			// if err != nil {
@@ -185,11 +174,11 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 				Level: 5,
 			}))
 
-			router.POST(CreateProjectPath, createProjectHandler.Handle)
-			router.POST(CreateTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
-			router.GET(GetTaskPath, getTaskHandler.Handle)
-			router.GET(GetProjectPath, getProjectHandler.Handle)
-			router.GET(GetProjectsPath, getProjectListHandler.Handle)
+			router.POST(server.CreateProjectPath, createProjectHandler.Handle)
+			router.POST(server.CreateTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
+			router.GET(server.GetTaskPath, getTaskHandler.Handle)
+			router.GET(server.GetProjectPath, getProjectHandler.Handle)
+			router.GET(server.GetProjectsPath, getProjectListHandler.Handle)
 
 			go func() {
 				errStartDispatcher := dispatcher.Start(cmd.Context())

@@ -273,7 +273,7 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 					entity.ProjectFormatTarGz,
 					entity.ProjectTypeLocal,
 					mock.Anything,
-				).Return(fmt.Errorf("error opening project file"))
+				).Return("no-project-id", fmt.Errorf("error opening project file"))
 			},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
@@ -333,9 +333,12 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 					entity.ProjectFormatTarGz,
 					entity.ProjectTypeLocal,
 					mock.Anything,
-				).Return(domainerror.NewProjectAlreadyExistsError(
-					fmt.Errorf("project already exists"),
-				))
+				).Return(
+					"no-project-id",
+					domainerror.NewProjectAlreadyExistsError(
+						fmt.Errorf("project already exists"),
+					),
+				)
 			},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
@@ -349,7 +352,6 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 				assert.Equal(t, http.StatusConflict, rec.Code)
 			},
 		},
-
 		{
 			desc: "Testing CreateProjectHandler.Handle request success and it is returning a StatusCreated",
 			handler: NewCreateProjectHandler(
@@ -396,18 +398,11 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 					entity.ProjectFormatTarGz,
 					entity.ProjectTypeLocal,
 					mock.Anything,
-				).Return(nil)
+				).Return("project-id", nil)
 			},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
-				var body *response.ProjectResponse
-				expectedBody := &response.ProjectResponse{
-					Format:  entity.ProjectFormatTarGz,
-					Storage: entity.ProjectTypeLocal,
-				}
-				err := json.Unmarshal(rec.Body.Bytes(), &body)
-				assert.NoError(t, err)
-				assert.Equal(t, expectedBody, body)
 				assert.Equal(t, http.StatusCreated, rec.Code)
+				assert.Equal(t, rec.Header().Get("Location"), "/projects/project-id")
 			},
 		},
 	}

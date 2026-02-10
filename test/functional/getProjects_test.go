@@ -11,12 +11,10 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 	projectService "github.com/apenella/ransidble/internal/domain/core/service/project"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
-	serve "github.com/apenella/ransidble/internal/handler/cli/serve"
 	"github.com/apenella/ransidble/internal/handler/http"
 	projectHandler "github.com/apenella/ransidble/internal/handler/http/project"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
-	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/database/local"
-	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
+	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository/local"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -93,37 +91,34 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 		method             string
 		url                string
 		expectedStatusCode int
+		expectedBody       string
 		arrangeTest        func(*SuiteGetProjectsList)
 	}{
 		{
 			desc:   "Testing a request to get projects list functinoal behavior when the request is successful that returns a StatusOK status code",
 			method: nethttp.MethodGet,
-			url:    "http://" + suite.listenAddress + serve.GetProjectsPath,
+			url:    "http://" + suite.listenAddress + http.GetProjectsPath,
 			arrangeTest: func(suite *SuiteGetProjectsList) {
 				log := logger.NewFakeLogger()
 				afs := afero.NewOsFs()
 
-				projectRepositoryBackendDriver := local.NewDatabaseDriver(
+				projectsRepository := local.NewDatabaseDriver(
 					afs,
 					filepath.Join("..", "fixtures", "functional-get-projects"),
 					log,
 				)
 
-				projectsRepository := localprojectpersistence.NewProjectRepository(
-					projectRepositoryBackendDriver,
-					log,
-				)
-
 				getProjectService := projectService.NewGetProjectService(projectsRepository, log)
 				getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
-				suite.router.GET(serve.GetProjectsPath, getProjectListHandler.Handle)
+				suite.router.GET(http.GetProjectsPath, getProjectListHandler.Handle)
 			},
+			expectedBody:       "[{\"format\":\"targz\",\"name\":\"project-3\",\"reference\":\"project-3.tar.gz\",\"storage\":\"local\"},{\"format\":\"targz\",\"name\":\"project-4\",\"reference\":\"project-4.tar.gz\",\"storage\":\"local\"}]",
 			expectedStatusCode: nethttp.StatusOK,
 		},
 		{
 			desc:   "Testing a request to get projects list functional behaviour when service returns an error getting the projects list that returns a StatusInternalServerError status code",
 			method: nethttp.MethodGet,
-			url:    "http://" + suite.listenAddress + serve.GetProjectsPath,
+			url:    "http://" + suite.listenAddress + http.GetProjectsPath,
 			arrangeTest: func(suite *SuiteGetProjectsList) {
 				log := logger.NewFakeLogger()
 
@@ -135,8 +130,9 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 				)
 
 				getProjectListHandler := projectHandler.NewGetProjectListHandler(getProjectService, log)
-				suite.router.GET(serve.GetProjectsPath, getProjectListHandler.Handle)
+				suite.router.GET(http.GetProjectsPath, getProjectListHandler.Handle)
 			},
+			expectedBody:       "{\"id\":\"\",\"error\":\"error getting project list: testing get project list error\",\"status\":500}",
 			expectedStatusCode: nethttp.StatusInternalServerError,
 		},
 	}
@@ -151,6 +147,7 @@ func (suite *SuiteGetProjectsList) TestGetProjectLists() {
 			desc:               test.desc,
 			method:             test.method,
 			url:                test.url,
+			expectedBody:       test.expectedBody,
 			expectedStatusCode: test.expectedStatusCode,
 		}
 

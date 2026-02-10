@@ -15,6 +15,7 @@ Ransidble is a utility that enables you to execute [Ansible](https://www.ansible
     - [Initiating the Ransidble server](#initiating-the-ransidble-server)
   - [REST API Reference](#rest-api-reference)
   - [User Reference](#user-reference)
+    - [Concepts](#concepts)
     - [Project Definition](#project-definition)
       - [Project Storage Types](#project-storage-types)
       - [Project Format Types](#project-format-types)
@@ -102,6 +103,13 @@ PLAY RECAP *********************************************************************
 The Ransidble provides you with a Open API specification that you can use to interact with the server. The Open API specification is available in the [api/openapi.yaml](api/openapi.yaml) file or through the [Swagger Editor](https://editor.swagger.io/?url=https://raw.githubusercontent.com/apenella/ransidble/main/api/openapi.yaml).
 
 ## User Reference
+
+### Concepts
+
+- **Project**: A Project is a packaged unit that contains the source code required to run Ansible, such as playbooks, roles, inventories, and related files.
+- **Project repository**: A Project Repository is a logical reference to where a Project’s source code is stored. It contains metadata such as the project name, version, and location, but not necessarily the source code itself.
+- **Project store**: A Project Store is the physical storage location where the Project source code is kept. This can be a local filesystem, a remote archive, or another supported storage backend.
+- **Fetch**: Fetch is the process of retrieving a Project’s source code from the Project Store and making it available locally so that Ansible commands can be executed.
 
 ### Project Definition
 

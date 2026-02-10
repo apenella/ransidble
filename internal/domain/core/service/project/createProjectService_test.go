@@ -23,6 +23,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 		storage              string
 		fileName             string
 		projectContentReader io.Reader
+		expectedProjectID    string
 		err                  error
 		service              *CreateProjectService
 		arrangeFunc          func(*testing.T, *CreateProjectService)
@@ -34,6 +35,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 			storage:              "local",
 			fileName:             "project.tar.gz",
 			projectContentReader: fileReader,
+			expectedProjectID:    "project",
 			err:                  nil,
 			service: NewCreateProjectService(
 				repository.NewMockProjectRepository(),
@@ -349,7 +351,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 				test.arrangeFunc(t, test.service)
 			}
 
-			err := test.service.Create(test.format, test.storage, test.fileName, test.projectContentReader)
+			id, err := test.service.Create(test.format, test.storage, test.fileName, test.projectContentReader)
 			if err != nil && test.err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
@@ -357,6 +359,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 				assert.Nil(t, test.err, "no error received when an error was expected")
 
 				if test.assertFunc != nil {
+					assert.Equal(t, test.expectedProjectID, id, "unexpected project ID returned")
 					assert.True(t, test.assertFunc(t, test.service))
 				}
 			}

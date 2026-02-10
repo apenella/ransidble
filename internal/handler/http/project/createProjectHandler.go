@@ -12,6 +12,7 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
+	serverhttp "github.com/apenella/ransidble/internal/handler/http"
 	"github.com/labstack/echo/v4"
 )
 
@@ -42,10 +43,11 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	var errorMsg string
 	var errorResponse *response.ProjectErrorResponse
 	var projectAlreadyExists *domainerror.ProjectAlreadyExistsError
+	var projectErrorResponseStatus int
 	var projectFileHeader *multipart.FileHeader
+	var projectID string
 	var projectReceivedFile multipart.File
 	var requestParameters request.ProjectParameters
-	var projectErrorResponseStatus int
 
 	if h.service == nil {
 		errorResponse = &response.ProjectErrorResponse{
@@ -128,7 +130,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
-	err = h.service.Create(requestParameters.Format, requestParameters.Storage, projectFileHeader.Filename, projectReceivedFile)
+	projectID, err = h.service.Create(requestParameters.Format, requestParameters.Storage, projectFileHeader.Filename, projectReceivedFile)
 	if err != nil {
 
 		httpStatus := http.StatusInternalServerError
@@ -153,9 +155,9 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 		return c.JSON(httpStatus, errorResponse)
 	}
 
-	// Pending to add the location header with the project location
+	// Use the route constant but replace the parameter placeholder with the actual ID
+	location := fmt.Sprintf("%s/%s", serverhttp.CreateProjectPath, projectID)
+	c.Response().Header().Set("Location", location)
 
-	c.JSON(http.StatusCreated, requestParameters)
-
-	return nil
+	return c.NoContent(http.StatusCreated)
 }

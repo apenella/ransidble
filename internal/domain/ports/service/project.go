@@ -12,8 +12,7 @@ type GetProjectServicer interface {
 	GetProjectsList() ([]*entity.Project, error)
 }
 
-// CreateProjectServicer represents the service to create a project
+// CreateProjectServicer represents the service to create a project. It returns the project ID on success and an error on failure.
 type CreateProjectServicer interface {
-	Create(format string, storage string, filename string, file io.Reader) error
-	// Create(format string, storage string, file *multipart.FileHeader) error
+	Create(format string, storage string, filename string, file io.Reader) (string, error)
 }

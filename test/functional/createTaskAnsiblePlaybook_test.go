@@ -14,14 +14,12 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/service/executor"
 	taskService "github.com/apenella/ransidble/internal/domain/core/service/task"
 	"github.com/apenella/ransidble/internal/domain/core/service/workspace"
-	"github.com/apenella/ransidble/internal/handler/cli/serve"
 	"github.com/apenella/ransidble/internal/handler/http"
 	taskHandler "github.com/apenella/ransidble/internal/handler/http/task"
 	"github.com/apenella/ransidble/internal/infrastructure/filesystem"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
-	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/database/local"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch"
-	localprojectpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
+	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository/local"
 	taskpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/task"
 	"github.com/apenella/ransidble/internal/infrastructure/tar"
 	"github.com/apenella/ransidble/internal/infrastructure/unpack"
@@ -398,14 +396,9 @@ func arrangeTaskAnsiblePlaybookRouter(router *echo.Echo, ansibleExecutor executo
 	rwFs := afero.NewCopyOnWriteFs(roFsBase, afero.NewMemMapFs())
 	fs := filesystem.NewFilesystem(rwFs)
 
-	projectRepositoryBackendDriver := local.NewDatabaseDriver(
+	projectsRepository := local.NewDatabaseDriver(
 		rwFs,
 		filepath.Join("..", "fixtures", "functional-create-task ansible-playbook"),
-		log,
-	)
-
-	projectsRepository := localprojectpersistence.NewProjectRepository(
-		projectRepositoryBackendDriver,
 		log,
 	)
 
@@ -456,7 +449,7 @@ func arrangeTaskAnsiblePlaybookRouter(router *echo.Echo, ansibleExecutor executo
 	)
 	createTaskAnsiblePlaybookHandler := taskHandler.NewCreateTaskAnsiblePlaybookHandler(createTaskAnsiblePlaybookService, log)
 
-	router.POST(serve.CreateTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
+	router.POST(http.CreateTaskAnsiblePlaybookPath, createTaskAnsiblePlaybookHandler.Handle)
 
 	return dispatcher, nil
 }
