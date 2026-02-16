@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFetchFactory(t *testing.T) {
+func TestStoProjectreFactory(t *testing.T) {
 
 	var factory *Factory
 	var storer *LocalStorage

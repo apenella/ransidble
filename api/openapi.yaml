@@ -138,10 +138,11 @@ paths:
       responses:
         202:
           description: Task accepted and is being processed
-          content:
-            application/json:
+          headers:
+            Location:
+              description: The URL of the created task
               schema:
-                $ref: '#/components/schemas/TaskCreatedResponse'
+                type: string
         400:
           description: Bad request, such as missing project ID or invalid request payload
           content:
@@ -388,13 +389,6 @@ components:
       required:
         - playbooks
         - inventory
-    TaskCreatedResponse:
-      type: object
-      description: Response when a task is created
-      properties:
-        id:
-          description: Task ID
-          type: string
     TaskResponse:
       type: object
       description: Response when handling a task request

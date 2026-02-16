@@ -20,6 +20,7 @@ import (
 	"github.com/apenella/ransidble/internal/infrastructure/filesystem"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/fetch"
+	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/repository/local"
 	"github.com/apenella/ransidble/internal/infrastructure/persistence/project/store"
 	taskpersistence "github.com/apenella/ransidble/internal/infrastructure/persistence/task"
@@ -50,9 +51,9 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			afs := afero.NewOsFs()
 			fs := filesystem.NewFilesystem(afs)
 
-			projectsRepository := local.NewDatabaseDriver(afs, config.Server.Project.ProjectRepositoryConfiguration.LocalRepositoryPath, log)
+			projectLocalRepository := local.NewDatabaseDriver(afs, config.Server.Project.ProjectRepositoryConfiguration.LocalRepositoryPath, log)
 
-			err = projectsRepository.Initialize()
+			err = projectLocalRepository.Initialize()
 			if err != nil {
 				log.Error(
 					err.Error(),
@@ -62,6 +63,11 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 					})
 				return err
 			}
+
+			projectsRepositoryFactory := repository.NewFactory()
+			projectsRepositoryFactory.Register(entity.ProjectTypeLocal, projectLocalRepository)
+
+			projectsRepository := projectsRepositoryFactory.Get(config.Server.Project.ProjectRepositoryConfiguration.Type)
 
 			// At this moment, the project repository loads the projects from the local storage. In the future, the plan is to have a database where you need to create a project before running it.
 			// projectsRepository := localprojectpersistence.NewProjectRepository(
