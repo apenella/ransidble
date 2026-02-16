@@ -296,6 +296,103 @@ func TestDelete(t *testing.T) {
 	}
 }
 
+func TestInitialize(t *testing.T) {
+	// test the Initialize method of the DatabaseDriver. Use a driven test table approach. use a in-memory filsystem. use afero. Start by testing all the errors and then test case where the initialization is successful. In the successful case, check that the database path is created if it does not exist. each test must have a arrange function to prepare the environment and an assert function to check the results.
+
+	tests := []struct {
+		desc        string
+		database    *DatabaseDriver
+		arrangeFunc func(*testing.T, *DatabaseDriver)
+		assertFunc  func(*testing.T, *DatabaseDriver)
+		err         error
+	}{
+		{
+			desc: "Testing successful initialization of the local database when the database path does not exist",
+			database: NewDatabaseDriver(
+				afero.NewMemMapFs(),
+				filepath.Join("/database"),
+				logger.NewFakeLogger(),
+			),
+			arrangeFunc: func(t *testing.T, database *DatabaseDriver) {},
+			assertFunc: func(t *testing.T, database *DatabaseDriver) {
+				_, err := database.fs.Stat(filepath.Join("/database"))
+				assert.NoError(t, err)
+			},
+		},
+		{
+			desc: "Testing successful initialization of the local database when the database path already exists",
+			database: NewDatabaseDriver(
+				afero.NewMemMapFs(),
+				filepath.Join("/database"),
+				logger.NewFakeLogger(),
+			),
+			arrangeFunc: func(t *testing.T, database *DatabaseDriver) {
+				database.fs.MkdirAll(filepath.Join("/database"), os.ModePerm)
+			},
+			assertFunc: func(t *testing.T, database *DatabaseDriver) {
+				_, err := database.fs.Stat(filepath.Join("/database"))
+				assert.NoError(t, err)
+			},
+		},
+		{
+			desc: "Testing error initializing the local database when the filesystem is not initialized",
+			database: NewDatabaseDriver(
+				nil,
+				filepath.Join("/database"),
+				logger.NewFakeLogger(),
+			),
+			arrangeFunc: func(t *testing.T, database *DatabaseDriver) {},
+			assertFunc:  func(t *testing.T, database *DatabaseDriver) {},
+			err:         fmt.Errorf("%s", ErrFilesystemNotInitialized),
+		},
+		{
+			desc: "Testing error initializing the local database when the database path is not initialized",
+			database: NewDatabaseDriver(
+				afero.NewMemMapFs(),
+				"",
+				logger.NewFakeLogger(),
+			),
+			arrangeFunc: func(t *testing.T, database *DatabaseDriver) {},
+			assertFunc:  func(t *testing.T, database *DatabaseDriver) {},
+			err:         fmt.Errorf("%s", ErrDatabasePathNotInitialized),
+		},
+		{
+			desc: "Testing error initializing the local database when the database path is a file",
+			database: NewDatabaseDriver(
+				afero.NewMemMapFs(),
+				filepath.Join("/database"),
+				logger.NewFakeLogger(),
+			),
+			arrangeFunc: func(t *testing.T, database *DatabaseDriver) {
+				afero.WriteFile(database.fs, filepath.Join("/database"), []byte("test"), os.ModePerm)
+			},
+			assertFunc: func(t *testing.T, database *DatabaseDriver) {},
+			err:        fmt.Errorf("%s: %w", ErrInitializingDatabase, fmt.Errorf("%s", ErrDatabasePathIsNotADirectory)),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			if test.arrangeFunc != nil {
+				test.arrangeFunc(t, test.database)
+			}
+
+			err := test.database.Initialize()
+			if test.err != nil {
+				assert.NotNil(t, err, "expected error but got nil")
+				assert.Equal(t, test.err.Error(), err.Error())
+			} else {
+				assert.Nil(t, err, "unexpected error occurred")
+				if test.assertFunc != nil {
+					test.assertFunc(t, test.database)
+				}
+			}
+		})
+	}
+}
+
 func TestRead(t *testing.T) {
 
 	// Arranging the database with the records needed for the test

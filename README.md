@@ -130,7 +130,7 @@ The storage type defines where the project is stored. The supported storage type
 
 #### Project Format Types
 
-The format type defines the structure of the project. The following sections describe the supported format types.
+The format type defines the structure of the project. The  following sections describe the supported format types.
 
 ##### Plain
 
@@ -163,15 +163,13 @@ tar -czvf my-project.tar.gz -C my-project .
 Once you have the tarball, you can create the project using the following command:
 
 ```bash
-$ curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@my-project.tar.gz'
+curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-1.tar.gz'
 
 HTTP/1.1 201 Created
-Content-Type: application/json
+Location: /projects/project-1
 Vary: Accept-Encoding
-Date: Sat, 08 Mar 2025 15:05:12 GMT
-Content-Length: 37
-
-{"format":"targz","storage":"local"}
+Date: Tue, 10 Feb 2026 20:11:23 GMT
+Content-Length: 0
 ```
 
 #### Performing a Request to Execute an Ansible playbook
@@ -179,15 +177,15 @@ Content-Length: 37
 The following example demonstrates how to execute an Ansible playbook using the Ransidble server. Please refer to the [REST API Reference](#rest-api-reference) section for more information.
 
 ```bash
-$ curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/tasks/ansible-playbook/project-1 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}'
+curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/tasks/ansible-playbook/project-1 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}'
 
 HTTP/1.1 202 Accepted
 Content-Type: application/json
 Vary: Accept-Encoding
-Date: Sun, 21 Jul 2024 18:01:19 GMT
+Date: Tue, 10 Feb 2026 20:14:25 GMT
 Content-Length: 46
 
-{"id":"ecfc92dc-6323-40d6-9bf8-71c4d4d98640"}
+{"id":"e29d7d93-fc1d-4f85-bbfc-81aa78e4c181"}
 ```
 
 #### Performing a Request Accepting Gzip Encoding
@@ -200,25 +198,22 @@ r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
 #### Getting the Status of an Execution
 
 ```bash
-$ curl -s -GET 0.0.0.0:8080/tasks/ecfc92dc-6323-40d6-9bf8-71c4d4d98640 | jq
+$ curl -s -GET 0.0.0.0:8080/tasks/e29d7d93-fc1d-4f85-bbfc-81aa78e4c181 | jq
 {
   "command": "ansible-playbook",
-  "completed_at": "2024-07-21T20:01:25+02:00",
-  "created_at": "2024-07-21T20:01:19+02:00",
-  "executed_at": "2024-07-21T20:01:19+02:00",
-  "id": "ecfc92dc-6323-40d6-9bf8-71c4d4d98640",
+  "completed_at": "2026-02-10T20:14:31Z",
+  "created_at": "2026-02-10T20:14:25Z",
+  "executed_at": "2026-02-10T20:14:25Z",
+  "id": "e29d7d93-fc1d-4f85-bbfc-81aa78e4c181",
   "parameters": {
     "playbooks": [
       "site.yml"
     ],
+    "requirements": {},
     "inventory": "127.0.0.1,",
     "connection": "local"
   },
-  "project": {
-    "name": "project-1",
-    "reference": "test/projects/project-1",
-    "type": "local"
-  },
+  "project_id": "project-1",
   "status": "SUCCESS"
 }
 ```
@@ -228,10 +223,10 @@ $ curl -s -GET 0.0.0.0:8080/tasks/ecfc92dc-6323-40d6-9bf8-71c4d4d98640 | jq
 ```bash
 $ curl -s 0.0.0.0:8080/projects/project-1 | jq
 {
-  "format": "plain",
+  "format": "targz",
   "name": "project-1",
-  "reference": "test/projects/project-1",
-  "type": "local"
+  "reference": "project-1.tar.gz",
+  "storage": "local"
 }
 ```
 
@@ -241,16 +236,16 @@ $ curl -s 0.0.0.0:8080/projects/project-1 | jq
 $ curl -s 0.0.0.0:8080/projects | jq
 [
   {
-    "format": "plain",
+    "format": "targz",
     "name": "project-1",
-    "reference": "test/projects/project-1",
-    "type": "local"
+    "reference": "project-1.tar.gz",
+    "storage": "local"
   },
   {
-    "format": "plain",
+    "format": "targz",
     "name": "project-2",
-    "reference": "test/projects/project-2",
-    "type": "local"
+    "reference": "project-2.tar.gz",
+    "storage": "local"
   }
 ]
 ```

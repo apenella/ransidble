@@ -13,6 +13,10 @@ import (
 )
 
 const (
+	// ErrDatabasePathIsNotADirectory is the error message when the database path is not a directory.
+	ErrDatabasePathIsNotADirectory = "database path is not a directory"
+	// ErrDatabasePathMustExist is the error message when the database path must exist.
+	ErrDatabasePathMustExist = "database path must exist"
 	// ErrDatabasePathNotInitialized is the error message when the database path is not initialized.
 	ErrDatabasePathNotInitialized = "database path not initialized"
 	// ErrDataToWriteIsNotProvided is the error message when the data to write is not provided.
@@ -25,6 +29,8 @@ const (
 	ErrFilesystemNotInitialized = "filesystem not initialized"
 	// ErrIDIsNotProvided is the error message when the ID is required.
 	ErrIDIsNotProvided = "ID is not provided"
+	// ErrInitializingDatabase is the error message when initializing the database fails.
+	ErrInitializingDatabase = "error initializing database"
 	// ErrInvalidRecordFormat is the error message when the record format is invalid.
 	ErrInvalidRecordFormat = "invalid record format"
 	// ErrInvalidRecordFormatIsDir is the error message when the record format is a directory.
@@ -35,26 +41,24 @@ const (
 	ErrMarshalingRecordToWrite = "error marshaling record to write"
 	// ErrOpeningFileToWriteRecord is the error message when opening the file to write the record fails.
 	ErrOpeningFileToWriteRecord = "error opening file to write record"
+	// ErrProjectExists is the error message when the project already exists.
+	ErrProjectExists = "error project already exists"
 	// ErrReadingRecord is the error message when reading the record fails.
 	ErrReadingRecord = "error reading record"
 	// ErrReadingRecordNotFound is the error message when the record is not found.
 	ErrReadingRecordNotFound = "record not found"
 	// ErrReadingRecordsFromDatabase is the error message when reading the records from the database fails.
 	ErrReadingRecordsFromDatabase = "error reading records from database"
+	// ErrRemovingRecord is the error message when removing the record fails.
+	ErrRemovingRecord = "error removing record"
+	// ErrStoringProject is the error message when storing the project fails.
+	ErrStoringProject = "error storing project"
 	// ErrVerifyingRecord is the error message when verifying the record fails.
 	ErrVerifyingRecord = "error verifying record"
 	// ErrVerifyingRecordInvalidHash is the error message when the record hash is invalid.
 	ErrVerifyingRecordInvalidHash = "record hash is invalid"
 	// ErrWritingRecord is the error message when writing the record fails.
 	ErrWritingRecord = "error writing record"
-	// ErrDatabasePathMustExist is the error message when the database path must exist.
-	ErrDatabasePathMustExist = "database path must exist"
-	// ErrRemovingRecord is the error message when removing the record fails.
-	ErrRemovingRecord = "error removing record"
-	// ErrProjectExists is the error message when the project already exists.
-	ErrProjectExists = "error project already exists"
-	// ErrStoringProject is the error message when storing the project fails.
-	ErrStoringProject = "error storing project"
 )
 
 // DatabaseDriver is a struct that represents a local database to persist the projects references.
@@ -110,6 +114,83 @@ func (db *DatabaseDriver) SafeStore(id string, data *entity.Project) error {
 // Delete deletes a project from the local database.
 func (db *DatabaseDriver) Delete(id string) error {
 	return db.remove(id)
+}
+
+// Initialize initializes the local database.
+func (db *DatabaseDriver) Initialize() error {
+	if db.fs == nil {
+		db.logger.Error(
+			ErrFilesystemNotInitialized,
+			map[string]interface{}{
+				"component": "DatabaseDriver.initialize",
+				"package":   packageName,
+			},
+		)
+		return fmt.Errorf("%s", ErrFilesystemNotInitialized)
+	}
+
+	if db.path == "" {
+		db.logger.Error(
+			ErrDatabasePathNotInitialized,
+			map[string]interface{}{
+				"component": "DatabaseDriver.initialize",
+				"package":   packageName,
+			},
+		)
+		return fmt.Errorf("%s", ErrDatabasePathNotInitialized)
+	}
+
+	info, err := db.fs.Stat(db.path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			db.logger.Info(
+				"Creating local project repository",
+				map[string]interface{}{
+					"component": "DatabaseDriver.initialize",
+					"package":   packageName,
+					"path":      db.path,
+				},
+			)
+
+			errMkdir := db.fs.MkdirAll(db.path, 0755)
+			if errMkdir != nil {
+				db.logger.Error(
+					fmt.Sprintf("%s: %s", ErrInitializingDatabase, errMkdir.Error()),
+					map[string]interface{}{
+						"component": "DatabaseDriver.initialize",
+						"package":   packageName,
+						"path":      db.path,
+					},
+				)
+				return fmt.Errorf("%s: %w", ErrInitializingDatabase, errMkdir)
+			}
+			return nil
+		}
+		db.logger.Error(
+			fmt.Sprintf("%s: %s", ErrInitializingDatabase, err.Error()),
+			map[string]interface{}{
+				"component": "DatabaseDriver.initialize",
+				"package":   packageName,
+				"path":      db.path,
+			},
+		)
+		return fmt.Errorf("%s: %w", ErrInitializingDatabase, err)
+	}
+
+	// ensure the database path is a directory otherwise it cannot be used as a database
+	if !info.IsDir() {
+		db.logger.Error(
+			fmt.Sprintf("%s: %s", ErrInitializingDatabase, ErrDatabasePathIsNotADirectory),
+			map[string]interface{}{
+				"component": "DatabaseDriver.initialize",
+				"package":   packageName,
+				"path":      db.path,
+			},
+		)
+		return fmt.Errorf("%s: %w", ErrInitializingDatabase, fmt.Errorf("%s", ErrDatabasePathIsNotADirectory))
+	}
+
+	return nil
 }
 
 // Private methods to manage the local database
