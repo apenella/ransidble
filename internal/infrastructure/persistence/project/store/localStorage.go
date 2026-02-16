@@ -81,7 +81,7 @@ func (s *LocalStorage) Initialize() error {
 	_, err := s.fs.Stat(s.path)
 	if err != nil {
 		s.logger.Info(
-			"Creating storage path",
+			"Creating local project storage path",
 			map[string]interface{}{
 				"component": "LocalStorage.Initialize",
 				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/store",

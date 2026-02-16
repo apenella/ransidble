@@ -51,7 +51,10 @@ The Ransidble server can be configured using environment variables. The followin
 |----------------------|-------------|---------------|
 | RANSIDBLE_SERVER_HTTP_LISTEN_ADDRESS | The port where the server listens for incoming requests | :8080 |
 | RANSIDBLE_SERVER_LOG_LEVEL | The log level for the server | info |
-| RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH | The path where the projects are stored | projects |
+| RANSIDBLE_SERVER_PROJECT_REPOSITORY_LOCAL_PATH | Path for project repository (if type is local) | repository |
+| RANSIDBLE_SERVER_PROJECT_REPOSITORY_TYPE | Project repository type (local, memory) | local |
+| RANSIDBLE_SERVER_PROJECT_STORAGE_LOCAL_PATH | Path for project storage (if type is local) | storage |
+| RANSIDBLE_SERVER_PROJECT_STORAGE_TYPE | Project storage type (local, memory) | local |
 | RANSIDBLE_SERVER_WORKER_POOL_SIZE | The number of workers to execute the commands | 1 |
 
 Ransidble can be also configured using a configuration file. In this case, the file must be named `ransidble.yaml` and placed in the same directory as the binary. Environment variables take precedence over the configuration file.
@@ -63,8 +66,12 @@ server:
   log_level: info
   worker_pool_size: 5
   project:
-    local_storage_path: projects
-    storage_type: local
+    storage:
+      local_path: storage
+      type: local
+    repository:
+      local_path: storage
+      type: local
 ```
 
 ### Initiating the Ransidble server

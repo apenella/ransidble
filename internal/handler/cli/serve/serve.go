@@ -50,7 +50,18 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			afs := afero.NewOsFs()
 			fs := filesystem.NewFilesystem(afs)
 
-			projectsRepository := local.NewDatabaseDriver(afs, config.Server.Project.LocalStoragePath, log)
+			projectsRepository := local.NewDatabaseDriver(afs, config.Server.Project.ProjectRepositoryConfiguration.LocalRepositoryPath, log)
+
+			err = projectsRepository.Initialize()
+			if err != nil {
+				log.Error(
+					err.Error(),
+					map[string]interface{}{
+						"component": "Serve",
+						"package":   "github.com/apenella/ransidble/internal/handler/cli/serve",
+					})
+				return err
+			}
 
 			// At this moment, the project repository loads the projects from the local storage. In the future, the plan is to have a database where you need to create a project before running it.
 			// projectsRepository := localprojectpersistence.NewProjectRepository(
@@ -88,12 +99,13 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			// 	return
 			// }
 
+			// TO DO: do not fetch from the local storage but from the project repository
 			fetchFactory := fetch.NewFactory()
 			fetchFactory.Register(
 				entity.ProjectTypeLocal,
 				fetch.NewLocalStorage(
 					afs,
-					config.Server.Project.LocalStoragePath,
+					config.Server.Project.ProjectStorageConfiguration.LocalStoragePath,
 					log,
 				),
 			)
@@ -146,7 +158,7 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			storeFactory := store.NewFactory()
 			localStorageStore := store.NewLocalStorage(
 				afs,
-				config.Server.Project.LocalStoragePath,
+				config.Server.Project.ProjectStorageConfiguration.LocalStoragePath,
 				log,
 			)
 			err = localStorageStore.Initialize()
