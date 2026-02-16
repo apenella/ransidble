@@ -12,6 +12,7 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
+	serverhttp "github.com/apenella/ransidble/internal/handler/http"
 	"github.com/labstack/echo/v4"
 )
 
@@ -168,9 +169,9 @@ func (h *CreateTaskAnsiblePlaybookHandler) Handle(c echo.Context) error {
 		return c.JSON(httpStatus, errorResponse)
 	}
 
-	taskCreated := &response.TaskCreatedResponse{
-		ID: taskID,
-	}
+	location := fmt.Sprintf("%s/%s", serverhttp.TaskBasePath, taskID)
 
-	return c.JSON(http.StatusAccepted, taskCreated)
+	c.Response().Header().Set("Location", location)
+
+	return c.NoContent(http.StatusAccepted)
 }

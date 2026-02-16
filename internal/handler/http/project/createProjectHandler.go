@@ -156,7 +156,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	}
 
 	// Use the route constant but replace the parameter placeholder with the actual ID
-	location := fmt.Sprintf("%s/%s", serverhttp.CreateProjectPath, projectID)
+	location := fmt.Sprintf("%s/%s", serverhttp.ProjectBasePath, projectID)
 	c.Response().Header().Set("Location", location)
 
 	return c.NoContent(http.StatusCreated)

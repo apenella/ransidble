@@ -6,6 +6,11 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/entity"
 )
 
+// ProjectRepositoryFactory represents the component to create a ProjectRepository
+type ProjectRepositoryFactory interface {
+	Get(projectType string) ProjectRepository
+}
+
 // ProjectRepository represents a repository to manage projects
 type ProjectRepository interface {
 	Find(id string) (*entity.Project, error)

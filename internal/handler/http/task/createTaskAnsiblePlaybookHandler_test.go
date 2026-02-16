@@ -13,6 +13,7 @@ import (
 	"github.com/apenella/ransidble/internal/domain/core/model/request"
 	"github.com/apenella/ransidble/internal/domain/core/model/response"
 	"github.com/apenella/ransidble/internal/domain/ports/service"
+	serverhttp "github.com/apenella/ransidble/internal/handler/http"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/apenella/ransidble/test/openapi"
 	"github.com/labstack/echo/v4"
@@ -292,14 +293,9 @@ func TestHandle_CreateTaskAnsiblePlaybookHandler(t *testing.T) {
 				h.service.(*service.MockAnsiblePlaybookService).On("Run", mock.Anything, mock.Anything).Return(nil)
 			},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
-				var body *response.TaskCreatedResponse
-				expectedBody := &response.TaskCreatedResponse{
-					ID: "testing_task_id",
-				}
-				err := json.Unmarshal(rec.Body.Bytes(), &body)
-				assert.NoError(t, err)
-				assert.Equal(t, expectedBody, body)
+
 				assert.Equal(t, http.StatusAccepted, rec.Code)
+				assert.Equal(t, fmt.Sprintf("%s/%s", serverhttp.TaskBasePath, "testing_task_id"), rec.Header().Get("Location"))
 			},
 		},
 	}
