@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -14,7 +15,7 @@ import (
 
 func TestLocalStorage_Initialize(t *testing.T) {
 
-	sourceBase := filepath.Join("fixtures", "persistence-project-store")
+	sourceBase := filepath.Join("fixtures", "persistence-project-store", "local", "store")
 	fs := afero.NewCopyOnWriteFs(
 		afero.NewReadOnlyFs(
 			afero.NewBasePathFs(afero.NewOsFs(), "../../../../../test"),
@@ -102,7 +103,7 @@ func TestLocalStorage_Initialize(t *testing.T) {
 
 func TestLocalStorage_Store(t *testing.T) {
 
-	sourceBase := filepath.Join("fixtures", "persistence-project-store")
+	sourceBase := filepath.Join("fixtures", "persistence-project-store", "local", "store")
 	sourceProjectFile := "project-1.tar.gz"
 	localStoragePath := filepath.Join("local-storage")
 
@@ -263,6 +264,123 @@ func TestLocalStorage_Store(t *testing.T) {
 			}
 
 			err := test.storage.Store(test.project, test.srcFile)
+			if err != nil && test.err != nil {
+				assert.Equal(t, test.err.Error(), err.Error())
+			} else {
+				assert.Nil(t, err)
+
+				if test.assertFunc != nil {
+					test.assertFunc(t, test.storage)
+				}
+			}
+		})
+	}
+}
+
+func TestLocalStorage_Delete(t *testing.T) {
+
+	// sourceBase := filepath.Join("fixtures", "persistence-project-store", "local", "delete")
+	// sourceProjectFile := "project-1.tar.gz"
+	// localStoragePath := filepath.Join("local-storage")
+
+	fs := afero.NewCopyOnWriteFs(
+		afero.NewReadOnlyFs(
+			afero.NewBasePathFs(
+				afero.NewOsFs(),
+				filepath.Join("..", "..", "..", "..", "..",
+					"test",
+					"fixtures",
+					"persistence-project-store",
+					"local",
+				),
+			),
+		),
+		afero.NewMemMapFs(),
+	)
+
+	tests := []struct {
+		desc        string
+		storage     *LocalStorage
+		project     *entity.Project
+		arrangeFunc func(*testing.T, *LocalStorage)
+		assertFunc  func(*testing.T, *LocalStorage)
+		err         error
+	}{
+		{
+			desc:    "Testing delete a project in local storage",
+			storage: NewLocalStorage(fs, "delete", logger.NewFakeLogger()),
+			project: &entity.Project{
+				Name:      "project-1",
+				Reference: "project-1.tar.gz",
+				Format:    "targz",
+				Storage:   "local",
+			},
+			arrangeFunc: func(t *testing.T, storage *LocalStorage) {
+				// Create the file in the local storage path to simulate an existing project
+				_, err := storage.fs.OpenFile(filepath.Join("delete", "project-1.tar.gz"), os.O_CREATE|os.O_WRONLY, 0644)
+
+				assert.Nil(t, err, fmt.Sprintf("error arranging the test by creating file %s", filepath.Join("delete", "project-1.tar.gz")))
+
+				_, err = storage.fs.Stat(filepath.Join("delete", "project-1.tar.gz"))
+				assert.Nil(t, err, fmt.Sprintf("error checking file %s", filepath.Join("delete", "project-1.tar.gz")))
+
+				fmt.Println("project created")
+			},
+			assertFunc: func(t *testing.T, storage *LocalStorage) {
+				_, err := storage.fs.Stat(filepath.Join("delete", "project-1.tar.gz"))
+				assert.NotNil(t, err, fmt.Sprintf("error checking file %s", filepath.Join("delete", "project-1.tar.gz")))
+
+			},
+			err: nil,
+		},
+		{
+			desc:    "Testing error deleting a project in local storage when project is not provided",
+			storage: NewLocalStorage(fs, "delete", logger.NewFakeLogger()),
+			project: nil,
+			assertFunc: func(t *testing.T, storage *LocalStorage) {
+				// No assertion needed as the error is expected
+			},
+			err: fmt.Errorf(ErrProjectNotProvided),
+		},
+		{
+			desc:    "Testing error deleting a project in local storage when storage filesystem is not initialized",
+			storage: NewLocalStorage(nil, "delete", logger.NewFakeLogger()),
+			project: &entity.Project{
+				Name:      "project-1",
+				Reference: "project-1.tar.gz",
+				Format:    "targz",
+				Storage:   "local",
+			},
+			assertFunc: func(t *testing.T, storage *LocalStorage) {
+				// No assertion needed as the error is expected
+			},
+			err: fmt.Errorf(ErrStorageHandlerNotInitialized),
+		},
+		{
+			desc:    "Testing error deleting a project in local storage when storage path is not provided",
+			storage: NewLocalStorage(fs, "", logger.NewFakeLogger()),
+			project: &entity.Project{
+				Name:      "project-1",
+				Reference: "project-1.tar.gz",
+				Format:    "targz",
+				Storage:   "local",
+			},
+			assertFunc: func(t *testing.T, storage *LocalStorage) {
+				// No assertion needed as the error is expected
+			},
+			err: fmt.Errorf(ErrStoragePathNotProvided),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			if test.arrangeFunc != nil {
+				test.arrangeFunc(t, test.storage)
+			}
+
+			err := test.storage.Delete(test.project)
 			if err != nil && test.err != nil {
 				assert.Equal(t, test.err.Error(), err.Error())
 			} else {

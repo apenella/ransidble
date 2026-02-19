@@ -34,6 +34,8 @@ const (
 	ErrCheckingStoragePathIsDirectory = "error checking storage path is a directory"
 	// ErrInitializingLocalStorage represents the error when the local storage cannot be initialized
 	ErrInitializingLocalStorage = "error initializing local storage"
+	// ErrDeletingProjectInLocalStorage represents the error when a project cannot be deleted in local storage
+	ErrDeletingProjectInLocalStorage = "error deleting project in local storage"
 )
 
 // LocalStorage represents a repository on local storage
@@ -222,6 +224,55 @@ func (s *LocalStorage) Store(project *entity.Project, srcFile io.Reader) (err er
 				"destination": destFilePath,
 			})
 		return fmt.Errorf(ErrStoringProjectInLocalStorage)
+	}
+
+	return nil
+}
+
+func (s *LocalStorage) Delete(project *entity.Project) error {
+
+	if project == nil {
+		s.logger.Error(
+			ErrProjectNotProvided,
+			map[string]interface{}{
+				"component": "LocalStorage.Delete",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/store",
+			})
+		return fmt.Errorf(ErrProjectNotProvided)
+	}
+
+	if s.fs == nil {
+		s.logger.Error(
+			ErrStorageHandlerNotInitialized,
+			map[string]interface{}{
+				"component": "LocalStorage.Delete",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/store",
+			})
+		return fmt.Errorf(ErrStorageHandlerNotInitialized)
+	}
+
+	if s.path == "" {
+		s.logger.Error(
+			ErrStoragePathNotProvided,
+			map[string]interface{}{
+				"component": "LocalStorage.Delete",
+				"package":   "github.com/apenella/ransidble/internal/infrastructure/persistence/project/store",
+			})
+		return fmt.Errorf(ErrStoragePathNotProvided)
+	}
+
+	destFilePath := filepath.Join(s.path, project.Reference)
+
+	err := s.fs.Remove(destFilePath)
+	if err != nil {
+		s.logger.Error(
+			fmt.Sprintf("%s: %s", ErrDeletingProjectInLocalStorage, err.Error()),
+			map[string]interface{}{
+				"component":   "LocalStorage.Delete",
+				"package":     "github.com/apenella/ransidble/internal/infrastructure/persistence/project/store",
+				"destination": destFilePath,
+			})
+		return fmt.Errorf("%s: %s", ErrDeletingProjectInLocalStorage, err.Error())
 	}
 
 	return nil
