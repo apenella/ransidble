@@ -7,6 +7,9 @@ type MockProjectRepositoryFactory struct {
 	mock.Mock
 }
 
+// Ensure MockProjectRepositoryFactory implements the ProjectRepositoryFactory interface
+var _ ProjectRepositoryFactory = (*MockProjectRepositoryFactory)(nil)
+
 // Get provides a mock function with given fields: project repository type
 func (m *MockProjectRepositoryFactory) Get(projectType string) ProjectRepository {
 	ret := m.Called(projectType)

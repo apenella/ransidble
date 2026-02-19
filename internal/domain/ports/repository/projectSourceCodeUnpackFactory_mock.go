@@ -7,6 +7,9 @@ type MockProjectSourceCodeUnpackFactory struct {
 	mock.Mock
 }
 
+// Ensure MockProjectSourceCodeUnpackFactory implements the SourceCodeUnpackFactory interface
+var _ SourceCodeUnpackFactory = (*MockProjectSourceCodeUnpackFactory)(nil)
+
 // Get provides a mock function with given fields: projectType
 func (m *MockProjectSourceCodeUnpackFactory) Get(projectType string) SourceCodeUnpacker {
 	ret := m.Called(projectType)

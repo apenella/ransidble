@@ -7,6 +7,9 @@ type Factory struct {
 	factory map[string]repository.SourceCodeFetcher
 }
 
+// Ensure Factory implements the SourceCodeFetchFactory interface
+var _ repository.SourceCodeFetchFactory = (*Factory)(nil)
+
 // NewFactory creates a new Factory for fetching source code
 func NewFactory() *Factory {
 	return &Factory{

@@ -7,6 +7,10 @@ type Factory struct {
 	factory map[string]repository.ProjectRepository
 }
 
+// Ensure Factory implements the ProjectRepositoryFactory interface
+var _ repository.ProjectRepositoryFactory = (*Factory)(nil)
+
+// NewFactory creates a new Factory for project repositories
 func NewFactory() *Factory {
 	return &Factory{
 		factory: make(map[string]repository.ProjectRepository),

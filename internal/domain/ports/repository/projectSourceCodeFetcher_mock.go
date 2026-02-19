@@ -10,6 +10,9 @@ type MockProjectSourceCodeFetcher struct {
 	mock.Mock
 }
 
+// Ensure MockProjectSourceCodeFetcher implements the SourceCodeFetcher interface
+var _ SourceCodeFetcher = (*MockProjectSourceCodeFetcher)(nil)
+
 // Fetch provides a mock function with given fields: project, destination
 func (m *MockProjectSourceCodeFetcher) Fetch(project *entity.Project, destination string) error {
 	ret := m.Called(project, destination)

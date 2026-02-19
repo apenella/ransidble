@@ -10,6 +10,9 @@ type MockProjectUnpacker struct {
 	mock.Mock
 }
 
+// Ensure MockProjectUnpacker implements the Unpacker interface
+var _ Unpacker = (*MockProjectUnpacker)(nil)
+
 // Unpack provides a mock function with given fields: project, workingDir
 func (m *MockProjectUnpacker) Unpack(project *entity.Project, workingDir string) error {
 	ret := m.Called(project, workingDir)

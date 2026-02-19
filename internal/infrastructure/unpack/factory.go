@@ -7,6 +7,9 @@ type Factory struct {
 	factory map[string]repository.SourceCodeUnpacker
 }
 
+// Ensure Factory implements the SourceCodeUnpackFactory interface
+var _ repository.SourceCodeUnpackFactory = (*Factory)(nil)
+
 // NewFactory creates a new Factory for unpacking source code
 func NewFactory() *Factory {
 	return &Factory{

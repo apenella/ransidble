@@ -7,6 +7,9 @@ type MockProjectSourceCodeStorageFactory struct {
 	mock.Mock
 }
 
+// Ensure MockProjectSourceCodeStorageFactory implements the SourceCodeFetchFactory interface
+var _ SourceCodeStorageFactory = (*MockProjectSourceCodeStorageFactory)(nil)
+
 // NewMockProjectSourceCodeStorageFactory provides a mock for the SourceCodeFetchFactory
 func NewMockProjectSourceCodeStorageFactory() *MockProjectSourceCodeStorageFactory {
 	return &MockProjectSourceCodeStorageFactory{}

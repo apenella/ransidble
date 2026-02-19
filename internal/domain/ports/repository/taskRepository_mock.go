@@ -10,6 +10,9 @@ type MockTaskRepository struct {
 	mock.Mock
 }
 
+// Ensure MockTaskRepository implements the TaskRepository interface
+var _ TaskRepository = (*MockTaskRepository)(nil)
+
 // NewMockTaskRepository returns a new MockTaskRepository
 func NewMockTaskRepository() *MockTaskRepository {
 	return &MockTaskRepository{}

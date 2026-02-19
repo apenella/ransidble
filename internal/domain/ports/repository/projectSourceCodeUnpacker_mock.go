@@ -10,6 +10,9 @@ type MockProjectSourceCodeUnpacker struct {
 	mock.Mock
 }
 
+// Ensure MockProjectSourceCodeUnpacker implements the SourceCodeUnpacker interface
+var _ SourceCodeUnpacker = (*MockProjectSourceCodeUnpacker)(nil)
+
 // Unpack provides a mock function with given fields: project, destination
 func (m *MockProjectSourceCodeUnpacker) Unpack(project *entity.Project, destination string) error {
 	ret := m.Called(project, destination)

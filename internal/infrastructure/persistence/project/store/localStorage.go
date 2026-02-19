@@ -48,6 +48,9 @@ type LocalStorage struct {
 	logger repository.Logger
 }
 
+// Ensure MockProjectRepository implements the ProjectRepository interface
+var _ repository.SourceCodeStorer = (*LocalStorage)(nil)
+
 // NewLocalStorage creates a new local project repository
 func NewLocalStorage(fs afero.Fs, path string, logger repository.Logger) *LocalStorage {
 	return &LocalStorage{

@@ -11,6 +11,9 @@ type MockFilesystemer struct {
 	mock.Mock
 }
 
+// Ensure MockFilesystemer implements the Filesystemer interface
+var _ Filesystemer = (*MockFilesystemer)(nil)
+
 // NewMockFilesystemer creates a new mock filesystemer
 func NewMockFilesystemer() *MockFilesystemer {
 	return &MockFilesystemer{}

@@ -10,6 +10,9 @@ type MockTaskExecutor struct {
 	mock.Mock
 }
 
+// Ensure MockTaskExecutor implements the Executor interface
+var _ Executor = (*MockTaskExecutor)(nil)
+
 // NewMockTaskExecutor returns a new MockTaskExecutor
 func NewMockTaskExecutor() *MockTaskExecutor {
 	return &MockTaskExecutor{}

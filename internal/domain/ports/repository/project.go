@@ -15,7 +15,7 @@ type ProjectRepositoryFactory interface {
 type ProjectRepository interface {
 	Find(id string) (*entity.Project, error)
 	FindAll() ([]*entity.Project, error)
-	// Remove(id string) error
+	Delete(id string) error
 	SafeStore(id string, project *entity.Project) error
 	// Store(id string, project *entity.Project) error
 	// Update(id string, project *entity.Project) error

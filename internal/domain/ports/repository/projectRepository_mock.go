@@ -10,6 +10,9 @@ type MockProjectRepository struct {
 	mock.Mock
 }
 
+// Ensure MockProjectRepository implements the ProjectRepository interface
+var _ ProjectRepository = (*MockProjectRepository)(nil)
+
 // NewMockProjectRepository creates a new mock project repository
 func NewMockProjectRepository() *MockProjectRepository {
 	return &MockProjectRepository{}
@@ -47,5 +50,11 @@ func (m *MockProjectRepository) FindAll() ([]*entity.Project, error) {
 // SafeStore mock method to store a project
 func (m *MockProjectRepository) SafeStore(id string, project *entity.Project) error {
 	args := m.Called(id, project)
+	return args.Error(0)
+}
+
+// Delete mock method to delete a project by ID
+func (m *MockProjectRepository) Delete(id string) error {
+	args := m.Called(id)
 	return args.Error(0)
 }

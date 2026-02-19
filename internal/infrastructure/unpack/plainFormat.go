@@ -17,6 +17,9 @@ type PlainFormat struct {
 	logger repository.Logger
 }
 
+// Ensure PlainFormat implements the SourceCodeUnpacker interface
+var _ repository.SourceCodeUnpacker = (*PlainFormat)(nil)
+
 // NewPlainFormat method creates a new PlainFormat struct
 func NewPlainFormat(fs afero.Fs, logger repository.Logger) *PlainFormat {
 	return &PlainFormat{

@@ -18,6 +18,9 @@ type TarGzipFormat struct {
 	extractor TarExtractorer
 }
 
+// Ensure TarGzipFormat implements the SourceCodeUnpacker interface
+var _ repository.SourceCodeUnpacker = (*TarGzipFormat)(nil)
+
 // NewTarGzipFormat method creates a new TarGzipFormat struct
 func NewTarGzipFormat(fs afero.Fs, extractor TarExtractorer, logger repository.Logger) *TarGzipFormat {
 	return &TarGzipFormat{

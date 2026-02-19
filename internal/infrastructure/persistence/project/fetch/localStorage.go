@@ -19,6 +19,9 @@ type LocalStorage struct {
 	path string
 }
 
+// Ensure LocalStorage implements the SourceCodeFetcher interface
+var _ repository.SourceCodeFetcher = (*LocalStorage)(nil)
+
 // NewLocalStorage creates a new local project repository
 func NewLocalStorage(fs afero.Fs, path string, logger repository.Logger) *LocalStorage {
 	return &LocalStorage{

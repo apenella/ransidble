@@ -7,6 +7,9 @@ type MockProjectSourceCodeFetchFactory struct {
 	mock.Mock
 }
 
+// Ensure MockProjectSourceCodeFetchFactory implements the SourceCodeFetchFactory interface
+var _ SourceCodeFetchFactory = (*MockProjectSourceCodeFetchFactory)(nil)
+
 // Get provides a mock function with given fields: projectType
 func (m *MockProjectSourceCodeFetchFactory) Get(projectType string) SourceCodeFetcher {
 	ret := m.Called(projectType)

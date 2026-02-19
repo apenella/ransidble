@@ -12,6 +12,9 @@ type MockProjectSourceCodeStorer struct {
 	mock.Mock
 }
 
+// Ensure MockProjectSourceCodeStorer implements the SourceCodeStorer interface
+var _ SourceCodeStorer = (*MockProjectSourceCodeStorer)(nil)
+
 // NewMockProjectSourceCodeStorer provides a mock for the SourceCodeStorer
 func NewMockProjectSourceCodeStorer() *MockProjectSourceCodeStorer {
 	return &MockProjectSourceCodeStorer{}

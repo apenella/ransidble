@@ -10,6 +10,9 @@ type MockBuilder struct {
 	Workspace *MockWorkspace
 }
 
+// Ensure MockBuilder implements the WorkspaceBuilder interface
+var _ service.WorkspaceBuilder = (*MockBuilder)(nil)
+
 // WithTask sets the task of the mock builder
 func (m *MockBuilder) WithTask(task *entity.Task) service.WorkspaceBuilder {
 	return m

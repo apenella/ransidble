@@ -9,6 +9,9 @@ type MockWorkspace struct {
 	mock.Mock
 }
 
+// Ensure MockWorkspace implements the Workspace interface
+var _ Workspacer = (*MockWorkspace)(nil)
+
 // Prepare prepares the mock workspace
 func (m *MockWorkspace) Prepare() error {
 	args := m.Called()

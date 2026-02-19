@@ -71,6 +71,9 @@ type DatabaseDriver struct {
 	logger repository.Logger
 }
 
+// Ensure DatabaseDriver implements the ProjectRepository interface
+var _ repository.ProjectRepository = (*DatabaseDriver)(nil)
+
 // NewDatabaseDriver creates a new instance of DatabaseDriver.
 func NewDatabaseDriver(fs afero.Fs, path string, logger repository.Logger) *DatabaseDriver {
 	return &DatabaseDriver{
