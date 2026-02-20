@@ -40,6 +40,9 @@ type Tar struct {
 	logger repository.Logger
 }
 
+// Ensure Tar implements the SourceCodeTarExtractorer interface
+var _ repository.SourceCodeTarExtractorer = (*Tar)(nil)
+
 // NewTar creates a new Tar struct
 func NewTar(fs afero.Fs, logger repository.Logger) *Tar {
 	return &Tar{

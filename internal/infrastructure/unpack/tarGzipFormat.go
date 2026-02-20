@@ -15,14 +15,14 @@ import (
 type TarGzipFormat struct {
 	fs        afero.Fs
 	logger    repository.Logger
-	extractor TarExtractorer
+	extractor repository.SourceCodeTarExtractorer
 }
 
 // Ensure TarGzipFormat implements the SourceCodeUnpacker interface
 var _ repository.SourceCodeUnpacker = (*TarGzipFormat)(nil)
 
 // NewTarGzipFormat method creates a new TarGzipFormat struct
-func NewTarGzipFormat(fs afero.Fs, extractor TarExtractorer, logger repository.Logger) *TarGzipFormat {
+func NewTarGzipFormat(fs afero.Fs, extractor repository.SourceCodeTarExtractorer, logger repository.Logger) *TarGzipFormat {
 	return &TarGzipFormat{
 		fs:        fs,
 		logger:    logger,

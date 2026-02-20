@@ -34,6 +34,7 @@ type SourceCodeFetchFactory interface {
 // SourceCodeStorer represents the component to save a project in a storage
 type SourceCodeStorer interface {
 	Store(project *entity.Project, file io.Reader) error
+	Delete(project *entity.Project) error
 }
 
 // SourceCodeStorageFactory represents the component to create a SourceCodeStorer
@@ -54,4 +55,9 @@ type SourceCodeUnpacker interface {
 // SourceCodeUnpackFactory represents the component to create a SourceCodeUnpacker
 type SourceCodeUnpackFactory interface {
 	Get(projectType string) SourceCodeUnpacker
+}
+
+// SourceCodeTarExtractorer represents the component to extract a tar file
+type SourceCodeTarExtractorer interface {
+	Extract(reader io.Reader, destination string) error
 }

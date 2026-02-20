@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/apenella/ransidble/internal/domain/core/entity"
+	"github.com/apenella/ransidble/internal/domain/ports/repository"
 	"github.com/apenella/ransidble/internal/infrastructure/logger"
 	"github.com/apenella/ransidble/internal/infrastructure/tar"
 	"github.com/spf13/afero"
@@ -56,7 +57,7 @@ func TestTarGzipFormatUnpack(t *testing.T) {
 		},
 		{
 			desc:        "Testing error unpacking project in tar.gz format when project is not provided",
-			unpack:      NewTarGzipFormat(fs, NewMockTarExtractor(), logger.NewFakeLogger()),
+			unpack:      NewTarGzipFormat(fs, repository.NewMockProjectSourceCodeTarExtractorer(), logger.NewFakeLogger()),
 			project:     nil,
 			workingDir:  workingDir,
 			err:         ErrProjectNotProvided,
@@ -65,7 +66,7 @@ func TestTarGzipFormatUnpack(t *testing.T) {
 		},
 		{
 			desc:        "Testing error unpacking project in tar.gz format when working directory is not provided",
-			unpack:      NewTarGzipFormat(fs, NewMockTarExtractor(), logger.NewFakeLogger()),
+			unpack:      NewTarGzipFormat(fs, repository.NewMockProjectSourceCodeTarExtractorer(), logger.NewFakeLogger()),
 			project:     &entity.Project{},
 			workingDir:  "",
 			err:         ErrWorkingDirNotProvided,
@@ -74,7 +75,7 @@ func TestTarGzipFormatUnpack(t *testing.T) {
 		},
 		{
 			desc:        "Testing error unpacking project in tar.gz format when filesystem is not provided",
-			unpack:      NewTarGzipFormat(nil, NewMockTarExtractor(), logger.NewFakeLogger()),
+			unpack:      NewTarGzipFormat(nil, repository.NewMockProjectSourceCodeTarExtractorer(), logger.NewFakeLogger()),
 			project:     &entity.Project{},
 			workingDir:  workingDir,
 			err:         ErrFilesystemNotProvided,
@@ -95,7 +96,7 @@ func TestTarGzipFormatUnpack(t *testing.T) {
 		},
 		{
 			desc:   "Testing error unpacking project in tar.gz format when project reference is not provided",
-			unpack: NewTarGzipFormat(fs, NewMockTarExtractor(), logger.NewFakeLogger()),
+			unpack: NewTarGzipFormat(fs, repository.NewMockProjectSourceCodeTarExtractorer(), logger.NewFakeLogger()),
 			project: &entity.Project{
 				Name:      "project-targz",
 				Format:    "targz",
@@ -109,7 +110,7 @@ func TestTarGzipFormatUnpack(t *testing.T) {
 		},
 		{
 			desc:   "Testing error unpacking project in tar.gz format when there is an error extracting tar file",
-			unpack: NewTarGzipFormat(fs, NewMockTarExtractor(), logger.NewFakeLogger()),
+			unpack: NewTarGzipFormat(fs, repository.NewMockProjectSourceCodeTarExtractorer(), logger.NewFakeLogger()),
 			project: &entity.Project{
 				Name:      "project-targz",
 				Format:    "targz",
@@ -119,7 +120,7 @@ func TestTarGzipFormatUnpack(t *testing.T) {
 			workingDir: workingDir,
 			err:        fmt.Errorf("%s: %w", ErrExtractingSourceCodeFile, errors.New("error extracting tar file")),
 			arrangeFunc: func(t *testing.T, unpack *TarGzipFormat) {
-				unpack.extractor.(*MockTarExtractor).On("Extract", mock.Anything, workingDir).Return(errors.New("error extracting tar file"))
+				unpack.extractor.(*repository.MockProjectSourceCodeTarExtractorer).On("Extract", mock.Anything, workingDir).Return(errors.New("error extracting tar file"))
 			},
 			assertFunc: func(t *testing.T, unpack *TarGzipFormat) {},
 		},
