@@ -186,6 +186,14 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 
 			createProjectHandler := projectHandler.NewCreateProjectHandler(createProjectService, log)
 
+			deleteProjectService := projectService.NewDeleteProjectService(
+				projectsRepository,
+				storeFactory,
+				log,
+			)
+
+			deleteProjectHandler := projectHandler.NewDeleteProjectHandler(deleteProjectService, log)
+
 			router := echo.New()
 			router.Use(middleware.Logger())
 			router.Use(middleware.GzipWithConfig(middleware.GzipConfig{
@@ -197,6 +205,7 @@ func NewCommand(config *configuration.Configuration) *cobra.Command {
 			router.GET(server.GetTaskPath, getTaskHandler.Handle)
 			router.GET(server.GetProjectPath, getProjectHandler.Handle)
 			router.GET(server.GetProjectsPath, getProjectListHandler.Handle)
+			router.DELETE(server.DeleteProjectPath, deleteProjectHandler.Handle)
 
 			go func() {
 				errStartDispatcher := dispatcher.Start(cmd.Context())

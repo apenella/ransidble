@@ -31,4 +31,6 @@ const (
 	ErrStorageHandlerNotInitialized = "storage handler not initialized"
 	// ErrStoringProject error message when storing project fails
 	ErrStoringProject = "storing project fails"
+	// ErrDeletingProject error message when deleting project fails
+	ErrDeletingProject = "deleting project fails"
 )

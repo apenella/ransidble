@@ -30,7 +30,6 @@ func NewCreateProjectService(repository repository.ProjectRepository, storage re
 // func (s *CreateProjectService) Create(format string, storage string, file *multipart.FileHeader) error {
 func (s *CreateProjectService) Create(format string, storage string, filename string, projectContentReader io.Reader) (string, error) {
 	var err error
-	// var projectFileReader io.Reader
 
 	if format == "" {
 		s.logger.Error(ErrProjectFormatNotProvided, map[string]interface{}{
@@ -140,19 +139,6 @@ func (s *CreateProjectService) Create(format string, storage string, filename st
 		})
 		return "", fmt.Errorf(ErrStorageHandlerNotFound)
 	}
-
-	// projectFileReader, err = file.Open()
-	// if err != nil {
-	// 	s.logger.Error(fmt.Sprintf("%s: %s", ErrOpeningProjectFile, err.Error()), map[string]interface{}{
-	// 		"component":  "CreateProjectService.Create",
-	// 		"package":    "github.com/apenella/ransidble/internal/domain/core/service/project",
-	// 		"format":     format,
-	// 		"project_id": name,
-	// 		"reference":  reference,
-	// 		"storage":    storage,
-	// 	})
-	// 	return fmt.Errorf("%s: %s", ErrOpeningProjectFile, err.Error())
-	// }
 
 	project := entity.NewProject(name, filename, format, storage)
 	err = s.repository.SafeStore(name, project)

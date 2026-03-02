@@ -10,6 +10,8 @@ const (
 	GetProjectPath = "/projects/:id"
 	// GetProjectsPath is the endpoint to list all projects
 	GetProjectsPath = "/projects"
+	// DeleteProjectPath is the endpoint to delete a project by ID
+	DeleteProjectPath = "/projects/:id"
 
 	// TaskBasePath is the base path for all task-related endpoints
 	TaskBasePath = "/tasks"

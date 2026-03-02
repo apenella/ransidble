@@ -25,3 +25,9 @@ func (m *MockProjectSourceCodeStorer) Store(project *entity.Project, file io.Rea
 	args := m.Called(project, file)
 	return args.Error(0)
 }
+
+// Delete provides a mock function with given fields: project
+func (m *MockProjectSourceCodeStorer) Delete(project *entity.Project) error {
+	args := m.Called(project)
+	return args.Error(0)
+}

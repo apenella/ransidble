@@ -118,6 +118,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectErrorResponse'
+    delete:
+      summary: Delete a project by ID
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the project
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Project deleted successfully
+          content: {}
+        400:
+          description: Bad request, such as missing project ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectErrorResponse'
+        404:
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectErrorResponse'
+        500:
+          description: An unexpected server error occurred while processing the request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectErrorResponse'
   /tasks/ansible-playbook/{project_id}:
     post:
       summary: Create a new Ansible playbook task

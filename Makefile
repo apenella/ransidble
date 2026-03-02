@@ -113,6 +113,12 @@ serve: ## Start a Ransidble server
 		--workdir /usr/src/app \
 		ransidble-server go run cmd/main.go serve
 
+attach: ## Attach to the Ransidble server container
+	@echo
+	@echo "$(COLOR_BLUE) Attaching to the Ransidble server container$(COLOR_END)"
+	@echo
+	@$(DOCKER_COMPOSE_BINARY) exec ransidble-server sh
+
 create-projects: create-project-1 create-project-2 create-project-3 create-project-4 ## Create projects
 
 create-project-1: ## Create a project with the name project-1
@@ -121,11 +127,23 @@ create-project-1: ## Create a project with the name project-1
 	@echo
 	curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-1.tar.gz'
 
+delete-project-1: ## Delete the project with the name project-1
+	@echo
+	@echo " $(COLOR_BLUE)Deleting project project-1$(COLOR_END)"
+	@echo
+	curl -iX DELETE 0.0.0.0:8080/projects/project-1
+
 create-project-2: ## Create a project with the name project-2
 	@echo
 	@echo " $(COLOR_BLUE)Creating project project-2$(COLOR_END)"
 	@echo
 	curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-2.tar.gz'
+
+delete-project-2: ## Delete the project with the name project-2
+	@echo
+	@echo " $(COLOR_BLUE)Deleting project project-2$(COLOR_END)"
+	@echo
+	curl -iX DELETE 0.0.0.0:8080/projects/project-2
 
 create-project-3: ## Create a project with the name project-3
 	@echo
@@ -133,11 +151,23 @@ create-project-3: ## Create a project with the name project-3
 	@echo
 	curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-3.tar.gz'
 
+delete-project-3: ## Delete the project with the name project-3
+	@echo
+	@echo " $(COLOR_BLUE)Deleting project project-3$(COLOR_END)"
+	@echo
+	curl -iX DELETE 0.0.0.0:8080/projects/project-3
+
 create-project-4: ## Create a project with the name project-4
 	@echo
 	@echo " $(COLOR_BLUE)Creating project project-4$(COLOR_END)"
 	@echo
 	curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-4.tar.gz'
+
+delete-project-4: ## Delete the project with the name project-4
+	@echo
+	@echo " $(COLOR_BLUE)Deleting project project-4$(COLOR_END)"
+	@echo
+	curl -iX DELETE 0.0.0.0:8080/projects/project-4
 
 list-projects: ## List the projects
 	@echo

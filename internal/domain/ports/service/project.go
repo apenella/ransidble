@@ -16,3 +16,8 @@ type GetProjectServicer interface {
 type CreateProjectServicer interface {
 	Create(format string, storage string, filename string, file io.Reader) (string, error)
 }
+
+// DeleteProjectServicer represents the service to delete a project. It returns an error on failure.
+type DeleteProjectServicer interface {
+	Delete(id string) error
+}

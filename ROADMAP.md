@@ -1,6 +1,7 @@
 # Ransidble Roadmap
 
 ## Enhancements
+
 - Store the execution output and make it available to the user
 - Add pagination to the get projects and tasks
 - Do not accept local connection
@@ -12,6 +13,7 @@
 - id generator should be injected as a dependency (for task creation) (internal/domain/core/service/task: createTaskAnsiblePlaybookService.go)
 
 ## Features
+
 - Create a use case for loading projects from the file system
 - Implement a client to interact with the API
 - Upload projects in multiple formats
@@ -19,6 +21,9 @@
   - oci image
 - Implement authentication (delegated to an external service)
 - Implement authorization (delegated to an external service)
+- Implement health endpoints
 
 ## Ideas
+
 - RolesPath: support specifying the path where roles should be installed on the local filesystem (internal/infrastructure/executor: ansiblePlaybook.go, internal/domain/core/model/request/ansiblePlaybookParameters.go, internal/domain/core/entity/ansiblePlaybookParameters.go)
+- 409 response for DELETE /projects/{id}: cannot delete due to constraint (e.g., project is running)

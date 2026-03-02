@@ -19,4 +19,8 @@ const (
 	ErrReadingFormProjectMetadataField = "error reading project metadata field"
 	// ErrCreateProjectServiceNotInitialized represents an error when the CreateProjectService is not initialized
 	ErrCreateProjectServiceNotInitialized = "create project service not initialized"
+	// ErrDeletingProject represents an error when the project can not be deleted
+	ErrDeletingProject = "error deleting project"
+	// ErrDeleteProjectServiceNotInitialized represents an error when the DeleteProjectService is not initialized
+	ErrDeleteProjectServiceNotInitialized = "delete project service not initialized"
 )
