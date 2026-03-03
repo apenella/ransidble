@@ -42,7 +42,7 @@ The idea for Ransidble was sparked by a question raised in the [Go Ansible](http
 
 That’s when Ransidble was born.
 
-Ransidble (Remote Ansible) is a lightweight REST API that allows you to execute Ansible playbooks remotely on your behalf. It acts as a controlled gateway between your automation workflows and restricted infrastructure. In short, Ransidble turns Ansible into a secure, remotely accessible automation service.
+Ransidble is a lightweight REST API that allows you to execute Ansible playbooks remotely on your behalf. It acts as a controlled gateway between your automation workflows and restricted infrastructure. In short, Ransidble turns Ansible into a secure, remotely accessible automation service.
 
 While powerful open-source solutions like [AWX](https://github.com/ansible/awx) already exist, Ransidble was built with a different goal in mind:
 
