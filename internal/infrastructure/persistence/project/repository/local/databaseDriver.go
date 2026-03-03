@@ -262,7 +262,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 				},
 			)
 
-			return nil, fmt.Errorf(msgErr)
+			return nil, fmt.Errorf("%s", msgErr)
 		}
 
 		msgErr := fmt.Sprintf("%s: %s", ErrReadingRecord, err.Error())
@@ -275,7 +275,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 			},
 		)
 
-		return nil, fmt.Errorf(msgErr)
+		return nil, fmt.Errorf("%s", msgErr)
 	}
 
 	if recordFileInfo.IsDir() {
@@ -289,7 +289,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 			},
 		)
 
-		return nil, fmt.Errorf(msgErr)
+		return nil, fmt.Errorf("%s", msgErr)
 	}
 
 	recordFile, err = db.fs.Open(recordPath)
@@ -304,7 +304,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 			},
 		)
 
-		return nil, fmt.Errorf(msgErr)
+		return nil, fmt.Errorf("%s", msgErr)
 	}
 	defer recordFile.Close()
 
@@ -320,7 +320,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 			},
 		)
 
-		return nil, fmt.Errorf(msgErr)
+		return nil, fmt.Errorf("%s", msgErr)
 	}
 
 	err = json.Unmarshal(recordContent, &record)
@@ -335,7 +335,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 			},
 		)
 
-		return nil, fmt.Errorf(msgErr)
+		return nil, fmt.Errorf("%s", msgErr)
 	}
 
 	verifiedRecord, err = record.Verify()
@@ -350,7 +350,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 			},
 		)
 
-		return nil, fmt.Errorf(msgErr)
+		return nil, fmt.Errorf("%s", msgErr)
 	}
 
 	if !verifiedRecord {
@@ -364,7 +364,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 			},
 		)
 
-		return nil, fmt.Errorf(msgErr)
+		return nil, fmt.Errorf("%s", msgErr)
 	}
 
 	err = json.Unmarshal(record.Data, &project)
@@ -379,7 +379,7 @@ func (db *DatabaseDriver) read(id string) (*entity.Project, error) {
 			},
 		)
 
-		return nil, fmt.Errorf(msgErr)
+		return nil, fmt.Errorf("%s", msgErr)
 	}
 
 	return project, nil

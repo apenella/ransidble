@@ -181,7 +181,7 @@ func (w *Worker) handleTask(ctx context.Context, task *entity.Task) error {
 				"worker_id": w.id,
 			})
 
-			return fmt.Errorf(errorMsg)
+			return fmt.Errorf("%s", errorMsg)
 		}
 
 		task.Running()
@@ -208,7 +208,7 @@ func (w *Worker) handleTask(ctx context.Context, task *entity.Task) error {
 		})
 
 	default:
-		errorMsg := fmt.Sprintf(ErrUnknownCommandType.Error())
+		errorMsg := ErrUnknownCommandType.Error()
 		task.Failed(errorMsg)
 		w.logger.Error(errorMsg, map[string]interface{}{
 			"command":   task.Command,
@@ -250,7 +250,7 @@ func (w *Worker) createWorkspace(task *entity.Task) (service.Workspacer, error) 
 func (w *Worker) handleAnsiblePlaybookTask(ctx context.Context, task *entity.Task, workingDir string) error {
 
 	if w.ansiblePlaybookExecutor == nil {
-		errMsg := fmt.Sprintf(ErrAnsiblePlaybookExecutorDefined.Error())
+		errMsg := ErrAnsiblePlaybookExecutorDefined.Error()
 		w.logger.Error(errMsg, map[string]interface{}{
 			"component": "Worker.handleAnsiblePlaybookTask",
 			"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",
@@ -271,7 +271,7 @@ func (w *Worker) handleAnsiblePlaybookTask(ctx context.Context, task *entity.Tas
 	// ansibleplaybook := executor.NewAnsiblePlaybook()
 	errRunAnsiblePlaybook := w.ansiblePlaybookExecutor.Run(ctx, workingDir, task.Parameters.(*entity.AnsiblePlaybookParameters))
 	if errRunAnsiblePlaybook != nil {
-		errorMsg := fmt.Sprintf(errRunAnsiblePlaybook.Error())
+		errorMsg := errRunAnsiblePlaybook.Error()
 		w.logger.Error(errorMsg, map[string]interface{}{
 			"component": "Worker.handleAnsiblePlaybookTask",
 			"package":   "github.com/apenella/ransidble/internal/infrastructure/executor",

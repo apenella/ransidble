@@ -299,7 +299,7 @@ func TestPrepare(t *testing.T) {
 				},
 				fs: repository.NewMockFilesystemer(),
 			},
-			err: fmt.Errorf(fmt.Sprintf("%s: %s", ErrCreatingWorkingDirFolder, errors.New("error creating working directory"))),
+			err: fmt.Errorf("%s", fmt.Sprintf("%s: %s", ErrCreatingWorkingDirFolder, "error creating working directory")),
 			arrangeFunc: func(t *testing.T, w *Workspace) {
 				project := &entity.Project{
 					Format:    "plain",

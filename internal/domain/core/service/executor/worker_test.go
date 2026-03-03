@@ -211,7 +211,7 @@ func TestHandleAnsiblePlaybookTask(t *testing.T) {
 				ProjectID:  "project-id",
 			},
 			workingDir: "/tmp",
-			err:        fmt.Errorf(ErrAnsiblePlaybookExecutorDefined.Error()),
+			err:        fmt.Errorf("%s", ErrAnsiblePlaybookExecutorDefined.Error()),
 		},
 		{
 			desc: "Testing error handling an ansible-playbook when ansible playbook executor returns an error",
@@ -415,7 +415,7 @@ func TestHandleTask(t *testing.T) {
 				Command:    "not-ansible-playbook",
 				ProjectID:  "project-id",
 			},
-			err: fmt.Errorf(ErrUnknownCommandType.Error()),
+			err: fmt.Errorf("%s", ErrUnknownCommandType.Error()),
 		},
 		{
 			desc: "Testing error handling a task when the task parameters are not an ansible-playbook parameters",
@@ -461,7 +461,7 @@ func TestHandleTask(t *testing.T) {
 				Command:    "ansible-playbook",
 				ProjectID:  "project-id",
 			},
-			err: fmt.Errorf(ErrAnsiblePlaybookTaskInvalidParameters.Error()),
+			err: fmt.Errorf("%s", ErrAnsiblePlaybookTaskInvalidParameters.Error()),
 		},
 		{
 			desc: "Testing error handling a task when ansible playbook executor returns an error",
