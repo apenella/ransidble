@@ -9,10 +9,10 @@ Ransidble is a utility that enables you to execute [Ansible](https://www.ansible
 
 - [Ransidble](#ransidble)
   - [Why Ransidble?](#why-ransidble)
-  - [How about the name?](#how-about-the-name)
+  - [How About The Name?](#how-about-the-name)
   - [Server Usage Reference](#server-usage-reference)
-    - [Configurating the Ransidble server](#configurating-the-ransidble-server)
-    - [Initiating the Ransidble server](#initiating-the-ransidble-server)
+    - [Configuring The Ransidble Server](#configuring-the-ransidble-server)
+    - [Starting The Ransidble Server](#starting-the-ransidble-server)
   - [REST API Reference](#rest-api-reference)
   - [User Reference](#user-reference)
     - [Concepts](#concepts)
@@ -23,27 +23,44 @@ Ransidble is a utility that enables you to execute [Ansible](https://www.ansible
         - [Tar Gz](#tar-gz)
     - [Examples of Requests](#examples-of-requests)
       - [Performing a Request to Create a Project](#performing-a-request-to-create-a-project)
-      - [Performing a Request to Execute an Ansible playbook](#performing-a-request-to-execute-an-ansible-playbook)
+      - [Performing a Request to Execute an Ansible Playbook](#performing-a-request-to-execute-an-ansible-playbook)
       - [Performing a Request Accepting Gzip Encoding](#performing-a-request-accepting-gzip-encoding)
-      - [Getting the Status of an Execution](#getting-the-status-of-an-execution)
-      - [Getting the project details](#getting-the-project-details)
-      - [Getting the list of projects](#getting-the-list-of-projects)
+      - [Performing a Rquest to Get the Status of an Execution](#performing-a-rquest-to-get-the-status-of-an-execution)
+      - [Performing a Request to Get the Project Details](#performing-a-request-to-get-the-project-details)
+      - [Performing a Request to List the Projects](#performing-a-request-to-list-the-projects)
+      - [Performing a Request to Delete a Project](#performing-a-request-to-delete-a-project)
   - [Development Reference](#development-reference)
     - [Contributing](#contributing)
     - [Code of Conduct](#code-of-conduct)
     - [Roadmap](#roadmap)
   - [Acknowledgments](#acknowledgments)
   - [License](#license)
-
+ 
 ## Why Ransidble?
 
-## How about the name?
+The idea for Ransidble was sparked by a question raised in the [Go Ansible](https://github.com/apenella/go-ansible) library. At the time, I didn’t act on it. Later, I found myself managing a group of servers that were isolated and accessible only from specific, audited origins. I needed a secure and controlled way to run Ansible playbooks remotely, without granting broad or direct access.
+
+That’s when Ransidble was born.
+
+Ransidble (Remote Ansible) is a lightweight REST API that allows you to execute Ansible playbooks remotely on your behalf. It acts as a controlled gateway between your automation workflows and restricted infrastructure. In short, Ransidble turns Ansible into a secure, remotely accessible automation service.
+
+While powerful open-source solutions like [AWX](https://github.com/ansible/awx) already exist, Ransidble was built with a different goal in mind:
+
+- Keep it lightweight and simple
+- Focus on API-first automation
+- Provide a minimal, easy-to-deploy solution
+
+This project is also a personal journey, an opportunity to design and implement a REST API from the ground up, solve a real-world problem, and share the solution with the community.
+
+If you need a simple way to trigger Ansible playbooks inside restricted environments, Ransidble might be exactly what you're looking for. If this resonates with your use case, give it a try, open an issue, or contribute, feedback and collaboration are always welcome.
+
+## How About The Name?
 
 Ransidble is a blend of 'Remote' and 'Ansible,' with a nod to the punk rock band [Rancid](https://rancidrancid.com/).
 
 ## Server Usage Reference
 
-### Configurating the Ransidble server
+### Configuring The Ransidble Server
 
 The Ransidble server can be configured using environment variables. The following table lists the available environment variables:
 
@@ -74,7 +91,7 @@ server:
       type: local
 ```
 
-### Initiating the Ransidble server
+### Starting The Ransidble Server
 
 ```bash
 RANSIDBLE_SERVER_LOG_LEVEL=info RANSIDBLE_SERVER_WORKER_POOL_SIZE=3 RANSIDBLE_SERVER_PROJECT_LOCAL_STORAGE_PATH=test/projects  go run cmd/main.go serve
@@ -127,7 +144,7 @@ Each project has the following attributes:
 - **Name**: The name of the project. Which is the unique identifier for the project.
 - **Reference**: The reference where the project is located in the storage.
 - **Storage Type**: The type of storage used to store the project. [This](#project-storage-types) section describes the supported storage types.
-- **Format**: The format of the project. [This](#project-format-types) section describes the supported format types.
+- **Format**: The format of the bundle that holds project. [This](#project-format-types) section describes the supported format types.
 
 #### Project Storage Types
 
@@ -170,7 +187,7 @@ tar -czvf my-project.tar.gz -C my-project .
 Once you have the tarball, you can create the project using the following command:
 
 ```bash
-curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-1.tar.gz'
+curl -i -s -X POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-1.tar.gz'
 
 HTTP/1.1 201 Created
 Location: /projects/project-1
@@ -179,20 +196,18 @@ Date: Tue, 10 Feb 2026 20:11:23 GMT
 Content-Length: 0
 ```
 
-#### Performing a Request to Execute an Ansible playbook
+#### Performing a Request to Execute an Ansible Playbook
 
 The following example demonstrates how to execute an Ansible playbook using the Ransidble server. Please refer to the [REST API Reference](#rest-api-reference) section for more information.
 
 ```bash
-curl -i -s -H "Content-Type: application/json" -XPOST 0.0.0.0:8080/tasks/ansible-playbook/project-1 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}'
+curl -i -s -H "Content-Type: application/json" -X POST 0.0.0.0:8080/tasks/ansible-playbook/project-1 -d '{"playbooks": ["site.yml"], "inventory": "127.0.0.1,", "connection": "local"}'
 
 HTTP/1.1 202 Accepted
-Content-Type: application/json
+Location: /tasks/4589842e-d9b3-4914-8856-e813ff3f74bc
 Vary: Accept-Encoding
-Date: Tue, 10 Feb 2026 20:14:25 GMT
-Content-Length: 46
-
-{"id":"e29d7d93-fc1d-4f85-bbfc-81aa78e4c181"}
+Date: Tue, 03 Mar 2026 07:31:18 GMT
+Content-Length: 0
 ```
 
 #### Performing a Request Accepting Gzip Encoding
@@ -202,7 +217,7 @@ $ curl -H 'Accept-Encoding: gzip' --output /dev/stdout -s -XPOST 0.0.0.0:8080/co
 r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
 ```
 
-#### Getting the Status of an Execution
+#### Performing a Rquest to Get the Status of an Execution
 
 ```bash
 $ curl -s -GET 0.0.0.0:8080/tasks/e29d7d93-fc1d-4f85-bbfc-81aa78e4c181 | jq
@@ -225,7 +240,7 @@ $ curl -s -GET 0.0.0.0:8080/tasks/e29d7d93-fc1d-4f85-bbfc-81aa78e4c181 | jq
 }
 ```
 
-#### Getting the project details
+#### Performing a Request to Get the Project Details
 
 ```bash
 $ curl -s 0.0.0.0:8080/projects/project-1 | jq
@@ -237,7 +252,7 @@ $ curl -s 0.0.0.0:8080/projects/project-1 | jq
 }
 ```
 
-#### Getting the list of projects
+#### Performing a Request to List the Projects
 
 ```bash
 $ curl -s 0.0.0.0:8080/projects | jq
@@ -255,6 +270,16 @@ $ curl -s 0.0.0.0:8080/projects | jq
     "storage": "local"
   }
 ]
+```
+
+#### Performing a Request to Delete a Project
+
+```bash
+curl -i -s -X DELETE 0.0.0.0:8080/projects/project-1
+
+HTTP/1.1 204 No Content
+Vary: Accept-Encoding
+Date: Mon, 02 Mar 2026 06:55:32 GMT
 ```
 
 ## Development Reference
