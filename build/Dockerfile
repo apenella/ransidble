@@ -1,5 +1,5 @@
 
-ARG golang_version=1.23
+ARG golang_version=1.24
 
 FROM golang:${golang_version}-alpine AS build
 

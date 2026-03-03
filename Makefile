@@ -48,19 +48,21 @@ ci-go-tools-docker-image: ## Build the docker image
 	@echo
 	@echo "$(COLOR_BLUE) Building the docker image $(COLOR_END)"
 	@echo
-	@docker build -t ci-go-tools-docker-image -f build/Dockerfile.ci .
 
-vet: ci-go-tools-docker-image ## Executes the go vet to report any suspicious constructs
+	@${DOCKER_COMPOSE_BINARY} build --no-cache ci
+
+vet: ## Executes the go vet to report any suspicious constructs
 	@echo
 	@echo "$(COLOR_BLUE) Executing go vet $(COLOR_END)"
 	@echo
-	@docker run --rm -v "${PWD}":/app -w /app ci-go-tools-docker-image go vet ./internal/... && echo "$(COLOR_GREEN) go vet: all files linted$(COLOR_END)" || echo "$(COLOR_RED)go vet: some files not linted$(COLOR_END)"
+	@${DOCKER_COMPOSE_BINARY} run --build --rm -v "${PWD}":/app -w /app --remove-orphans ci go vet ./internal/... && echo "$(COLOR_GREEN) go vet: all files linted$(COLOR_END)" || echo "$(COLOR_RED)go vet: some files not linted$(COLOR_END)"
+# @docker run --rm -v "${PWD}":/app -w /app ci-go-tools-docker-image go vet ./internal/... && echo "$(COLOR_GREEN) go vet: all files linted$(COLOR_END)" || echo "$(COLOR_RED)go vet: some files not linted$(COLOR_END)"
 
 golint: ci-go-tools-docker-image ## Executes Go linter (golint)
 	@echo
 	@echo "$(COLOR_BLUE) Executing golint$(COLOR_END)"
 	@echo
-	@docker run --rm -v "${PWD}":/app -w /app ci-go-tools-docker-image golint ./internal/... && echo "$(COLOR_GREEN) golint: all files linted$(COLOR_END)" || echo "$(COLOR_RED)golint: some files not linted$(COLOR_END)"
+	@${DOCKER_COMPOSE_BINARY} run --build --rm -v "${PWD}":/app -w /app --remove-orphans ci golint ./internal/... && echo "$(COLOR_GREEN) golint: all files linted$(COLOR_END)" || echo "$(COLOR_RED)golint: some files not linted$(COLOR_END)"
 
 tests: unit-tests functional-test validate-openapi ## Executes tests
 
