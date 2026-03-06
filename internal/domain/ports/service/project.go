@@ -14,7 +14,7 @@ type GetProjectServicer interface {
 
 // CreateProjectServicer represents the service to create a project. It returns the project ID on success and an error on failure.
 type CreateProjectServicer interface {
-	Create(format string, storage string, filename string, file io.Reader) (string, error)
+	Create(format string, storage string, filename string, file io.Reader) error
 }
 
 // DeleteProjectServicer represents the service to delete a project. It returns an error on failure.

@@ -63,6 +63,19 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
+	projectID = c.Param("id")
+	if projectID == "" {
+		errorResponse = &response.ProjectErrorResponse{
+			Error:  ErrProjectIDNotProvided,
+			Status: http.StatusBadRequest,
+		}
+		h.logger.Error(ErrProjectIDNotProvided, map[string]interface{}{
+			"component": "GetProjectHandler.Handle",
+			"package":   "github.com/apenella/ransidble/internal/handler/http/project",
+		})
+		return c.JSON(http.StatusBadRequest, errorResponse)
+	}
+
 	metadata := c.FormValue(RequestFormProjectMetadataFieldName)
 	err = json.Unmarshal([]byte(metadata), &requestParameters)
 	if err != nil {
@@ -130,7 +143,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
-	projectID, err = h.service.Create(requestParameters.Format, requestParameters.Storage, projectFileHeader.Filename, projectReceivedFile)
+	err = h.service.Create(requestParameters.Format, requestParameters.Storage, projectID, projectReceivedFile)
 	if err != nil {
 
 		httpStatus := http.StatusInternalServerError

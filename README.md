@@ -187,7 +187,7 @@ tar -czvf my-project.tar.gz -C my-project .
 Once you have the tarball, you can create the project using the following command:
 
 ```bash
-curl -i -s -X POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-1.tar.gz'
+curl -i -s -X POST 0.0.0.0:8080/projects/project-1 -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-1.tar.gz'
 
 HTTP/1.1 201 Created
 Location: /projects/project-1
@@ -220,13 +220,13 @@ r+LIU(ILVHHM.-IMQ(.MNN-.N+'NyI&
 #### Performing a Rquest to Get the Status of an Execution
 
 ```bash
-$ curl -s -GET 0.0.0.0:8080/tasks/e29d7d93-fc1d-4f85-bbfc-81aa78e4c181 | jq
+$ curl -s -GET 0.0.0.0:8080/tasks/4589842e-d9b3-4914-8856-e813ff3f74bc | jq
 {
   "command": "ansible-playbook",
   "completed_at": "2026-02-10T20:14:31Z",
   "created_at": "2026-02-10T20:14:25Z",
   "executed_at": "2026-02-10T20:14:25Z",
-  "id": "e29d7d93-fc1d-4f85-bbfc-81aa78e4c181",
+  "id": "4589842e-d9b3-4914-8856-e813ff3f74bc",
   "parameters": {
     "playbooks": [
       "site.yml"

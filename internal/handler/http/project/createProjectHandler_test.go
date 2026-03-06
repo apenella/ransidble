@@ -48,9 +48,12 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 				logger.NewFakeLogger(),
 			),
 			method: http.MethodPost,
-			path:   "/projects",
+			path:   "/projects/project-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
-				return echo.New().NewContext(r, w)
+				c := echo.New().NewContext(r, w)
+				c.SetParamNames("id")
+				c.SetParamValues("project-id")
+				return c
 			},
 			arrangeTestFunc: func(h *CreateProjectHandler) {},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
@@ -73,12 +76,16 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 				logger.NewFakeLogger(),
 			),
 			method: http.MethodPost,
-			path:   "/projects",
+			path:   "/projects/project-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				// The error in this test case if forced by sending an empty body
+				r = httptest.NewRequest(http.MethodPost, "/projects/project-id", nil)
 
-				r = httptest.NewRequest(http.MethodPost, "/projects", nil)
-				return echo.New().NewContext(r, w)
+				c := echo.New().NewContext(r, w)
+				c.SetParamNames("id")
+				c.SetParamValues("project-id")
+
+				return c
 			},
 			arrangeTestFunc: func(h *CreateProjectHandler) {},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
@@ -101,7 +108,7 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 				logger.NewFakeLogger(),
 			),
 			method: http.MethodPost,
-			path:   "/projects",
+			path:   "/projects/project-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				// The erorr in test case is forced by setting an invalid format in the request
 
@@ -122,9 +129,14 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 
 				multiparWriter.WriteField(RequestFormProjectMetadataFieldName, string(requestParametersJSON))
 
-				r = httptest.NewRequest(http.MethodPost, "/projects", &bodyBuffer)
+				r = httptest.NewRequest(http.MethodPost, "/projects/project-id", &bodyBuffer)
 				r.Header.Set(echo.HeaderContentType, multiparWriter.FormDataContentType())
-				return echo.New().NewContext(r, w)
+
+				c := echo.New().NewContext(r, w)
+				c.SetParamNames("id")
+				c.SetParamValues("project-id")
+
+				return c
 			},
 			arrangeTestFunc: func(h *CreateProjectHandler) {},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
@@ -146,7 +158,7 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 				logger.NewFakeLogger(),
 			),
 			method: http.MethodPost,
-			path:   "/projects",
+			path:   "/projects/project-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				// The erorr in test case is forced by setting an invalid storage in the request
 
@@ -167,9 +179,14 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 
 				multiparWriter.WriteField(RequestFormProjectMetadataFieldName, string(requestParametersJSON))
 
-				r = httptest.NewRequest(http.MethodPost, "/projects", &bodyBuffer)
+				r = httptest.NewRequest(http.MethodPost, "/projects/project-id", &bodyBuffer)
 				r.Header.Set(echo.HeaderContentType, multiparWriter.FormDataContentType())
-				return echo.New().NewContext(r, w)
+
+				c := echo.New().NewContext(r, w)
+				c.SetParamNames("id")
+				c.SetParamValues("project-id")
+
+				return c
 			},
 			arrangeTestFunc: func(h *CreateProjectHandler) {},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
@@ -185,13 +202,13 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			},
 		},
 		{
-			desc: "Testing CreateProjectHandler.Handle responding with an error when is was not possible achieve the project file form the form and is returning a StatusBadRequest",
+			desc: "Testing CreateProjectHandler.Handle responding with an error when it was not possible achieve the project file form the form and is returning a StatusBadRequest",
 			handler: NewCreateProjectHandler(
 				service.NewMockCreateProjectService(),
 				logger.NewFakeLogger(),
 			),
 			method: http.MethodPost,
-			path:   "/projects",
+			path:   "/projects/project-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				var bodyBuffer bytes.Buffer
 
@@ -210,9 +227,13 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 
 				multiparWriter.WriteField(RequestFormProjectMetadataFieldName, string(requestParametersJSON))
 
-				r = httptest.NewRequest(http.MethodPost, "/projects", &bodyBuffer)
+				r = httptest.NewRequest(http.MethodPost, "/projects/project-id", &bodyBuffer)
 				r.Header.Set(echo.HeaderContentType, multiparWriter.FormDataContentType())
-				return echo.New().NewContext(r, w)
+
+				c := echo.New().NewContext(r, w)
+				c.SetParamNames("id")
+				c.SetParamValues("project-id")
+				return c
 			},
 			arrangeTestFunc: func(h *CreateProjectHandler) {},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
@@ -228,13 +249,13 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			},
 		},
 		{
-			desc: "Testing CreateProjectHandler.Handle responding with an error when is was not possible to create the project and is returning a StatusInternalServerError",
+			desc: "Testing CreateProjectHandler.Handle responding with an error when it was not possible to create the project and is returning a StatusInternalServerError",
 			handler: NewCreateProjectHandler(
 				service.NewMockCreateProjectService(),
 				logger.NewFakeLogger(),
 			),
 			method: http.MethodPost,
-			path:   "/projects",
+			path:   "/projects/project-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				var bodyBuffer bytes.Buffer
 
@@ -263,17 +284,23 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				r = httptest.NewRequest(http.MethodPost, "/projects", &bodyBuffer)
+				r = httptest.NewRequest(http.MethodPost, "/projects/project-id", &bodyBuffer)
 				r.Header.Set(echo.HeaderContentType, multiparWriter.FormDataContentType())
-				return echo.New().NewContext(r, w)
+
+				c := echo.New().NewContext(r, w)
+				c.SetParamNames("id")
+				c.SetParamValues("project-id")
+
+				return c
 			},
 			arrangeTestFunc: func(h *CreateProjectHandler) {
 				h.service.(*service.MockCreateProjectService).On(
 					"Create",
 					entity.ProjectFormatTarGz,
 					entity.ProjectTypeLocal,
+					"project-id",
 					mock.Anything,
-				).Return("no-project-id", fmt.Errorf("error opening project file"))
+				).Return(fmt.Errorf("error opening project file"))
 			},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				var body *response.ProjectErrorResponse
@@ -294,7 +321,7 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 				logger.NewFakeLogger(),
 			),
 			method: http.MethodPost,
-			path:   "/projects",
+			path:   "/projects/project-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				var bodyBuffer bytes.Buffer
 
@@ -323,18 +350,23 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				r = httptest.NewRequest(http.MethodPost, "/projects", &bodyBuffer)
+				r = httptest.NewRequest(http.MethodPost, "/projects/project-id", &bodyBuffer)
 				r.Header.Set(echo.HeaderContentType, multiparWriter.FormDataContentType())
-				return echo.New().NewContext(r, w)
+
+				c := echo.New().NewContext(r, w)
+				c.SetParamNames("id")
+				c.SetParamValues("project-id")
+
+				return c
 			},
 			arrangeTestFunc: func(h *CreateProjectHandler) {
 				h.service.(*service.MockCreateProjectService).On(
 					"Create",
 					entity.ProjectFormatTarGz,
 					entity.ProjectTypeLocal,
+					"project-id",
 					mock.Anything,
 				).Return(
-					"no-project-id",
 					domainerror.NewProjectAlreadyExistsError(
 						fmt.Errorf("project already exists"),
 					),
@@ -359,7 +391,7 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 				logger.NewFakeLogger(),
 			),
 			method: http.MethodPost,
-			path:   "/projects",
+			path:   "/projects/project-id",
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				var bodyBuffer bytes.Buffer
 
@@ -388,17 +420,22 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				r = httptest.NewRequest(http.MethodPost, "/projects", &bodyBuffer)
+				r = httptest.NewRequest(http.MethodPost, "/projects/project-id", &bodyBuffer)
 				r.Header.Set(echo.HeaderContentType, multiparWriter.FormDataContentType())
-				return echo.New().NewContext(r, w)
+
+				c := echo.New().NewContext(r, w)
+				c.SetParamNames("id")
+				c.SetParamValues("project-id")
+				return c
 			},
 			arrangeTestFunc: func(h *CreateProjectHandler) {
 				h.service.(*service.MockCreateProjectService).On(
 					"Create",
 					entity.ProjectFormatTarGz,
 					entity.ProjectTypeLocal,
+					"project-id",
 					mock.Anything,
-				).Return("project-id", nil)
+				).Return(nil)
 			},
 			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusCreated, rec.Code)

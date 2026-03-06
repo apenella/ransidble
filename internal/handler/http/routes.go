@@ -5,7 +5,7 @@ const (
 	// ProjectBasePath is the base path for all project-related endpoints
 	ProjectBasePath = "/projects"
 	// CreateProjectPath is the endpoint to create a new project
-	CreateProjectPath = "/projects"
+	CreateProjectPath = "/projects/:id"
 	// GetProjectPath is the endpoint to get a project by ID
 	GetProjectPath = "/projects/:id"
 	// GetProjectsPath is the endpoint to list all projects

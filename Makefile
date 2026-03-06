@@ -127,7 +127,7 @@ create-project-1: ## Create a project with the name project-1
 	@echo
 	@echo " $(COLOR_BLUE)Creating project project-1$(COLOR_END)"
 	@echo
-	curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-1.tar.gz'
+	curl -iX POST 0.0.0.0:8080/projects/project-1 -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-1.tar.gz'
 
 delete-project-1: ## Delete the project with the name project-1
 	@echo
@@ -139,7 +139,7 @@ create-project-2: ## Create a project with the name project-2
 	@echo
 	@echo " $(COLOR_BLUE)Creating project project-2$(COLOR_END)"
 	@echo
-	curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-2.tar.gz'
+	curl -iX POST 0.0.0.0:8080/projects/project-2 -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-2.tar.gz'
 
 delete-project-2: ## Delete the project with the name project-2
 	@echo
@@ -151,7 +151,7 @@ create-project-3: ## Create a project with the name project-3
 	@echo
 	@echo " $(COLOR_BLUE)Creating project project-3$(COLOR_END)"
 	@echo
-	curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-3.tar.gz'
+	curl -iX POST 0.0.0.0:8080/projects/project-3 -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-3.tar.gz'
 
 delete-project-3: ## Delete the project with the name project-3
 	@echo
@@ -163,7 +163,7 @@ create-project-4: ## Create a project with the name project-4
 	@echo
 	@echo " $(COLOR_BLUE)Creating project project-4$(COLOR_END)"
 	@echo
-	curl -iX POST 0.0.0.0:8080/projects -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-4.tar.gz'
+	curl -iX POST 0.0.0.0:8080/projects/project-4 -H 'Content-Type: multipart/form-data' -F 'metadata={"format":"targz","storage":"local"};type=application/json' -F 'file=@test/fixtures/projects/project-4.tar.gz'
 
 delete-project-4: ## Delete the project with the name project-4
 	@echo

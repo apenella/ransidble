@@ -18,24 +18,22 @@ func TestCreateProjectService_Create(t *testing.T) {
 	fileReader := io.NopCloser(strings.NewReader("content for testing"))
 
 	tests := []struct {
-		desc                 string
-		format               string
-		storage              string
-		fileName             string
-		projectContentReader io.Reader
-		expectedProjectID    string
-		err                  error
-		service              *CreateProjectService
 		arrangeFunc          func(*testing.T, *CreateProjectService)
 		assertFunc           func(*testing.T, *CreateProjectService) bool
+		desc                 string
+		err                  error
+		format               string
+		projectContentReader io.Reader
+		projectID            string
+		service              *CreateProjectService
+		storage              string
 	}{
 		{
 			desc:                 "Testing create a project on the CreateProjectService",
-			format:               "plain",
+			format:               "targz",
 			storage:              "local",
-			fileName:             "project.tar.gz",
+			projectID:            "project-id",
 			projectContentReader: fileReader,
-			expectedProjectID:    "project",
 			err:                  nil,
 			service: NewCreateProjectService(
 				repository.NewMockProjectRepository(),
@@ -47,7 +45,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 
 				service.repository.(*repository.MockProjectRepository).On(
 					"Find",
-					"project",
+					"project-id",
 				).Return(nil, nil)
 				service.storage.(*repository.MockProjectSourceCodeStorageFactory).On(
 					"Get",
@@ -55,22 +53,22 @@ func TestCreateProjectService_Create(t *testing.T) {
 				).Return(projectSourceCodeStorer)
 				service.repository.(*repository.MockProjectRepository).On(
 					"SafeStore",
-					"project",
+					"project-id",
 					&entity.Project{
-						Name:      "project",
-						Format:    "plain",
+						Name:      "project-id",
+						Format:    "targz",
 						Storage:   "local",
-						Reference: "project.tar.gz",
+						Reference: "project-id.tar.gz",
 					},
 				).Return(nil)
 
 				projectSourceCodeStorer.On(
 					"Store",
 					&entity.Project{
-						Name:      "project",
-						Format:    "plain",
+						Name:      "project-id",
+						Format:    "targz",
 						Storage:   "local",
-						Reference: "project.tar.gz",
+						Reference: "project-id.tar.gz",
 					},
 					fileReader,
 				).Return(nil)
@@ -83,7 +81,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 			desc:                 "Testing an error creating a project on the CreateProjectService service when the format is not provided",
 			format:               "",
 			storage:              "local",
-			fileName:             "project.tar.gz",
+			projectID:            "project-id",
 			projectContentReader: fileReader,
 			err:                  fmt.Errorf(ErrProjectFormatNotProvided),
 			service: NewCreateProjectService(
@@ -97,7 +95,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 			desc:                 "Testing an error creating a project on the CreateProjectService service when the storage is not provided",
 			format:               "plain",
 			storage:              "",
-			fileName:             "project.tar.gz",
+			projectID:            "project-id",
 			projectContentReader: fileReader,
 			err:                  fmt.Errorf(ErrProjectStorageNotProvided),
 			service: NewCreateProjectService(
@@ -112,7 +110,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 			format:               "plain",
 			storage:              "local",
 			projectContentReader: nil,
-			fileName:             "project.tar.gz",
+			projectID:            "project",
 			err:                  fmt.Errorf(ErrProjectContentReaderNotProvided),
 			service: NewCreateProjectService(
 				repository.NewMockProjectRepository(),
@@ -126,8 +124,10 @@ func TestCreateProjectService_Create(t *testing.T) {
 			format:               "plain",
 			storage:              "local",
 			projectContentReader: fileReader,
-			fileName:             "",
-			err:                  fmt.Errorf(ErrFileNameNotProvided),
+			projectID:            "",
+			err: domainerror.NewProjectIDNotProvidedError(
+				fmt.Errorf(ErrProjectIDNotProvided),
+			),
 			service: NewCreateProjectService(
 				repository.NewMockProjectRepository(),
 				repository.NewMockProjectSourceCodeStorageFactory(),
@@ -140,7 +140,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 			format:               "plain",
 			storage:              "local",
 			projectContentReader: fileReader,
-			fileName:             "project.tar.gz",
+			projectID:            "project-id",
 			err:                  fmt.Errorf(ErrStorageHandlerNotInitialized),
 			service: NewCreateProjectService(
 				repository.NewMockProjectRepository(),
@@ -154,24 +154,10 @@ func TestCreateProjectService_Create(t *testing.T) {
 			format:               "plain",
 			storage:              "local",
 			projectContentReader: fileReader,
-			fileName:             "project.tar.gz",
+			projectID:            "project-id",
 			err:                  fmt.Errorf(ErrProjectRepositoryNotInitialized),
 			service: NewCreateProjectService(
 				nil,
-				repository.NewMockProjectSourceCodeStorageFactory(),
-				logger.NewFakeLogger(),
-			),
-			arrangeFunc: func(t *testing.T, service *CreateProjectService) {},
-		},
-		{
-			desc:                 "Testing an error creating a project on the CreateProjectService service when project name has an non supported extension",
-			format:               "plain",
-			storage:              "local",
-			projectContentReader: fileReader,
-			fileName:             "project.non-supported-extension",
-			err:                  fmt.Errorf("%s: %s", ErrProjectFileExtensionNotSupported, "file project.non-supported-extension extension not supported"),
-			service: NewCreateProjectService(
-				repository.NewMockProjectRepository(),
 				repository.NewMockProjectSourceCodeStorageFactory(),
 				logger.NewFakeLogger(),
 			),
@@ -182,8 +168,12 @@ func TestCreateProjectService_Create(t *testing.T) {
 			format:               "non-supported-format",
 			storage:              "local",
 			projectContentReader: fileReader,
-			fileName:             "project.tar.gz",
-			err:                  fmt.Errorf("%s: %s", ErrProjectFormatNotSupported, "invalid format: non-supported-format"),
+			projectID:            "project-id",
+			err: fmt.Errorf(
+				"%s: %s",
+				ErrProjectFormatNotSupported,
+				"invalid format: non-supported-format",
+			),
 			service: NewCreateProjectService(
 				repository.NewMockProjectRepository(),
 				repository.NewMockProjectSourceCodeStorageFactory(),
@@ -196,7 +186,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 			format:               "plain",
 			storage:              "local",
 			projectContentReader: fileReader,
-			fileName:             "project.tar.gz",
+			projectID:            "project-id",
 			err: domainerror.NewProjectAlreadyExistsError(
 				fmt.Errorf(ErrProjectAlreadyExists),
 			),
@@ -208,12 +198,12 @@ func TestCreateProjectService_Create(t *testing.T) {
 			arrangeFunc: func(t *testing.T, service *CreateProjectService) {
 				service.repository.(*repository.MockProjectRepository).On(
 					"Find",
-					"project",
+					"project-id",
 				).Return(&entity.Project{
-					Name:      "project",
+					Name:      "project-id",
 					Format:    "plain",
 					Storage:   "local",
-					Reference: "project.tar.gz",
+					Reference: "project-id.tar.gz",
 				}, nil)
 			},
 		},
@@ -222,26 +212,24 @@ func TestCreateProjectService_Create(t *testing.T) {
 			format:               "plain",
 			storage:              "non-supported-storage",
 			projectContentReader: fileReader,
-			fileName:             "project.tar.gz",
-			err:                  fmt.Errorf("%s: %s", ErrProjectStorageNotSupported, "invalid storage type: non-supported-storage"),
+			projectID:            "project-id",
+			err: fmt.Errorf(
+				"%s: %s",
+				ErrProjectStorageNotSupported, "invalid storage type: non-supported-storage",
+			),
 			service: NewCreateProjectService(
 				repository.NewMockProjectRepository(),
 				repository.NewMockProjectSourceCodeStorageFactory(),
 				logger.NewFakeLogger(),
 			),
-			arrangeFunc: func(t *testing.T, service *CreateProjectService) {
-				service.repository.(*repository.MockProjectRepository).On(
-					"Find",
-					"project",
-				).Return(nil, nil)
-			},
+			arrangeFunc: func(t *testing.T, service *CreateProjectService) {},
 		},
 		{
 			desc:                 "Testing an error creating a project on the CreateProjectService service when storage handler is not found",
 			format:               "plain",
 			storage:              "local",
 			projectContentReader: fileReader,
-			fileName:             "project.tar.gz",
+			projectID:            "project-id",
 			err:                  fmt.Errorf(ErrStorageHandlerNotFound),
 			service: NewCreateProjectService(
 				repository.NewMockProjectRepository(),
@@ -251,7 +239,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 			arrangeFunc: func(t *testing.T, service *CreateProjectService) {
 				service.repository.(*repository.MockProjectRepository).On(
 					"Find",
-					"project",
+					"project-id",
 				).Return(nil, nil)
 				service.storage.(*repository.MockProjectSourceCodeStorageFactory).On(
 					"Get",
@@ -261,10 +249,10 @@ func TestCreateProjectService_Create(t *testing.T) {
 		},
 		{
 			desc:                 "Testing an error creating a project on the CreateProjectService service when storing a project to the repository fails",
-			format:               "plain",
+			format:               "targz",
 			storage:              "local",
 			projectContentReader: fileReader,
-			fileName:             "project.tar.gz",
+			projectID:            "project-id",
 			err:                  fmt.Errorf("%s: %s", ErrStoringProject, "storing project fails"),
 			service: NewCreateProjectService(
 				repository.NewMockProjectRepository(),
@@ -276,7 +264,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 
 				service.repository.(*repository.MockProjectRepository).On(
 					"Find",
-					"project",
+					"project-id",
 				).Return(nil, nil)
 				service.storage.(*repository.MockProjectSourceCodeStorageFactory).On(
 					"Get",
@@ -284,22 +272,22 @@ func TestCreateProjectService_Create(t *testing.T) {
 				).Return(projectSourceCodeStorer)
 				service.repository.(*repository.MockProjectRepository).On(
 					"SafeStore",
-					"project",
+					"project-id",
 					&entity.Project{
-						Name:      "project",
-						Format:    "plain",
+						Name:      "project-id",
+						Format:    "targz",
 						Storage:   "local",
-						Reference: "project.tar.gz",
+						Reference: "project-id.tar.gz",
 					},
 				).Return(fmt.Errorf("storing project fails"))
 			},
 		},
 		{
 			desc:                 "Testing an error creating a project on the CreateProjectService service when storing a project to the persistent storage fails",
-			format:               "plain",
+			format:               "targz",
 			storage:              "local",
 			projectContentReader: fileReader,
-			fileName:             "project.tar.gz",
+			projectID:            "project-id",
 			err:                  fmt.Errorf("%s: %s", ErrStoringProject, "storing project fails"),
 			service: NewCreateProjectService(
 				repository.NewMockProjectRepository(),
@@ -311,7 +299,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 
 				service.repository.(*repository.MockProjectRepository).On(
 					"Find",
-					"project",
+					"project-id",
 				).Return(nil, nil)
 				service.storage.(*repository.MockProjectSourceCodeStorageFactory).On(
 					"Get",
@@ -319,22 +307,22 @@ func TestCreateProjectService_Create(t *testing.T) {
 				).Return(projectSourceCodeStorer)
 				service.repository.(*repository.MockProjectRepository).On(
 					"SafeStore",
-					"project",
+					"project-id",
 					&entity.Project{
-						Name:      "project",
-						Format:    "plain",
+						Name:      "project-id",
+						Format:    "targz",
 						Storage:   "local",
-						Reference: "project.tar.gz",
+						Reference: "project-id.tar.gz",
 					},
 				).Return(nil)
 
 				projectSourceCodeStorer.On(
 					"Store",
 					&entity.Project{
-						Name:      "project",
-						Format:    "plain",
+						Name:      "project-id",
+						Format:    "targz",
 						Storage:   "local",
-						Reference: "project.tar.gz",
+						Reference: "project-id.tar.gz",
 					},
 					fileReader,
 				).Return(fmt.Errorf("storing project fails"))
@@ -351,7 +339,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 				test.arrangeFunc(t, test.service)
 			}
 
-			id, err := test.service.Create(test.format, test.storage, test.fileName, test.projectContentReader)
+			err := test.service.Create(test.format, test.storage, test.projectID, test.projectContentReader)
 			if err != nil && test.err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
@@ -359,49 +347,9 @@ func TestCreateProjectService_Create(t *testing.T) {
 				assert.Nil(t, test.err, "no error received when an error was expected")
 
 				if test.assertFunc != nil {
-					assert.Equal(t, test.expectedProjectID, id, "unexpected project ID returned")
 					assert.True(t, test.assertFunc(t, test.service))
 				}
 			}
-		})
-	}
-}
-
-func TestExtractProjectName(t *testing.T) {
-	tests := []struct {
-		desc     string
-		fileName string
-		expected string
-	}{
-		{
-			desc:     "Testing extract project name from a file name",
-			fileName: "project.tar.gz",
-			expected: "project",
-		},
-		{
-			desc:     "Testing extract project name from a file name with a single extension",
-			fileName: "project.tar",
-			expected: "project",
-		},
-		{
-			desc:     "Testing extract project name from a file name with no extension",
-			fileName: "project",
-			expected: "project",
-		},
-		{
-			desc:     "Testing extract project name from a blank file name",
-			fileName: "",
-			expected: "",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-			t.Log(test.desc)
-
-			projectName := extractProjectName(test.fileName)
-			assert.Equal(t, test.expected, projectName)
 		})
 	}
 }

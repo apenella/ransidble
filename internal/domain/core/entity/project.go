@@ -15,8 +15,8 @@ const (
 	// ProjectFormatTarGz represents a project in tar.gz format
 	ProjectFormatTarGz = "targz"
 
-	// ExtensionTarGz represents the tar.gz extension
-	ExtensionTarGz = ".tar.gz"
+	// ExtensionTarGz represents the tar.gz extension. It is not lead with a dot
+	ExtensionTarGz = "tar.gz"
 )
 
 var (
@@ -66,6 +66,24 @@ func (p *Project) ProjectSourceCodeExtension() (string, error) {
 func (p *Project) Validate() error {
 	validate := validator.New()
 	return validate.Struct(p)
+}
+
+// GetExtensionFromFormat returns the project source code extension from the project format
+func GetExtensionFromFormat(format string) (string, error) {
+
+	var err error
+
+	err = ValidateProjectFormat(format)
+	if err != nil {
+		return "", fmt.Errorf("error getting extensiont: %w", err)
+	}
+
+	ext, ok := projectFomatToExtension[format]
+	if !ok {
+		return "", fmt.Errorf("format %s not supported", format)
+	}
+
+	return ext, nil
 }
 
 // ValidateProjectFormat validates the project format

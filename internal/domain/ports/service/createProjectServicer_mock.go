@@ -11,6 +11,9 @@ type MockCreateProjectService struct {
 	mock.Mock
 }
 
+// Ensure MockCreateProjectService implements CreateProjectServicer interface
+var _ CreateProjectServicer = (*MockCreateProjectService)(nil)
+
 // NewMockCreateProjectService creates a new MockCreateProjectService
 func NewMockCreateProjectService() *MockCreateProjectService {
 	return &MockCreateProjectService{}
@@ -18,7 +21,7 @@ func NewMockCreateProjectService() *MockCreateProjectService {
 
 // Create method to create a project
 // func (m *MockCreateProjectService) Create(format string, storage string, file *multipart.FileHeader) error {
-func (m *MockCreateProjectService) Create(format string, storage string, filename string, file io.Reader) (string, error) {
-	args := m.Called(format, storage, file)
-	return args.String(0), args.Error(1)
+func (m *MockCreateProjectService) Create(format string, storage string, filename string, file io.Reader) error {
+	args := m.Called(format, storage, filename, file)
+	return args.Error(0)
 }

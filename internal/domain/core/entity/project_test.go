@@ -305,3 +305,47 @@ func TestValidateProjectFileExtension(t *testing.T) {
 		})
 	}
 }
+
+func TestGetExtensionFromFormat(t *testing.T) {
+	tests := []struct {
+		desc     string
+		format   string
+		expected string
+		err      error
+	}{
+		{
+			desc:     "Testing get extension from format with plain format",
+			format:   "plain",
+			expected: "",
+			err:      nil,
+		},
+		{
+			desc:     "Testing get extension from format with targz format",
+			format:   "targz",
+			expected: "tar.gz",
+			err:      nil,
+		},
+		{
+			desc:     "Testing get extension from format with invalid format",
+			format:   "invalid-format",
+			expected: "",
+			err:      fmt.Errorf("error getting extensiont: invalid format: invalid-format"),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Log(test.desc)
+			t.Parallel()
+
+			got, err := GetExtensionFromFormat(test.format)
+
+			if err != nil && test.err != nil {
+				assert.Equal(t, test.err.Error(), err.Error())
+			} else {
+				assert.Nil(t, test.err, "an expected error not received")
+				assert.Nil(t, err, "got an unexpected error")
+				assert.Equal(t, test.expected, got)
+			}
+		})
+	}
+}
