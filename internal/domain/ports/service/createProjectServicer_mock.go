@@ -21,7 +21,7 @@ func NewMockCreateProjectService() *MockCreateProjectService {
 
 // Create method to create a project
 // func (m *MockCreateProjectService) Create(format string, storage string, file *multipart.FileHeader) error {
-func (m *MockCreateProjectService) Create(format string, storage string, filename string, file io.Reader) error {
-	args := m.Called(format, storage, filename, file)
+func (m *MockCreateProjectService) Create(format string, storage string, projectID string, version string, file io.Reader) error {
+	args := m.Called(format, storage, projectID, version, file)
 	return args.Error(0)
 }

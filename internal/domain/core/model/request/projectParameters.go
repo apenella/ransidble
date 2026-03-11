@@ -12,6 +12,8 @@ type ProjectParameters struct {
 	// Reference string `json:"reference" validate:"required"`
 	// Storage represents the project type
 	Storage string `json:"storage" validate:"required,oneof=local"`
+	// Version represents the project version. This is an optional field, if not provided, the FallbackVersion will be used.
+	Version string `json:"version,omitempty"`
 }
 
 // Validate validates the request

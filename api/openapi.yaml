@@ -113,6 +113,10 @@ paths:
               properties:
                 metadata:
                   type: object
+                  description: The project metadata parameters required to create the project
+                  required:
+                    - storage
+                    - format
                   properties:
                     storage:
                       type: string
@@ -125,6 +129,9 @@ paths:
                       enum:
                         - plain
                         - targz
+                    version:
+                      type: string
+                      description: The project version. This is an optional parameter. If not provided, it will be set to the latest version.
                 file:
                   type: string
                   format: binary

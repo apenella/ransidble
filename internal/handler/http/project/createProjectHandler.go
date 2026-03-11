@@ -143,7 +143,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, errorResponse)
 	}
 
-	err = h.service.Create(requestParameters.Format, requestParameters.Storage, projectID, projectReceivedFile)
+	err = h.service.Create(requestParameters.Format, requestParameters.Storage, projectID, requestParameters.Version, projectReceivedFile)
 	if err != nil {
 
 		httpStatus := http.StatusInternalServerError

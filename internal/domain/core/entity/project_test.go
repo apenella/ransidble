@@ -11,12 +11,26 @@ func TestNewProject(t *testing.T) {
 	t.Log("Testing project entity creation")
 	t.Parallel()
 
-	project := NewProject("project", "reference", "plain", "local")
+	project := NewProject("project", "v1.0.0", "reference", "plain", "local")
 
 	assert.Equal(t, "plain", project.Format)
 	assert.Equal(t, "project", project.Name)
 	assert.Equal(t, "reference", project.Reference)
 	assert.Equal(t, "local", project.Storage)
+	assert.Equal(t, "v1.0.0", project.Version)
+}
+
+func TestNewProject_FallbackVersion(t *testing.T) {
+	t.Log("Testing project entity creation with fallback version")
+	t.Parallel()
+
+	project := NewProject("project", "", "reference", "plain", "local")
+
+	assert.Equal(t, "plain", project.Format)
+	assert.Equal(t, "project", project.Name)
+	assert.Equal(t, "reference", project.Reference)
+	assert.Equal(t, "local", project.Storage)
+	assert.Equal(t, "latest", project.Version)
 }
 
 func TestProjectValidate(t *testing.T) {
@@ -25,6 +39,7 @@ func TestProjectValidate(t *testing.T) {
 		Name      string
 		Reference string
 		Storage   string
+		Version   string
 	}
 
 	tests := []struct {
@@ -39,6 +54,7 @@ func TestProjectValidate(t *testing.T) {
 				Name:      "project",
 				Reference: "reference",
 				Storage:   "local",
+				Version:   "v1.0.0",
 			},
 			wantErr: false,
 		},
@@ -49,6 +65,7 @@ func TestProjectValidate(t *testing.T) {
 				Name:      "project",
 				Reference: "reference",
 				Storage:   "local",
+				Version:   "v1.0.0",
 			},
 			wantErr: true,
 		},
@@ -59,6 +76,7 @@ func TestProjectValidate(t *testing.T) {
 				Name:      "",
 				Reference: "reference",
 				Storage:   "local",
+				Version:   "v1.0.0",
 			},
 			wantErr: true,
 		},
@@ -69,6 +87,7 @@ func TestProjectValidate(t *testing.T) {
 				Name:      "project",
 				Reference: "",
 				Storage:   "local",
+				Version:   "v1.0.0",
 			},
 			wantErr: true,
 		},
@@ -79,6 +98,7 @@ func TestProjectValidate(t *testing.T) {
 				Name:      "project",
 				Reference: "reference",
 				Storage:   "",
+				Version:   "v1.0.0",
 			},
 			wantErr: true,
 		},
@@ -89,6 +109,7 @@ func TestProjectValidate(t *testing.T) {
 				Name:      "project",
 				Reference: "reference",
 				Storage:   "invalid-type",
+				Version:   "v1.0.0",
 			},
 			wantErr: true,
 		},
@@ -99,6 +120,18 @@ func TestProjectValidate(t *testing.T) {
 				Name:      "project",
 				Reference: "reference",
 				Storage:   "local",
+				Version:   "v1.0.0",
+			},
+			wantErr: true,
+		},
+		{
+			desc: "Validating a project entity with empty version",
+			fields: fields{
+				Format:    "plain",
+				Name:      "project",
+				Reference: "reference",
+				Storage:   "local",
+				Version:   "",
 			},
 			wantErr: true,
 		},
@@ -113,6 +146,7 @@ func TestProjectValidate(t *testing.T) {
 				Name:      test.fields.Name,
 				Reference: test.fields.Reference,
 				Storage:   test.fields.Storage,
+				Version:   test.fields.Version,
 			}
 			err := p.Validate()
 
@@ -134,6 +168,7 @@ func TestProjectSourceCodeExtension(t *testing.T) {
 		Name      string
 		Reference string
 		Storage   string
+		Version   string
 	}
 	tests := []struct {
 		desc     string
@@ -148,6 +183,7 @@ func TestProjectSourceCodeExtension(t *testing.T) {
 				Name:      "project",
 				Reference: "reference",
 				Storage:   "local",
+				Version:   "v1.0.0",
 			},
 			expected: ExtensionTarGz,
 			err:      nil,
@@ -159,6 +195,7 @@ func TestProjectSourceCodeExtension(t *testing.T) {
 				Name:      "project",
 				Reference: "reference",
 				Storage:   "local",
+				Version:   "v1.0.0",
 			},
 			expected: "",
 			err:      nil,
@@ -170,6 +207,7 @@ func TestProjectSourceCodeExtension(t *testing.T) {
 				Name:      "project",
 				Reference: "reference",
 				Storage:   "local",
+				Version:   "v1.0.0",
 			},
 			expected: "",
 			err:      fmt.Errorf("format invalid-format not supported"),
@@ -185,6 +223,7 @@ func TestProjectSourceCodeExtension(t *testing.T) {
 				Name:      test.fields.Name,
 				Reference: test.fields.Reference,
 				Storage:   test.fields.Storage,
+				Version:   test.fields.Version,
 			}
 			got, err := p.ProjectSourceCodeExtension()
 

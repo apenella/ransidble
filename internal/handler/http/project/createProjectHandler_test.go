@@ -299,6 +299,7 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 					entity.ProjectFormatTarGz,
 					entity.ProjectTypeLocal,
 					"project-id",
+					"",
 					mock.Anything,
 				).Return(fmt.Errorf("error opening project file"))
 			},
@@ -365,6 +366,7 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 					entity.ProjectFormatTarGz,
 					entity.ProjectTypeLocal,
 					"project-id",
+					"",
 					mock.Anything,
 				).Return(
 					domainerror.NewProjectAlreadyExistsError(
@@ -385,7 +387,7 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			},
 		},
 		{
-			desc: "Testing CreateProjectHandler.Handle request success and it is returning a StatusCreated",
+			desc: "Testing CreateProjectHandler.Handle request without version success and it is returning a StatusCreated",
 			handler: NewCreateProjectHandler(
 				service.NewMockCreateProjectService(),
 				logger.NewFakeLogger(),
@@ -434,6 +436,67 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 					entity.ProjectFormatTarGz,
 					entity.ProjectTypeLocal,
 					"project-id",
+					"",
+					mock.Anything,
+				).Return(nil)
+			},
+			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
+				assert.Equal(t, http.StatusCreated, rec.Code)
+				assert.Equal(t, rec.Header().Get("Location"), "/projects/project-id")
+			},
+		},
+		{
+			desc: "Testing CreateProjectHandler.Handle request with version success and it is returning a StatusCreated",
+			handler: NewCreateProjectHandler(
+				service.NewMockCreateProjectService(),
+				logger.NewFakeLogger(),
+			),
+			method: http.MethodPost,
+			path:   "/projects/project-id",
+			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
+				var bodyBuffer bytes.Buffer
+
+				requestParameters := &request.ProjectParameters{
+					Format:  entity.ProjectFormatTarGz,
+					Storage: entity.ProjectTypeLocal,
+					Version: "1.0.0",
+				}
+
+				requestParametersJSON, err := json.Marshal(requestParameters)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				multiparWriter := multipart.NewWriter(&bodyBuffer)
+				defer multiparWriter.Close()
+
+				multiparWriter.WriteField(RequestFormProjectMetadataFieldName, string(requestParametersJSON))
+
+				part, err := multiparWriter.CreateFormFile(RequestFormProjectFileFieldeName, "project.tar.gz")
+				if err != nil {
+					t.Fatal(err)
+				}
+				projectContentFile := strings.NewReader("project-content")
+				_, err = io.Copy(part, projectContentFile)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				r = httptest.NewRequest(http.MethodPost, "/projects/project-id", &bodyBuffer)
+				r.Header.Set(echo.HeaderContentType, multiparWriter.FormDataContentType())
+
+				c := echo.New().NewContext(r, w)
+				c.SetParamNames("id")
+				c.SetParamValues("project-id")
+				return c
+			},
+			arrangeTestFunc: func(h *CreateProjectHandler) {
+				h.service.(*service.MockCreateProjectService).On(
+					"Create",
+					entity.ProjectFormatTarGz,
+					entity.ProjectTypeLocal,
+					"project-id",
+					"1.0.0",
 					mock.Anything,
 				).Return(nil)
 			},

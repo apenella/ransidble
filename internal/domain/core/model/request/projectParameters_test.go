@@ -8,10 +8,9 @@ import (
 
 func TestProjectParametersValidate(t *testing.T) {
 	type fields struct {
-		Format string
-		// Name      string
-		// Reference string
+		Format  string
 		Storage string
+		Version string
 	}
 	test := []struct {
 		desc    string
@@ -21,9 +20,7 @@ func TestProjectParametersValidate(t *testing.T) {
 		{
 			desc: "Validating a ProjectParameters",
 			fields: fields{
-				Format: "targz",
-				// Name:   "project",
-				// Reference: "reference",
+				Format:  "targz",
 				Storage: "local",
 			},
 			wantErr: false,
@@ -31,45 +28,21 @@ func TestProjectParametersValidate(t *testing.T) {
 		{
 			desc: "Validating a ProjectParameters with empty format",
 			fields: fields{
-				// Name: "project",
-				// Reference: "reference",
 				Storage: "local",
 			},
 			wantErr: true,
 		},
-		// {
-		// 	desc: "Validating a ProjectParameters with empty name",
-		// 	fields: fields{
-		// 		Format: "targz",
-		// 		// Reference: "reference",
-		// 		Storage: "local",
-		// 	},
-		// 	wantErr: true,
-		// },
-		// {
-		// 	desc: "Validating a ProjectParameters with empty reference",
-		// 	fields: fields{
-		// 		Format:  "targz",
-		// 		Name:    "project",
-		// 		Storage: "local",
-		// 	},
-		// 	wantErr: true,
-		// },
 		{
 			desc: "Validating a ProjectParameters with empty storage",
 			fields: fields{
 				Format: "targz",
-				// Name:   "project",
-				// Reference: "reference",
 			},
 			wantErr: true,
 		},
 		{
 			desc: "Validating a ProjectParameters with invalid format",
 			fields: fields{
-				Format: "invalid",
-				// Name:   "project",
-				// Reference: "reference",
+				Format:  "invalid",
 				Storage: "local",
 			},
 			wantErr: true,
@@ -77,21 +50,27 @@ func TestProjectParametersValidate(t *testing.T) {
 		{
 			desc: "Validating a ProjectParameters with invalid storage",
 			fields: fields{
-				Format: "targz",
-				// Name:   "project",
-				// Reference: "reference",
+				Format:  "targz",
 				Storage: "invalid",
 			},
 			wantErr: true,
+		},
+		{
+			desc: "Validating a ProjectParameters with a version",
+			fields: fields{
+				Format:  "targz",
+				Storage: "local",
+				Version: "v1.0.0",
+			},
+			wantErr: false,
 		},
 	}
 	for _, test := range test {
 		t.Run(test.desc, func(t *testing.T) {
 			p := &ProjectParameters{
-				Format: test.fields.Format,
-				// Name:   test.fields.Name,
-				// Reference: test.fields.Reference,
+				Format:  test.fields.Format,
 				Storage: test.fields.Storage,
+				Version: test.fields.Version,
 			}
 
 			err := p.Validate()

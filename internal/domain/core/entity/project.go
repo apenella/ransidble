@@ -17,6 +17,9 @@ const (
 
 	// ExtensionTarGz represents the tar.gz extension. It is not lead with a dot
 	ExtensionTarGz = "tar.gz"
+
+	// FallbackVersion represents the fallback version for a project if the version is not provided
+	FallbackVersion = "latest"
 )
 
 var (
@@ -33,21 +36,27 @@ type Project struct {
 	Format string `json:"format" validate:"required,oneof=plain targz"`
 	// Name represents the project name. This field is required
 	Name string `json:"name" validate:"required"`
-	// Source represents the project source. This field is required
+	// Reference represents the project source. This field is required
 	Reference string `json:"reference" validate:"required"`
 	// Storage represents the project type. This field is required and must be one of the following values: local
 	Storage string `json:"storage" validate:"required,oneof=local"`
-	// Hash represents the project hash
-	//Hash string `json:"hash" validate:"sha256"`
+	// Version represents the project version. This field is required
+	Version string `json:"version,omitempty" validate:"required"`
 }
 
 // NewProject creates a new project instance
-func NewProject(name, referene, format, storage string) *Project {
+func NewProject(name, version, reference, format, storage string) *Project {
+
+	if version == "" {
+		version = FallbackVersion
+	}
+
 	return &Project{
 		Format:    format,
 		Name:      name,
-		Reference: referene,
+		Reference: reference,
 		Storage:   storage,
+		Version:   version,
 	}
 }
 
@@ -71,9 +80,7 @@ func (p *Project) Validate() error {
 // GetExtensionFromFormat returns the project source code extension from the project format
 func GetExtensionFromFormat(format string) (string, error) {
 
-	var err error
-
-	err = ValidateProjectFormat(format)
+	err := ValidateProjectFormat(format)
 	if err != nil {
 		return "", fmt.Errorf("error getting extensiont: %w", err)
 	}

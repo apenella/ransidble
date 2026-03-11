@@ -31,7 +31,7 @@ func NewCreateProjectService(repository repository.ProjectRepository, storage re
 
 // Create creates a project and returns an error if something goes wrong
 // func (s *CreateProjectService) Create(format string, storage string, file *multipart.FileHeader) error {
-func (s *CreateProjectService) Create(format string, storage string, projectID string, projectContentReader io.Reader) error {
+func (s *CreateProjectService) Create(format string, storage string, projectID string, projectVersion string, projectContentReader io.Reader) error {
 	var err error
 	var extension string
 
@@ -71,16 +71,20 @@ func (s *CreateProjectService) Create(format string, storage string, projectID s
 
 	if s.storage == nil {
 		s.logger.Error(ErrStorageHandlerNotInitialized, map[string]interface{}{
-			"component": "CreateProjectService.Create",
-			"package":   "github.com/apenella/ransidble/internal/domain/core/service/project",
+			"component":       "CreateProjectService.Create",
+			"package":         "github.com/apenella/ransidble/internal/domain/core/service/project",
+			"project_id":      projectID,
+			"project_version": projectVersion,
 		})
 		return fmt.Errorf(ErrStorageHandlerNotInitialized)
 	}
 
 	if s.repository == nil {
 		s.logger.Error(ErrProjectRepositoryNotInitialized, map[string]interface{}{
-			"component": "CreateProjectService.Create",
-			"package":   "github.com/apenella/ransidble/internal/domain/core/service/project",
+			"component":       "CreateProjectService.Create",
+			"package":         "github.com/apenella/ransidble/internal/domain/core/service/project",
+			"project_id":      projectID,
+			"project_version": projectVersion,
 		})
 		return fmt.Errorf(ErrProjectRepositoryNotInitialized)
 	}
@@ -88,11 +92,12 @@ func (s *CreateProjectService) Create(format string, storage string, projectID s
 	err = entity.ValidateProjectFormat(format)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("%s: %s", ErrProjectFormatNotSupported, err.Error()), map[string]interface{}{
-			"component":  "CreateProjectService.Create",
-			"format":     format,
-			"package":    "github.com/apenella/ransidble/internal/domain/core/service/project",
-			"project_id": projectID,
-			"storage":    storage,
+			"component":       "CreateProjectService.Create",
+			"format":          format,
+			"package":         "github.com/apenella/ransidble/internal/domain/core/service/project",
+			"project_id":      projectID,
+			"project_version": projectVersion,
+			"storage":         storage,
 		})
 		return fmt.Errorf("%s: %s", ErrProjectFormatNotSupported, err.Error())
 	}
@@ -100,10 +105,11 @@ func (s *CreateProjectService) Create(format string, storage string, projectID s
 	err = entity.ValidateProjectStorage(storage)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("%s: %s", ErrProjectStorageNotSupported, err.Error()), map[string]interface{}{
-			"component":  "CreateProjectService.Create",
-			"package":    "github.com/apenella/ransidble/internal/domain/core/service/project",
-			"project_id": projectID,
-			"storage":    storage,
+			"component":       "CreateProjectService.Create",
+			"package":         "github.com/apenella/ransidble/internal/domain/core/service/project",
+			"project_id":      projectID,
+			"project_version": projectVersion,
+			"storage":         storage,
 		})
 		return fmt.Errorf("%s: %s", ErrProjectStorageNotSupported, err.Error())
 	}
@@ -111,11 +117,12 @@ func (s *CreateProjectService) Create(format string, storage string, projectID s
 	extension, err = entity.GetExtensionFromFormat(format)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("%s: %s", ErrProjectFormatNotSupported, err.Error()), map[string]interface{}{
-			"component":  "CreateProjectService.Create",
-			"format":     format,
-			"package":    "github.com/apenella/ransidble/internal/domain/core/service/project",
-			"project_id": projectID,
-			"storage":    storage,
+			"component":       "CreateProjectService.Create",
+			"format":          format,
+			"package":         "github.com/apenella/ransidble/internal/domain/core/service/project",
+			"project_id":      projectID,
+			"project_version": projectVersion,
+			"storage":         storage,
 		})
 		return fmt.Errorf("%s: %s", ErrProjectFormatNotSupported, err.Error())
 	}
@@ -124,11 +131,12 @@ func (s *CreateProjectService) Create(format string, storage string, projectID s
 	findProject, _ := s.repository.Find(projectID)
 	if findProject != nil {
 		s.logger.Error(fmt.Sprintf(ErrProjectAlreadyExists), map[string]interface{}{
-			"component":  "CreateProjectService.Create",
-			"package":    "github.com/apenella/ransidble/internal/domain/core/service/project",
-			"format":     format,
-			"project_id": projectID,
-			"storage":    storage,
+			"component":       "CreateProjectService.Create",
+			"package":         "github.com/apenella/ransidble/internal/domain/core/service/project",
+			"format":          format,
+			"project_id":      projectID,
+			"project_version": projectVersion,
+			"storage":         storage,
 		})
 		return domainerror.NewProjectAlreadyExistsError(
 			fmt.Errorf(ErrProjectAlreadyExists),
@@ -138,27 +146,29 @@ func (s *CreateProjectService) Create(format string, storage string, projectID s
 	storer := s.storage.Get(storage)
 	if storer == nil {
 		s.logger.Error(ErrStorageHandlerNotFound, map[string]interface{}{
-			"component":  "CreateProjectService.Create",
-			"format":     format,
-			"package":    "github.com/apenella/ransidble/internal/domain/core/service/project",
-			"project_id": projectID,
-			"storage":    storage,
+			"component":       "CreateProjectService.Create",
+			"format":          format,
+			"package":         "github.com/apenella/ransidble/internal/domain/core/service/project",
+			"project_id":      projectID,
+			"project_version": projectVersion,
+			"storage":         storage,
 		})
 		return fmt.Errorf(ErrStorageHandlerNotFound)
 	}
 
 	reference := fmt.Sprintf("%s.%s", projectID, extension)
 
-	project := entity.NewProject(projectID, reference, format, storage)
+	project := entity.NewProject(projectID, projectVersion, reference, format, storage)
 	err = s.repository.SafeStore(projectID, project)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("%s: %s", ErrStoringProject, err.Error()), map[string]interface{}{
-			"component":  "CreateProjectService.Create",
-			"format":     format,
-			"package":    "github.com/apenella/ransidble/internal/domain/core/service/project",
-			"project_id": projectID,
-			"reference":  reference,
-			"storage":    storage,
+			"component":       "CreateProjectService.Create",
+			"format":          format,
+			"package":         "github.com/apenella/ransidble/internal/domain/core/service/project",
+			"project_id":      projectID,
+			"project_version": projectVersion,
+			"reference":       reference,
+			"storage":         storage,
 		})
 		return fmt.Errorf("%s: %s", ErrStoringProject, err.Error())
 	}
@@ -166,23 +176,26 @@ func (s *CreateProjectService) Create(format string, storage string, projectID s
 	err = storer.Store(project, projectContentReader)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("%s: %s", ErrStoringProject, err.Error()), map[string]interface{}{
-			"component":  "CreateProjectService.Create",
-			"package":    "github.com/apenella/ransidble/internal/domain/core/service/project",
-			"format":     format,
-			"project_id": projectID,
-			"reference":  reference,
-			"storage":    storage,
+			"component":       "CreateProjectService.Create",
+			"format":          format,
+			"package":         "github.com/apenella/ransidble/internal/domain/core/service/project",
+			"project_id":      projectID,
+			"project_version": projectVersion,
+			"reference":       reference,
+			"storage":         storage,
 		})
 		return fmt.Errorf("%s: %s", ErrStoringProject, err.Error())
+
 	}
 
 	s.logger.Info("Project created", map[string]interface{}{
-		"component":  "CreateProjectService.Create",
-		"package":    "github.com/apenella/ransidble/internal/domain/core/service/project",
-		"format":     format,
-		"project_id": projectID,
-		"reference":  reference,
-		"storage":    storage,
+		"component":       "CreateProjectService.Create",
+		"package":         "github.com/apenella/ransidble/internal/domain/core/service/project",
+		"format":          format,
+		"project_id":      projectID,
+		"project_version": projectVersion,
+		"reference":       reference,
+		"storage":         storage,
 	})
 
 	return nil

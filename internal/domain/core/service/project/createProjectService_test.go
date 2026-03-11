@@ -25,14 +25,16 @@ func TestCreateProjectService_Create(t *testing.T) {
 		format               string
 		projectContentReader io.Reader
 		projectID            string
+		projectVersion       string
 		service              *CreateProjectService
 		storage              string
 	}{
 		{
-			desc:                 "Testing create a project on the CreateProjectService",
+			desc:                 "Testing create a project on the CreateProjectService providing a specific version",
 			format:               "targz",
 			storage:              "local",
 			projectID:            "project-id",
+			projectVersion:       "v1.0.0",
 			projectContentReader: fileReader,
 			err:                  nil,
 			service: NewCreateProjectService(
@@ -56,6 +58,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 					"project-id",
 					&entity.Project{
 						Name:      "project-id",
+						Version:   "v1.0.0",
 						Format:    "targz",
 						Storage:   "local",
 						Reference: "project-id.tar.gz",
@@ -66,6 +69,59 @@ func TestCreateProjectService_Create(t *testing.T) {
 					"Store",
 					&entity.Project{
 						Name:      "project-id",
+						Version:   "v1.0.0",
+						Format:    "targz",
+						Storage:   "local",
+						Reference: "project-id.tar.gz",
+					},
+					fileReader,
+				).Return(nil)
+			},
+			assertFunc: func(t *testing.T, service *CreateProjectService) bool {
+				return service.repository.(*repository.MockProjectRepository).AssertExpectations(t)
+			},
+		},
+		{
+			desc:                 "Testing create a project on the CreateProjectService without providing a version",
+			format:               "targz",
+			storage:              "local",
+			projectID:            "project-id",
+			projectVersion:       "",
+			projectContentReader: fileReader,
+			err:                  nil,
+			service: NewCreateProjectService(
+				repository.NewMockProjectRepository(),
+				repository.NewMockProjectSourceCodeStorageFactory(),
+				logger.NewFakeLogger(),
+			),
+			arrangeFunc: func(t *testing.T, service *CreateProjectService) {
+				projectSourceCodeStorer := repository.NewMockProjectSourceCodeStorer()
+
+				service.repository.(*repository.MockProjectRepository).On(
+					"Find",
+					"project-id",
+				).Return(nil, nil)
+				service.storage.(*repository.MockProjectSourceCodeStorageFactory).On(
+					"Get",
+					"local",
+				).Return(projectSourceCodeStorer)
+				service.repository.(*repository.MockProjectRepository).On(
+					"SafeStore",
+					"project-id",
+					&entity.Project{
+						Name:      "project-id",
+						Version:   "latest",
+						Format:    "targz",
+						Storage:   "local",
+						Reference: "project-id.tar.gz",
+					},
+				).Return(nil)
+
+				projectSourceCodeStorer.On(
+					"Store",
+					&entity.Project{
+						Name:      "project-id",
+						Version:   "latest",
 						Format:    "targz",
 						Storage:   "local",
 						Reference: "project-id.tar.gz",
@@ -274,10 +330,11 @@ func TestCreateProjectService_Create(t *testing.T) {
 					"SafeStore",
 					"project-id",
 					&entity.Project{
-						Name:      "project-id",
 						Format:    "targz",
-						Storage:   "local",
+						Name:      "project-id",
 						Reference: "project-id.tar.gz",
+						Storage:   "local",
+						Version:   "latest",
 					},
 				).Return(fmt.Errorf("storing project fails"))
 			},
@@ -309,20 +366,22 @@ func TestCreateProjectService_Create(t *testing.T) {
 					"SafeStore",
 					"project-id",
 					&entity.Project{
-						Name:      "project-id",
 						Format:    "targz",
-						Storage:   "local",
+						Name:      "project-id",
 						Reference: "project-id.tar.gz",
+						Storage:   "local",
+						Version:   "latest",
 					},
 				).Return(nil)
 
 				projectSourceCodeStorer.On(
 					"Store",
 					&entity.Project{
-						Name:      "project-id",
 						Format:    "targz",
-						Storage:   "local",
+						Name:      "project-id",
 						Reference: "project-id.tar.gz",
+						Storage:   "local",
+						Version:   "latest",
 					},
 					fileReader,
 				).Return(fmt.Errorf("storing project fails"))
@@ -339,7 +398,7 @@ func TestCreateProjectService_Create(t *testing.T) {
 				test.arrangeFunc(t, test.service)
 			}
 
-			err := test.service.Create(test.format, test.storage, test.projectID, test.projectContentReader)
+			err := test.service.Create(test.format, test.storage, test.projectID, test.projectVersion, test.projectContentReader)
 			if err != nil && test.err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
