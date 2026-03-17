@@ -13,7 +13,13 @@ func NewMockDeleteProjectService() *MockDeleteProjectService {
 }
 
 // Delete method to delete a project
-func (m *MockDeleteProjectService) Delete(id string) error {
-	args := m.Called(id)
+func (m *MockDeleteProjectService) Delete(projectID string) error {
+	args := m.Called(projectID)
+	return args.Error(0)
+}
+
+// DeleteVersion method to delete a project version
+func (m *MockDeleteProjectService) DeleteVersion(projectID string, version string) error {
+	args := m.Called(projectID, version)
 	return args.Error(0)
 }

@@ -16,16 +16,16 @@ func TestDeleteProjectService_Delete(t *testing.T) {
 	tests := []struct {
 		desc        string
 		service     *DeleteProjectService
-		id          string
+		projectID   string
 		arrangeFunc func(*testing.T, *DeleteProjectService)
 		assertFunc  func(*testing.T, *DeleteProjectService) bool
 		err         error
 	}{
 		{
-			desc:    "Testing an error deleting a project on the DeleteProjectService service when the project repository is not initialized",
-			service: NewDeleteProjectService(nil, nil, logger.NewFakeLogger()),
-			id:      "test-id",
-			err:     fmt.Errorf(ErrProjectRepositoryNotInitialized),
+			desc:      "Testing an error deleting a project on the DeleteProjectService service when the project repository is not initialized",
+			service:   NewDeleteProjectService(nil, nil, logger.NewFakeLogger()),
+			projectID: "test-id",
+			err:       fmt.Errorf(ErrProjectRepositoryNotInitialized),
 		},
 		{
 			desc: "Testing an error deleting a project on the DeleteProjectService service when the project storage is not provided",
@@ -34,8 +34,8 @@ func TestDeleteProjectService_Delete(t *testing.T) {
 				nil,
 				logger.NewFakeLogger(),
 			),
-			id:  "test-id",
-			err: fmt.Errorf(ErrProjectStorageNotProvided),
+			projectID: "test-id",
+			err:       fmt.Errorf(ErrProjectStorageNotProvided),
 		},
 		{
 			desc: "Testing an error deleting a project on the DeleteProjectService service when the project id is not provided",
@@ -44,7 +44,7 @@ func TestDeleteProjectService_Delete(t *testing.T) {
 				repository.NewMockProjectSourceCodeStorageFactory(),
 				logger.NewFakeLogger(),
 			),
-			id: "",
+			projectID: "",
 			err: domainerror.NewProjectNotProvidedError(
 				fmt.Errorf(ErrProjectIDNotProvided),
 			),
@@ -56,7 +56,7 @@ func TestDeleteProjectService_Delete(t *testing.T) {
 				repository.NewMockProjectSourceCodeStorageFactory(),
 				logger.NewFakeLogger(),
 			),
-			id: "test-id",
+			projectID: "test-id",
 			arrangeFunc: func(t *testing.T, service *DeleteProjectService) {
 				service.repository.(*repository.MockProjectRepository).On(
 					"Find",
@@ -77,7 +77,7 @@ func TestDeleteProjectService_Delete(t *testing.T) {
 				repository.NewMockProjectSourceCodeStorageFactory(),
 				logger.NewFakeLogger(),
 			),
-			id: "test-id",
+			projectID: "test-id",
 			arrangeFunc: func(t *testing.T, service *DeleteProjectService) {
 				service.repository.(*repository.MockProjectRepository).On(
 					"Find",
@@ -106,7 +106,7 @@ func TestDeleteProjectService_Delete(t *testing.T) {
 				repository.NewMockProjectSourceCodeStorageFactory(),
 				logger.NewFakeLogger(),
 			),
-			id: "test-id",
+			projectID: "test-id",
 			arrangeFunc: func(t *testing.T, service *DeleteProjectService) {
 				service.repository.(*repository.MockProjectRepository).On(
 					"Find",
@@ -143,7 +143,7 @@ func TestDeleteProjectService_Delete(t *testing.T) {
 				repository.NewMockProjectSourceCodeStorageFactory(),
 				logger.NewFakeLogger(),
 			),
-			id: "test-id",
+			projectID: "test-id",
 			arrangeFunc: func(t *testing.T, service *DeleteProjectService) {
 				projectSourceCodeStorer := repository.NewMockProjectSourceCodeStorer()
 
@@ -192,7 +192,7 @@ func TestDeleteProjectService_Delete(t *testing.T) {
 				repository.NewMockProjectSourceCodeStorageFactory(),
 				logger.NewFakeLogger(),
 			),
-			id: "test-id",
+			projectID: "test-id",
 			arrangeFunc: func(t *testing.T, service *DeleteProjectService) {
 				projectSourceCodeStorer := repository.NewMockProjectSourceCodeStorer()
 
@@ -249,7 +249,7 @@ func TestDeleteProjectService_Delete(t *testing.T) {
 				test.arrangeFunc(t, test.service)
 			}
 
-			err := test.service.Delete(test.id)
+			err := test.service.Delete(test.projectID)
 			if err != nil && test.err != nil {
 				assert.Equal(t, test.err, err)
 			} else {
@@ -262,4 +262,14 @@ func TestDeleteProjectService_Delete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeleteProjectService_DeleteVersion(t *testing.T) {
+
+	service := &DeleteProjectService{}
+
+	err := service.DeleteVersion("test-id", "test-version")
+
+	assert.Equal(t, fmt.Errorf("DeleteVersion method not implemented yet"), err, "unexpected error received")
+
 }

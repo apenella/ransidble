@@ -19,5 +19,6 @@ type CreateProjectServicer interface {
 
 // DeleteProjectServicer represents the service to delete a project. It returns an error on failure.
 type DeleteProjectServicer interface {
-	Delete(id string) error
+	Delete(projectID string) error
+	DeleteVersion(projectID string, version string) error
 }
