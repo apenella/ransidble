@@ -42,6 +42,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 	var err error
 	var errorMsg string
 	var errorResponse *response.ProjectErrorResponse
+	var metadata string
 	var projectAlreadyExists *domainerror.ProjectAlreadyExistsError
 	var projectErrorResponseStatus int
 	var projectFileHeader *multipart.FileHeader
@@ -76,7 +77,21 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errorResponse)
 	}
 
-	metadata := c.FormValue(RequestFormProjectMetadataFieldName)
+	metadata = c.FormValue(RequestFormProjectMetadataFieldName)
+	if metadata == "" {
+
+		errorResponse = &response.ProjectErrorResponse{
+			Error:  ErrProjectMetadataFieldNotProvided,
+			Status: http.StatusBadRequest,
+		}
+		h.logger.Error(ErrProjectMetadataFieldNotProvided, map[string]interface{}{
+			"component":  "CreateProjectHandler.Handle",
+			"package":    "github.com/apenella/ransidble/internal/handler/http/project",
+			"project_id": projectID,
+		})
+		return c.JSON(http.StatusBadRequest, errorResponse)
+	}
+
 	err = json.Unmarshal([]byte(metadata), &requestParameters)
 	if err != nil {
 		errorMsg = fmt.Sprintf("%s: %s", ErrReadingFormProjectMetadataField, err.Error())
@@ -84,6 +99,7 @@ func (h *CreateProjectHandler) Handle(c echo.Context) error {
 			Error:  errorMsg,
 			Status: http.StatusInternalServerError,
 		}
+
 		h.logger.Error(
 			errorMsg,
 			map[string]interface{}{

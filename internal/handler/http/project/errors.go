@@ -10,9 +10,11 @@ const (
 	// ErrGetProjectServiceNotInitialized represents an error when the GetProjectService is not initialized
 	ErrGetProjectServiceNotInitialized = "get project service not initialized"
 	// ErrInvalidRequestMetadata represents an error when the request metadata is invalid
-	ErrInvalidRequestMetadata = "invalid request metadata"
-	// ErrProjectIDNotProvided represents an error when the task id is not provided
+	ErrInvalidRequestMetadata = "provided metadata is not valid"
+	// ErrProjectIDNotProvided represents an error when the project id is not provided
 	ErrProjectIDNotProvided = "project id not provided"
+	// ErrProjectMetadataFieldNotProvided represents an error when the project metadata is not provided by the user
+	ErrProjectMetadataFieldNotProvided = "project metadata not provided in the request"
 	// ErrReadingFormProjectFileField represents an error when the form field for the project file can not be read
 	ErrReadingFormProjectFileField = "error reading project file field"
 	// ErrReadingFormProjectMetadataField represents an error when the form field for the project metadata can not be read

@@ -70,7 +70,7 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			},
 		},
 		{
-			desc: "Testing CreateProjectHandler.Handle responding with an error when unmarshaling project metadata form fails and is returning a StatusInternalServerError",
+			desc: "Testing CreateProjectHandler.Handle responding with an error when project metadata is not provided and is returning a StatusBadRequest",
 			handler: NewCreateProjectHandler(
 				service.NewMockCreateProjectService(),
 				logger.NewFakeLogger(),
@@ -80,6 +80,46 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
 				// The error in this test case if forced by sending an empty body
 				r = httptest.NewRequest(http.MethodPost, "/projects/project-id", nil)
+
+				c := echo.New().NewContext(r, w)
+				c.SetParamNames("id")
+				c.SetParamValues("project-id")
+
+				return c
+			},
+			arrangeTestFunc: func(h *CreateProjectHandler) {},
+			assertTestFunc: func(t *testing.T, rec *httptest.ResponseRecorder) {
+
+				var body *response.ProjectErrorResponse
+				expectedBody := &response.ProjectErrorResponse{
+					Error:  ErrProjectMetadataFieldNotProvided,
+					Status: http.StatusBadRequest,
+				}
+				err := json.Unmarshal(rec.Body.Bytes(), &body)
+				assert.NoError(t, err)
+				assert.Equal(t, expectedBody, body)
+				assert.Equal(t, http.StatusBadRequest, rec.Code)
+			},
+		},
+		{
+			desc: "Testing CreateProjectHandler.Handle responding with an error when unmarshaling project metadata form fails and is returning a StatusInternalServerError",
+			handler: NewCreateProjectHandler(
+				service.NewMockCreateProjectService(),
+				logger.NewFakeLogger(),
+			),
+			method: http.MethodPost,
+			path:   "/projects/project-id",
+			arrangeContextFunc: func(r *http.Request, w http.ResponseWriter) echo.Context {
+				// The error in this test case if forced by sending a wrong JSON
+				var bodyBuffer bytes.Buffer
+
+				multiparWriter := multipart.NewWriter(&bodyBuffer)
+				defer multiparWriter.Close()
+
+				multiparWriter.WriteField(RequestFormProjectMetadataFieldName, "{")
+
+				r = httptest.NewRequest(http.MethodPost, "/projects/project-id", &bodyBuffer)
+				r.Header.Set(echo.HeaderContentType, multiparWriter.FormDataContentType())
 
 				c := echo.New().NewContext(r, w)
 				c.SetParamNames("id")
@@ -407,12 +447,12 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				multiparWriter := multipart.NewWriter(&bodyBuffer)
-				defer multiparWriter.Close()
+				multipartWriter := multipart.NewWriter(&bodyBuffer)
+				defer multipartWriter.Close()
 
-				multiparWriter.WriteField(RequestFormProjectMetadataFieldName, string(requestParametersJSON))
+				multipartWriter.WriteField(RequestFormProjectMetadataFieldName, string(requestParametersJSON))
 
-				part, err := multiparWriter.CreateFormFile(RequestFormProjectFileFieldeName, "project.tar.gz")
+				part, err := multipartWriter.CreateFormFile(RequestFormProjectFileFieldeName, "project.tar.gz")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -423,7 +463,7 @@ func TestHandle_CreateProjectHandler(t *testing.T) {
 				}
 
 				r = httptest.NewRequest(http.MethodPost, "/projects/project-id", &bodyBuffer)
-				r.Header.Set(echo.HeaderContentType, multiparWriter.FormDataContentType())
+				r.Header.Set(echo.HeaderContentType, multipartWriter.FormDataContentType())
 
 				c := echo.New().NewContext(r, w)
 				c.SetParamNames("id")
