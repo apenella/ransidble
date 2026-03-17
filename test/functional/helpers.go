@@ -70,6 +70,12 @@ func actAndAssert(t *testing.T, input *InputFunctionalTest) error {
 
 			assert.Equal(t, input.expectedBody, strings.TrimSpace(string(body)))
 		}
+
+		if len(input.expectedHttpHeaders) > 0 {
+			for key, value := range input.expectedHttpHeaders {
+				assert.Equal(t, value, httpResp.Header.Get(key))
+			}
+		}
 	})
 
 	if !passed {
